@@ -10,6 +10,8 @@ namespace GalacticRupture.Sim
         Orbit,     // circle a point at a radius and altitude
         Escort,    // keep station on another ship at a local offset
         AttackRun, // repeated passes at a target: inbound, break away, come round again
+        Attack,    // close to gun range, then hold the broadside and focus fire
+        Face,      // stop and turn to face a point
     }
 
     public sealed class ShipOrder
@@ -34,6 +36,12 @@ namespace GalacticRupture.Sim
 
         public static ShipOrder AttackRun(int target) =>
             new ShipOrder { Kind = OrderKind.AttackRun, OtherShip = target };
+
+        public static ShipOrder Attack(int target) =>
+            new ShipOrder { Kind = OrderKind.Attack, OtherShip = target };
+
+        public static ShipOrder Face(Vector3 point) =>
+            new ShipOrder { Kind = OrderKind.Face, Point = point };
     }
 
     public sealed class Mount
@@ -89,6 +97,7 @@ namespace GalacticRupture.Sim
         public bool Alive = true;
 
         public ShipOrder Order = ShipOrder.Hold();
+        public int FocusTarget = -1;     // guns prefer this ship when it bears
         public float CruiseSpeedFraction = 1f;
 
         internal bool RunOutbound;

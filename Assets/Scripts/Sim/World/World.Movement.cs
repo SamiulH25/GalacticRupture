@@ -59,6 +59,15 @@ namespace GalacticRupture.Sim
                 case OrderKind.AttackRun:
                     goal = AttackRunGoal(ship, order, ref desiredSpeed);
                     break;
+
+                case OrderKind.Attack:
+                    goal = AttackGoal(ship, order, ref desiredSpeed);
+                    break;
+
+                case OrderKind.Face:
+                    goal = order.Point;
+                    desiredSpeed = 0f;
+                    break;
             }
 
             Vector3 to = Flat(goal - ship.Position);
@@ -116,6 +125,31 @@ namespace GalacticRupture.Sim
             }
             desiredSpeed = ship.Def.MaxSpeed * ship.CruiseSpeedFraction;
             return ship.RunExitPoint;
+        }
+
+        // Close to three quarters of gun range, then turn the beam to the target so every turret
+        // with an arc on that side bears, and ease off to a slow crawl.
+        Vector3 AttackGoal(Ship ship, ShipOrder order, ref float desiredSpeed)
+        {
+            var target = ShipById(order.OtherShip);
+            if (target == null || !target.Alive)
+            {
+                ship.Order = ShipOrder.Hold();
+                ship.FocusTarget = -1;
+                return ship.Position;
+            }
+            ship.TargetAltitude = target.Position.Y;
+            Vector3 to = Flat(target.Position - ship.Position);
+            float dist = to.Length();
+            float engage = System.MathF.Max(ship.MaxGunRange * 0.75f, 300f);
+            if (dist > engage || dist < 1f) return target.Position;
+
+            Vector3 dir = to / dist;
+            Vector3 port = new Vector3(-dir.Z, 0f, dir.X);
+            // Pick whichever beam heading needs less turning.
+            Vector3 beam = Vector3.Dot(port, ship.Forward) >= 0f ? port : -port;
+            desiredSpeed = ship.Def.MaxSpeed * 0.25f;
+            return ship.Position + beam * 500f;
         }
 
         static Vector3 Flat(Vector3 v) => new Vector3(v.X, 0f, v.Z);

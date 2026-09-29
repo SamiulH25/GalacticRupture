@@ -124,6 +124,7 @@ namespace GalacticRupture.Sim
                 if (m.Def.Class == MountClass.PointDefence && small) score *= 0.5f;
                 if (m.Def.Class == MountClass.Line && !small) score *= 0.6f;
                 if (other == current) score *= 0.8f;
+                if (other.Id == ship.FocusTarget) score *= 0.05f;
 
                 if (score < bestScore)
                 {

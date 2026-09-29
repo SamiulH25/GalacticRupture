@@ -23,6 +23,7 @@ namespace GalacticRupture.Game
         public CameraRig Rig;
 
         public static bool Active { get; private set; }
+        public static bool Requested => System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-grCapture") >= 0;
 
         string _dir;
         int _next;

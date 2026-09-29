@@ -36,6 +36,25 @@ namespace GalacticRupture.Sim
         readonly List<int> _query = new List<int>();
         const float ScanInterval = 0.5f;
 
+        // Orders from the player (or an AI) wait here and apply at the start of the next tick,
+        // so the same command stream always gives the same battle.
+        readonly List<(int Ship, ShipOrder Order)> _commands = new List<(int, ShipOrder)>();
+
+        public void Issue(int ship, ShipOrder order) => _commands.Add((ship, order));
+
+        void ApplyCommands()
+        {
+            foreach (var (id, order) in _commands)
+            {
+                var ship = ShipById(id);
+                if (ship == null || !ship.Alive) continue;
+                ship.Order = order;
+                ship.RunOutbound = false;
+                ship.FocusTarget = order.Kind == OrderKind.Attack ? order.OtherShip : -1;
+            }
+            _commands.Clear();
+        }
+
         public int Tick { get; private set; }
         public float Time => Tick * Dt;
 
@@ -58,6 +77,7 @@ namespace GalacticRupture.Sim
         public void Step()
         {
             Tick++;
+            ApplyCommands();
             Director?.Tick(this);
 
             foreach (var ship in Ships)

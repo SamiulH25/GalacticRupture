@@ -16,6 +16,7 @@ namespace GalacticRupture.Game
 
         public World World { get; private set; }
         public TurretToy Toy { get; private set; }
+        public Skirmish Battle { get; private set; }
         public FleetPresenter Presenter { get; private set; }
         public float Alpha { get; private set; }
 
@@ -28,7 +29,7 @@ namespace GalacticRupture.Game
         readonly System.Diagnostics.Stopwatch _watch = new System.Diagnostics.Stopwatch();
 
         // The ship the camera starts on.
-        public int Flagship => Toy != null ? Toy.Flagship : 0;
+        public int Flagship => Toy != null ? Toy.Flagship : Battle != null ? Battle.Flagship : 0;
 
         static readonly float[] Speeds = { 0.25f, 1f, 2f, 4f };
 
@@ -41,7 +42,9 @@ namespace GalacticRupture.Game
             _projectiles = gameObject.AddComponent<ProjectileRenderer>();
             _projectiles.Init(Art);
 
-            Load(TurretToy.Create(Seed));
+            bool toy = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-grToy") >= 0 || CaptureMode.Requested;
+            // (RtsCapture uses the skirmish, like a player would.)
+            Load(toy ? TurretToy.Create(Seed) : Skirmish.Create(Seed));
         }
 
         // Replaces the running battle, views and all.
@@ -52,6 +55,7 @@ namespace GalacticRupture.Game
             Presenter.transform.SetParent(transform, false);
             World = world;
             Toy = world.Director as TurretToy;
+            Battle = world.Director as Skirmish;
             Presenter.Init(Art, _fx, World);
             _accumulator = 0f;
             Dispatch();
@@ -96,10 +100,17 @@ namespace GalacticRupture.Game
             var kb = Keyboard.current;
             if (kb == null) return;
             if (kb.spaceKey.wasPressedThisFrame) Paused = !Paused;
-            if (kb.digit1Key.wasPressedThisFrame) TimeScale = Speeds[0];
-            if (kb.digit2Key.wasPressedThisFrame) TimeScale = Speeds[1];
-            if (kb.digit3Key.wasPressedThisFrame) TimeScale = Speeds[2];
-            if (kb.digit4Key.wasPressedThisFrame) TimeScale = Speeds[3];
+            if (kb.equalsKey.wasPressedThisFrame || kb.numpadPlusKey.wasPressedThisFrame) StepSpeed(1);
+            if (kb.minusKey.wasPressedThisFrame || kb.numpadMinusKey.wasPressedThisFrame) StepSpeed(-1);
+            if (kb.ctrlKey.isPressed && kb.rKey.wasPressedThisFrame)
+                Load(Toy != null ? TurretToy.Create(Seed) : Skirmish.Create(Seed + (ulong)Time.frameCount));
+        }
+
+        void StepSpeed(int dir)
+        {
+            int i = System.Array.IndexOf(Speeds, TimeScale);
+            if (i < 0) i = 1;
+            TimeScale = Speeds[Mathf.Clamp(i + dir, 0, Speeds.Length - 1)];
         }
     }
 }
