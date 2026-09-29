@@ -1,6 +1,7 @@
 # Galactic Rupture — Design Ideas
 
-Living brainstorm document. Updated as we go.
+The single design document for the game. Everything else in the repo is implementation.
+Updated as we go.
 
 **Status key:** `LOCKED` decided · `PROPOSED` suggested, not yet confirmed · `OPEN` needs discussion
 
@@ -328,139 +329,166 @@ stop pretending.
 
 ## 8. Technology
 
-`LOCKED` — **No game engine.** Godot/Unity/Unreal are off the table. But frameworks and
-libraries are fine and will be used. The requirement is *no lock-in*, not *no code reuse*.
+`LOCKED` — **Unity 6 (6000.6.3f1), Universal Render Pipeline, C#.** All implementation work
+done with Claude, driven from the terminal through the `unity` CLI.
 
-### 8.1 The Lock-In Principle
+This replaces the original "no game engine" decision (NeoVeldrid + Silk.NET). The engine-free
+stack cost too much time on plumbing — windowing, a renderer, an asset loader, UI — before any
+of it made the game look good. The goal is now a *stunning* game, and the visual ceiling of a
+hand-rolled renderer was the bottleneck.
 
-`LOCKED` — What "tied down" actually means, precisely:
+### 8.1 The Lock-In Principle, Restated for an Engine
 
-An **engine** owns your scene format, asset pipeline, editor and architecture — you fight
-it for control. A **graphics library** owns the draw call, nothing else. bgfx's own tagline
-is *"Bring Your Own Engine/Framework"*; it explicitly declines to dictate pipelines,
-meshes, cameras, lights or materials. That is almost a word-for-word description of the
-requirement.
+We now depend on an engine's scene format and editor. The principle that survives is the one
+that always mattered:
 
-**The operative rule is in §8.6 — never let a library's file format become your save
-format.** Freedom lives in the data model, not the library choice.
+> **The rules of the game do not live in the engine.**
 
-### 8.2 Language: C# / .NET
+- `GalacticRupture.Sim` is a separate assembly with **no `UnityEngine` reference**
+  (`noEngineReferences: true`, enforced by a test). Deterministic, fixed tick, runnable
+  headless from a test or a batch job.
+- Unity owns presentation: meshes, materials, lights, VFX, cameras, UI, input.
+- The Game layer reads sim state and draws it; it never decides an outcome.
 
-`LOCKED` — **C# / .NET.** All implementation work done with Claude.
+If Unity ever had to go, the sim and its tests leave with us intact.
 
-**Why C# won:**
+### 8.2 Render Pipeline: URP
 
-1. **Hot reload turns design iteration from a compile-wait loop into a save-and-reload
-   loop.** This is the decisive reason. When you're tuning whether persistent damage
-   snowballs, or whether turret traverse rates feel fair, that's the difference between
-   testing 40 variants this afternoon and 3 this week. *We are design-iterating
-   constantly; that is the dominant workload.*
-2. **Headless simulation is trivial**, which makes AI-vs-AI balance testing a first-class
-   tool rather than a project.
-3. **The 3D ecosystem is now sufficient.** NeoVeldrid + Silk.NET cover rendering, input,
-   audio and asset loading. There is no longer a reason to leave C# for C++.
+`LOCKED` — **URP, not HDRP** (user decision, 2026-09-29).
 
-**Rejected alternatives:**
-
-| Option | Why not |
+| | Why |
 |---|---|
-| C++ / bgfx | Most prior art, best raw perf — but slow rebuilds, manual memory, a real learning curve on the GPU layer. Iteration speed is the bottleneck for us, not frame time. |
-| Rust / wgpu | Philosophically the purest no-lock-in choice, and genuinely good. Rejected on weaker AI-assist ergonomics and a thinner 3D ecosystem for what we need. |
-| Zig | wgpu available; rejected on ecosystem and tooling. |
+| Scale | URP is lighter per frame and scales to much larger fleets (§8.8). HDRP would cap us near 50–150 capitals |
+| Hardware | Development machine is a GTX 1080 Ti: no hardware ray tracing, so HDRP's high end is unavailable anyway |
+| Look | Space is mostly black with one key light (the star). The look comes from HDR bloom, emissives, VFX and good models, all of which URP does well |
 
-**Honest caveat:** Silk.NET is maintained by volunteers and its 2.x line is in maintenance
-mode with 3.0 in progress. NeoVeldrid is pinned to Silk.NET 2.x. This is a real, accepted
-risk — the mitigation is that it's a *bindings* library, and the abstraction it provides
-(Silk.NET 3.0) is unlikely to change. Never let it become our save format and we're safe.
+The cost: volumetrics and lighting fidelity take hand-built shader work instead of arriving in
+a settings panel.
 
-### 8.3 Rendering Framework: NeoVeldrid
+### 8.3 Project Layout
 
-`LOCKED` — **NeoVeldrid** (maintained fork of Veldrid, MIT, targets .NET 10, ImGui
-integration built in, pure C# shader cross-compilation).
+| Assembly | Folder | Role |
+|---|---|---|
+| `GalacticRupture.Sim` | `Assets/Scripts/Sim` | Rules. No engine. Fixed tick, deterministic |
+| `GalacticRupture.Game` | `Assets/Scripts/Game` | Unity side: sim runner, views, camera, input, UI, VFX hooks |
+| `GalacticRupture.Tests.EditMode` | `Assets/Tests/EditMode` | NUnit tests against the sim |
 
-> **Warning for future reference:** the *original* **Veldrid is dead.** Its author stepped
-> back in Feb 2023 and the repo is abandoned. If you go looking for "Veldrid" you will find
-> the dead repo first. **NeoVeldrid** is the live fork (v1.2.0, July 2026).
+Art under `Assets/Art/{Models,Materials,Shaders,VFX}`, prefabs under `Assets/Prefabs`, data
+under `Assets/Data`.
 
-**Alternatives considered:**
-
-| Option | Why not |
-|---|---|
-| bgfx | Excellent and very much alive — the best-in-class C++ choice. Rejected *only* because we're in C# and it has no first-class .NET story. Would be the recommendation in a C++ project. |
-| Raw Vulkan | Maximum freedom, maximum cost. We don't need to own the GPU layer for the requirements in §8.1. |
-
-**Rendering scope** — deliberately narrow, so the renderer does exactly one job:
-- Fixed camera angles (no free orbit)
-- Hard content cap: a few dozen hulls, one material model
-- Single shadow cascade, tightly fitted to camera focus
-- Instanced draws: one draw call per ship type per LOD
-- Depth prepass on opaque geometry
-- LOD swaps at distance (barrel animation culled at fleet scale)
-
-### 8.4 Full Stack
-
-**Stack:**
+### 8.4 Stack
 
 | Layer | Choice |
 |---|---|
-| Language | C# / .NET 10 |
-| Rendering | NeoVeldrid (maintained fork of Veldrid, MIT, .NET 10) |
-| Window / input | Silk.NET.SDL |
-| Math | System.Numerics |
-| Audio | miniaudio via Silk.NET |
-| UI | ImGui.NET (dev tooling; skin or replace for ship) |
-| Text | MSDF atlas — lock in early |
-| Data | TOML — hot-reloadable, schema-validatable, diffable |
-| Physics | **None.** We need sphere overlap, not rigid bodies |
+| Engine | Unity 6000.6.3f1 |
+| Rendering | URP 17.6, Shader Graph, VFX Graph |
+| Camera | Cinemachine |
+| Input | Input System |
+| Performance | Burst, Collections, Mathematics; GPU instancing for fleets |
+| UI | UI Toolkit (uGUI only where a package needs it) |
+| Tests | Unity Test Framework (NUnit), EditMode, via `unity test` |
+| Models | Blender through the Blender MCP, exported to glTF/FBX |
+| Sim math | `System.Numerics` — available without an engine reference |
+| Physics | **None in the sim.** Sphere overlap and ray-vs-sphere, written by us |
 
 ### 8.5 Architecture Notes
 
-- `Game.Sim` has **zero** rendering references. Deterministic, headless-runnable.
-- Everything scriptable lives in hot-reloadable C# — scenarios, events, AI, balance
-  constants. This is what actually buys the iteration speed in §8.2.
-- Build the map and system editors **inside the game client**, not as a separate tool —
-  same camera, selection and gizmo code, one UI instead of two. Pair with a plain text
-  view for scripts and data; hot reload closes the loop.
+- The sim steps at a **fixed tick**; the Game layer interpolates between the last two ticks
+  for rendering. Pausing and time dilation (§3) are changes to how many ticks run per frame,
+  never to the rules.
+- Game objects are **views**: a ship view holds a reference to a sim ship id and copies its
+  pose each frame. Views can be destroyed and rebuilt from sim state at any time.
+- `PROPOSED` — **Data is authored as ScriptableObjects** in the Game layer (edited live in the
+  Inspector, which gives hot tuning for free) and converted to plain C# definitions the sim
+  consumes. The sim never sees a Unity type.
+- Build tools (scene builders, benchmark scenes) are editor scripts that construct scenes
+  from code, so a scene can always be regenerated and nothing is hand-edited YAML.
 
-### 8.6 Format Discipline — The One Rule That Buys Freedom
+### 8.6 Format Discipline
 
-> Never let a library's file format become your save format.
+> The meshes belong to the art tool. The ship's *layout* belongs to us.
 
-- **Meshes: glTF.** Be compatible with the art ecosystem; purity here is a mistake — we'd
-  be reimplementing an importer for no gain.
-- **Scenes: our own `.grscene`.** Composition, LOD, turret mount points and arcs,
-  damage-state mesh swaps, metadata.
-- Turret mount points live in *our* format, not the mesh, so hulls can be re-exported from
-  a new DCC tool without breaking weapon layout.
+- **Meshes:** glTF or FBX from Blender.
+- **Turret mount points, arcs, hardpoint classes and damage-state swaps live in our hull
+  definitions,** not in the mesh, so a hull can be re-exported or remodelled without breaking
+  its weapon layout.
+- Every turret is a **separate mesh with its own pivot** (yaw on the base, pitch on the
+  barrels), instanced from a shared parts kit.
 
-This is the difference between "we use Godot" and "we use NeoVeldrid." Both mean depending
-on someone else's code. Only one means depending on someone's *data model*. If the editor
-writes a format only our own code reads, swapping the renderer is a month of work rather
-than a rewrite.
+### 8.7 Determinism
 
-### 8.7 Determinism in C#
+Buy determinism by **structure**, not by contorting the code:
 
-**The actual gotcha:**
-- `+ - * /` and comparisons on `float` are IEEE-754 and safe
-- **Transcendentals are not** — `MathF.Sin` etc. delegate to platform libm and are not
-  bit-identical across platforms. This is the real killer and it looks like ordinary math.
-- Sim uses no transcendentals. Rotations via quaternions or angle tables.
-- Positions as `double` in sim, `float` at render.
-
-Scope note: if single-player on one platform, plain `float` is fine. Buy determinism by
-*structure* (separate assembly, fixed tick, no libm in the sim), not by contorting the code.
+- Separate assembly, fixed tick, all randomness from a seeded sim RNG (never
+  `UnityEngine.Random`, never `System.Random` shared across systems).
+- No iteration over unordered collections where order affects the outcome.
+- Transcendentals (`Atan2`, `Sin`, `Sqrt`) go through one `SimMath` class. `+ - * /` are
+  IEEE-754 and safe; libm is not bit-identical across platforms. Single-player on one platform
+  makes plain `MathF` fine today, and the wrapper means a table-based version can drop in if
+  lockstep multiplayer or cross-platform replays ever matter.
+- A **state hash** each tick makes "same seed, same outcome, attended or not" testable (§3).
 
 ### 8.8 The Number That Gates Everything Else
 
-How many ships can we draw at 60fps, with shadows, at target camera distance? EAW had ~30
-on screen. Stellaris has 10,000. **That is a different game** — different tactical layer,
-camera, selection model, and AI cost model. We cannot design the combat layer until we know
-which number we're near. Benchmark a throwaway stress scene first: 10,000 instanced ships,
-one shadow cascade, depth prepass, no gameplay.
+How many ships can we draw at 60fps, with shadows, at target camera distance, on a GTX 1080 Ti?
+EAW had ~30 on screen. Stellaris has 10,000. **That is a different game** — different tactical
+layer, camera, selection model, and AI cost. The combat layer cannot be sized until we know
+which number we're near.
+
+A benchmark scene answers it: N instanced hulls with turrets, one shadow cascade, bloom on, no
+gameplay. Measure at three camera distances. Re-run when real models land.
+
+### 8.9 The Visual Bar
+
+`LOCKED` — **Stunning is a requirement, not polish.** The game is judged by feel and look.
+
+`PROPOSED` — What stunning means for us, concretely:
+
+- **One star lights the battle.** A strong directional key light with the star's colour, a
+  faint cool fill, deep blacks. Ships read by silhouette and rim light, not ambient mush.
+- **HDR everywhere.** Engines, muzzle flashes, beams, shield impacts and hull fires are
+  emissive and bloom. Tonemapped (ACES or Neutral), with exposure tuned per system.
+- **A sky worth looking at.** A procedural starfield and nebula backdrop per system, plus the
+  system's star and planets as real objects at a distance.
+- **Guns you can watch.** Barrels traverse visibly, recoil, flash; tracers and beams are bright
+  and readable at fleet scale. The converging battery is the signature image (§2.1).
+- **Damage you can read.** Scorching, venting, fires, debris, listing — the ship is the health
+  bar (§2.2).
+- **Cinematic camera.** Close, low, restricted orbit in tactical view; an establishing pass
+  when an engagement opens.
+- **Models at a fixed quality bar.** Practical warships whose shapes follow from what a power
+  at war needs (armoured bows, centreline superfiring guns, radiators, redundant engines), not
+  art objects. No ventral guns; short, chunky barrels in proportion to the gunhouse.
+
+### 8.10 Toolchain
+
+```sh
+unity run . --editor-version 6000.6.3f1 -- -executeMethod <Class.Method>   # batch jobs, scene builders
+unity test . --editor-version 6000.6.3f1 --mode EditMode --output <file>   # sim tests
+unity build . --target StandaloneLinux64 --execute-method <Class.Method>   # player builds
+unity status / unity command ...                                           # drive a live Editor
+```
 
 ---
 
-## 9. Open Questions
+## 9. Build Order
+
+`PROPOSED` — Playable early, playable always. Each step ends with something to run and judge.
+
+1. **Turret toy.** A capital in a lit space scene, its turrets tracking targets independently
+   with finite traverse, firing tracers. Proves §2.1 and sets the visual bar.
+2. **Fleet benchmark.** §8.8. Sizes everything after it.
+3. **Ship duel.** Shields / hull / subsystems, three damage channels, movement, orders,
+   facing. 2v2 where facing and convergence decide the outcome.
+4. **Fleet engagement.** 10–50 ships, doctrine AI, end states, the unattended resolution and
+   the report.
+5. **Mini campaign.** A handful of systems, two factions, supply range, production, persistent
+   damage carried between battles.
+6. **Deepen**, one layer at a time: economy, armies and transports, council and diplomacy.
+
+---
+
+## 10. Open Questions
 
 1. **One engagement type or several?** Fleet action, planetary siege, escort-intercept as
    three different games, or one universal brawl?
@@ -468,19 +496,19 @@ one shadow cascade, depth prepass, no gameplay.
 3. **The three majors** — mirrors with one real ideological difference each, plus their
    doctrine differences and default loadouts.
 4. **Minors** — do they fall out as the powers that picked a side?
-5. **Tick rates** at strategic and tactical resolution are open.
+5. **Tick rates** at strategic and tactical resolution.
 6. **Does the two-resolution system get confirmed?** It is the structural spine and nothing
    above is fully designed without it.
+7. **Map size and travel** — 12 systems or more, and FTL transit (§4) versus fixed gates.
 
 ---
 
-## 10. Change Log
+## 11. Change Log
 
-- Initial document created from the opening brainstorm. Captures: vision, four pillars,
-  two-resolution architecture proposal, map philosophy, damage model and hardpoint
-  principle, army layer, setting premise, tech stack, and open questions.
-- Expanded §8 into a proper record of the technical decisions: added the lock-in principle,
-  the C# rationale with rejected alternatives, the NeoVeldrid rationale (with a warning
-  that the original Veldrid is dead), rendering scope, format discipline, and the
-  benchmark that gates combat design. Previously these were recorded as bare choices with
-  no reasoning, which would have made them impossible to revisit or defend later.
+- Initial document created from the opening brainstorm: vision, four pillars, two-resolution
+  architecture, map, damage model and hardpoints, armies, setting, tech stack, open questions.
+- Expanded §8 into a record of the engine-free technical decisions (C#, NeoVeldrid).
+- **2026-09-29 — Fresh start.** The previous implementation, plans and design docs were
+  retired; this file is the only design source carried forward. §8 rewritten for Unity 6 +
+  URP (engine-free stack dropped, lock-in principle restated as "the rules don't live in the
+  engine"), added the visual bar (§8.9) and build order (§9).
