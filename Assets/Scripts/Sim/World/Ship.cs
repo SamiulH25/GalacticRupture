@@ -78,6 +78,7 @@ namespace GalacticRupture.Sim
     {
         public readonly int Id;
         public readonly int Side;
+        public int Faction;              // who built it, for its paint; the sim only uses Side
         public readonly HullDef Def;
         public readonly List<Mount> Mounts = new List<Mount>();
 
@@ -112,6 +113,7 @@ namespace GalacticRupture.Sim
         {
             Id = id;
             Side = side;
+            Faction = side;
             Def = def;
             Position = PrevPosition = position;
             Yaw = PrevYaw = yaw;

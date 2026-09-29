@@ -125,7 +125,7 @@ namespace GalacticRupture.Game
                     case CampaignEventKind.ShipBuilt when ours:
                         Say($"{Date}: {e.Text} commissioned at {SysName(e.System)}.");
                         break;
-                    case CampaignEventKind.SiegeStarted:
+                    case CampaignEventKind.LandingStarted:
                         Say(ours ? $"{Date}: our ships are taking {SysName(e.System)}."
                                  : $"{Date}: the Remnant is moving on {SysName(e.System)}.");
                         break;

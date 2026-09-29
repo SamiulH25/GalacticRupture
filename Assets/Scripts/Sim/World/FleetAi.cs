@@ -12,10 +12,20 @@ namespace GalacticRupture.Sim
             {
                 if (!s.Alive || s.Side != side) continue;
                 var current = world.ShipById(s.Order.OtherShip);
-                bool busy = (s.Order.Kind == OrderKind.Attack || s.Order.Kind == OrderKind.AttackRun) && current != null && current.Alive;
+                bool busy = s.Def.Class != HullClass.Transport && (s.Order.Kind == OrderKind.Attack || s.Order.Kind == OrderKind.AttackRun) && current != null && current.Alive;
                 if (busy) continue;
                 var target = Nearest(world, s);
                 if (target == null) continue;
+                if (s.Def.Class == HullClass.Transport)
+                {
+                    // Troop ships keep out of it: back off, away from the nearest threat.
+                    if (s.Order.Kind == OrderKind.MoveTo) continue;
+                    Vector3 away = s.Position - target.Position;
+                    away.Y = 0f;
+                    float len = away.Length();
+                    if (len > 1f) world.Issue(s.Id, ShipOrder.MoveTo(s.Position + away / len * 2500f));
+                    continue;
+                }
                 if (s.Def.Class <= HullClass.Frigate)
                 {
                     var o = ShipOrder.AttackRun(target.Id);

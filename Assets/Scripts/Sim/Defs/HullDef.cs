@@ -19,6 +19,7 @@ namespace GalacticRupture.Sim
         Destroyer,
         Cruiser,
         Battleship,
+        Transport,  // carries armies; the fattest target in the game (IDEAS.md §6)
     }
 
     public sealed class HullDef
@@ -44,6 +45,7 @@ namespace GalacticRupture.Sim
         public int Cost = 100;
         public float BuildDays = 3f;
         public float LyPerDay = 5f;
+        public int TroopCapacity;         // armies carried
 
         public List<HardpointDef> Hardpoints = new List<HardpointDef>();
     }

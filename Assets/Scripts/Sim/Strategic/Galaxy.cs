@@ -11,8 +11,9 @@ namespace GalacticRupture.Sim.Strategic
         public int Owner = -1;         // faction, -1 unclaimed
         public int Tier = 1;           // 1..3: income, and whether it can build
         public bool Capital;
-        public float Siege;            // 0..1 capture progress by the faction in `Besieger`
-        public int Besieger = -1;
+        public float Siege;            // 0..1: the landed attackers' share of the ground war
+        public int Besieger = -1;      // faction with armies landed here, -1 if none
+        public float Militia;          // local defence force, rebuilds slowly
         public float Unrest;           // hours of lost production after a change of hands
 
         public bool Shipyard => Tier >= 2;

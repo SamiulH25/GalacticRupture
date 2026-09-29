@@ -32,8 +32,9 @@ namespace GalacticRupture.Sim.Strategic
             }
         }
 
-        // Rough fighting value, for the AI and the battle forecast.
-        public float Strength => Def.Cost * (0.35f + 0.65f * HullFraction) * (0.3f + 0.7f * MountsAlive / (float)System.Math.Max(1, MountAlive.Length));
+        // Rough fighting value, for the AI and the battle forecast. Transports count for little.
+        public float Strength => (Def.Class == HullClass.Transport ? 0.2f : 1f) * Def.Cost
+            * (0.35f + 0.65f * HullFraction) * (0.3f + 0.7f * MountsAlive / (float)System.Math.Max(1, MountAlive.Length));
     }
 
     public sealed class Fleet
@@ -48,6 +49,7 @@ namespace GalacticRupture.Sim.Strategic
         public float Progress;          // light-years flown along the current lane
         public readonly List<int> Route = new List<int>(); // systems after Next
         public double ArrivedHour;
+        public bool Held;               // stopped in a lane by an engagement
 
         public bool InTransit => Next >= 0;
         public bool Alive => Ships.Count > 0;
@@ -72,30 +74,38 @@ namespace GalacticRupture.Sim.Strategic
                 return s;
             }
         }
+
+        public int TroopCapacity
+        {
+            get
+            {
+                int n = 0;
+                foreach (var r in Ships) n += r.Def.TroopCapacity;
+                return n;
+            }
+        }
     }
 
     public sealed class Faction
     {
         public int Id;
         public string Name = "";
+        public bool Major;
         public float Credits;
+        public float Influence;
         public float SupplyRange = 14f; // light-years from the nearest owned system
         public string ShipPrefix = "";
         public int ShipsBuilt;
+        public int Capital = -1;
+        public bool Eliminated;
+        public float EmbargoHours;      // council sanction: income cut while > 0
     }
 
     public sealed class BuildItem
     {
-        public HullDef Def;
+        public HullDef Def;             // null: an army
         public float HoursLeft;
         public int Owner;
-    }
-
-    public sealed class Engagement
-    {
-        public int System;
-        public int Attacker;            // the faction that arrived last
-        public readonly List<int> Fleets = new List<int>();
     }
 
     public enum CampaignState
@@ -112,7 +122,16 @@ namespace GalacticRupture.Sim.Strategic
         BattleResolved,
         SystemCaptured,
         ShipBuilt,
-        SiegeStarted,
+        ArmyRaised,
+        LandingStarted,
+        LandingFailed,
+        WarDeclared,
+        TreatySigned,
+        TreatyBroken,
+        CouncilSession,
+        CouncilResult,
+        FactionEliminated,
+        Interception,
     }
 
     public struct CampaignEvent
@@ -121,18 +140,21 @@ namespace GalacticRupture.Sim.Strategic
         public int System;
         public int Fleet;
         public int Faction;
+        public int Other;
         public string Text;
     }
 
-    // The strategic layer: an hourly tick over systems, fleets, yards and supply. When hostile
-    // fleets meet, time stops until the battle is fought (attended or not) and written back.
+    // The strategic layer: an hourly tick over systems, fleets, armies, yards, supply,
+    // intelligence and diplomacy. When the player's fleets meet a hostile force, time stops
+    // until the battle is fought (attended or not) and written back; battles elsewhere resolve
+    // unattended through the same tactical sim.
     public sealed partial class Campaign
     {
         public const int PlayerFaction = 0;
         public const int EnemyFaction = 1;
 
         public readonly Galaxy Galaxy = new Galaxy();
-        public readonly Faction[] Factions = new Faction[2];
+        public readonly List<Faction> Factions = new List<Faction>();
         public readonly List<Fleet> Fleets = new List<Fleet>();
         public readonly Dictionary<int, List<BuildItem>> Yards = new Dictionary<int, List<BuildItem>>();
         public readonly List<CampaignEvent> Events = new List<CampaignEvent>();
@@ -140,6 +162,7 @@ namespace GalacticRupture.Sim.Strategic
         public double Hours { get; private set; }
         public Engagement Pending { get; private set; }
         public CampaignState State { get; private set; }
+        public bool AiEnabled = true;       // off in tests that drive every faction by hand
 
         Rng _rng;
         int _nextFleetId;
@@ -148,7 +171,17 @@ namespace GalacticRupture.Sim.Strategic
 
         public ref Rng Rng => ref _rng;
 
+        public int Day => (int)(Hours / 24.0);
+
         public static float IncomePerDay(StarSystem s) => s.Tier switch { 3 => 110f, 2 => 50f, _ => 22f };
+        public static float InfluencePerDay(StarSystem s) => s.Capital ? 3f : s.Tier >= 2 ? 1f : 0.5f;
+
+        public Faction AddFaction(string name, bool major, string prefix, float credits)
+        {
+            var f = new Faction { Id = Factions.Count, Name = name, Major = major, ShipPrefix = prefix, Credits = credits, Influence = 20f };
+            Factions.Add(f);
+            return f;
+        }
 
         public Fleet FleetById(int id)
         {
@@ -171,18 +204,37 @@ namespace GalacticRupture.Sim.Strategic
             return new ShipRecord(def, $"{fac.ShipPrefix} {100 + fac.ShipsBuilt}");
         }
 
+        void Emit(CampaignEventKind kind, int system = -1, int faction = -1, int other = -1, int fleet = -1, string text = null) =>
+            Events.Add(new CampaignEvent { Kind = kind, System = system, Faction = faction, Other = other, Fleet = fleet, Text = text });
+
+        // Call once after building the map.
+        public void Begin()
+        {
+            InitDiplomacy();
+            InitIntel();
+            foreach (var s in Galaxy.Systems) s.Militia = MaxMilitia(s);
+            UpdateIntel();
+        }
+
         // One hour.
         public void Tick()
         {
-            if (Pending != null || State != CampaignState.Ongoing) return;
+            if (Pending != null || Council != null || State != CampaignState.Ongoing) return;
             Hours += 1.0;
             MoveFleets();
+            if (Pending != null) return;
             Economy();
-            BuildShips();
+            BuildQueue();
             Repair();
-            Sieges();
-            DetectEngagement();
-            if (((int)Hours) % 6 == 0) CampaignAi.Think(this, EnemyFaction);
+            GroundWar();
+            UpdateIntel();
+            DetectEngagements();
+            if (Pending != null) return;
+            DiplomacyTick();
+            if (!AiEnabled) return;
+            int h = (int)Hours;
+            for (int f = 1; f < Factions.Count; f++)
+                if (!Factions[f].Eliminated && (h + f * 2) % 6 == 0) CampaignAi.Think(this, f);
         }
 
         // --- Orders ---------------------------------------------------------------------------
@@ -190,10 +242,19 @@ namespace GalacticRupture.Sim.Strategic
         public bool MoveFleet(int fleetId, int to)
         {
             var f = FleetById(fleetId);
-            if (f == null || !f.Alive) return false;
+            if (f == null || !f.Alive || f.Held) return false;
             f.Route.Clear();
             if (f.InTransit)
             {
+                if (to == f.System || Galaxy.Route(f.System, to).Count < Galaxy.Route(f.Next, to).Count)
+                {
+                    // Turn back the way it came.
+                    float len = Galaxy.LaneLength(f.System, f.Next);
+                    (f.System, f.Next) = (f.Next, f.System);
+                    f.Progress = System.MathF.Max(0f, len - f.Progress);
+                    if (f.Next != to) f.Route.AddRange(Galaxy.Route(f.Next, to));
+                    return true;
+                }
                 // Finish the current jump; the rest of the route starts from there.
                 if (f.Next != to) f.Route.AddRange(Galaxy.Route(f.Next, to));
                 return true;
@@ -211,19 +272,23 @@ namespace GalacticRupture.Sim.Strategic
         public bool CanBuild(int owner, int system, HullDef def)
         {
             var s = Galaxy.Systems[system];
-            return s.Owner == owner && s.Shipyard && Factions[owner].Credits >= def.Cost;
+            return s.Owner == owner && s.Shipyard && s.Unrest <= 0f && Factions[owner].Credits >= def.Cost;
         }
 
         public bool QueueBuild(int owner, int system, HullDef def)
         {
             if (!CanBuild(owner, system, def)) return false;
             Factions[owner].Credits -= def.Cost;
-            if (!Yards.TryGetValue(system, out var q)) Yards[system] = q = new List<BuildItem>();
-            q.Add(new BuildItem { Def = def, HoursLeft = def.BuildDays * 24f, Owner = owner });
+            Queue(system).Add(new BuildItem { Def = def, HoursLeft = def.BuildDays * 24f, Owner = owner });
             return true;
         }
 
-        // Moves ships between two fleets at the same system (merging when `ships` covers all).
+        List<BuildItem> Queue(int system)
+        {
+            if (!Yards.TryGetValue(system, out var q)) Yards[system] = q = new List<BuildItem>();
+            return q;
+        }
+
         public Fleet Split(int fleetId, IList<int> shipIndices, string name)
         {
             var f = FleetById(fleetId);
@@ -236,6 +301,7 @@ namespace GalacticRupture.Sim.Strategic
                 nf.Ships.Insert(0, f.Ships[sorted[i]]);
                 f.Ships.RemoveAt(sorted[i]);
             }
+            DropExcessTroops(f);
             return nf;
         }
 
@@ -247,6 +313,8 @@ namespace GalacticRupture.Sim.Strategic
             if (into.InTransit || from.InTransit || into.System != from.System) return false;
             into.Ships.AddRange(from.Ships);
             from.Ships.Clear();
+            foreach (var a in Armies)
+                if (a.Fleet == from.Id) a.Fleet = into.Id;
             Fleets.Remove(from);
             return true;
         }
@@ -257,7 +325,7 @@ namespace GalacticRupture.Sim.Strategic
         {
             foreach (var f in Fleets)
             {
-                if (!f.InTransit || !f.Alive) continue;
+                if (!f.InTransit || !f.Alive || f.Held) continue;
                 float len = Galaxy.LaneLength(f.System, f.Next);
                 f.Progress += f.LyPerDay / 24f;
                 if (f.Progress < len) continue;
@@ -273,26 +341,32 @@ namespace GalacticRupture.Sim.Strategic
                 else
                 {
                     f.Next = -1;
-                    Events.Add(new CampaignEvent { Kind = CampaignEventKind.FleetArrived, Fleet = f.Id, System = f.System, Faction = f.Owner });
+                    Emit(CampaignEventKind.FleetArrived, f.System, f.Owner, fleet: f.Id);
                 }
             }
+            DetectInterceptions();
         }
 
         void Economy()
         {
+            foreach (var fac in Factions) if (fac.EmbargoHours > 0f) fac.EmbargoHours -= 1f;
             foreach (var s in Galaxy.Systems)
             {
                 if (s.Owner < 0) continue;
+                var fac = Factions[s.Owner];
+                fac.Influence += InfluencePerDay(s) / 24f;
                 if (s.Unrest > 0f)
                 {
                     s.Unrest -= 1f;
                     continue;
                 }
-                Factions[s.Owner].Credits += IncomePerDay(s) / 24f;
+                float income = IncomePerDay(s) / 24f;
+                if (fac.EmbargoHours > 0f) income *= 0.7f;
+                fac.Credits += income;
             }
         }
 
-        void BuildShips()
+        void BuildQueue()
         {
             foreach (var kv in Yards)
             {
@@ -306,10 +380,17 @@ namespace GalacticRupture.Sim.Strategic
                     if (q[i].HoursLeft > 0f) continue;
                     var item = q[i];
                     q.RemoveAt(i);
+                    if (item.Owner != sys.Owner) continue;
+                    if (item.Def == null)
+                    {
+                        var army = NewArmy(item.Owner, sys.Id);
+                        Emit(CampaignEventKind.ArmyRaised, sys.Id, item.Owner, text: army.Name);
+                        continue;
+                    }
                     var fleet = HomeFleet(item.Owner, sys.Id) ?? NewFleet(item.Owner, sys.Id, $"{sys.Name} Squadron");
                     var ship = NewShip(item.Owner, item.Def);
                     fleet.Ships.Add(ship);
-                    Events.Add(new CampaignEvent { Kind = CampaignEventKind.ShipBuilt, System = sys.Id, Fleet = fleet.Id, Faction = item.Owner, Text = ship.Name });
+                    Emit(CampaignEventKind.ShipBuilt, sys.Id, item.Owner, fleet: fleet.Id, text: ship.Name);
                 }
             }
         }
@@ -326,7 +407,8 @@ namespace GalacticRupture.Sim.Strategic
             Vector3 p = FleetPosition(f);
             float range = Factions[f.Owner].SupplyRange;
             foreach (var s in Galaxy.Systems)
-                if (s.Owner == f.Owner && Vector3.Distance(s.Position, p) <= range) return true;
+                if ((s.Owner == f.Owner || (s.Owner >= 0 && Stance(s.Owner, f.Owner) == DiplomaticStance.Alliance))
+                    && Vector3.Distance(s.Position, p) <= range) return true;
             return false;
         }
 
@@ -363,130 +445,28 @@ namespace GalacticRupture.Sim.Strategic
             }
         }
 
-        // An enemy fleet sitting in a system with no defenders takes it over time.
-        void Sieges()
-        {
-            foreach (var s in Galaxy.Systems)
-            {
-                int besieger = -1;
-                bool defended = false;
-                foreach (var f in Fleets)
-                {
-                    if (!f.Alive || f.InTransit || f.System != s.Id) continue;
-                    if (f.Owner == s.Owner) defended = true;
-                    else besieger = f.Owner;
-                }
-                if (besieger < 0 || defended)
-                {
-                    s.Siege = System.MathF.Max(0f, s.Siege - 1f / 24f);
-                    if (s.Siege <= 0f) s.Besieger = -1;
-                    continue;
-                }
-                if (s.Besieger != besieger)
-                {
-                    s.Besieger = besieger;
-                    s.Siege = 0f;
-                    Events.Add(new CampaignEvent { Kind = CampaignEventKind.SiegeStarted, System = s.Id, Faction = besieger });
-                }
-                float hoursToTake = s.Owner < 0 ? 18f : s.Capital ? 96f : 36f + 12f * s.Tier;
-                s.Siege += 1f / hoursToTake;
-                if (s.Siege < 1f) continue;
-
-                int loser = s.Owner;
-                s.Owner = besieger;
-                s.Siege = 0f;
-                s.Besieger = -1;
-                s.Unrest = 72f;
-                // Half-built hulls in a captured yard are lost; captured systems degrade, never raze.
-                if (Yards.TryGetValue(s.Id, out var q)) q.Clear();
-                Events.Add(new CampaignEvent { Kind = CampaignEventKind.SystemCaptured, System = s.Id, Faction = besieger });
-                if (s.Capital && loser >= 0)
-                    State = loser == PlayerFaction ? CampaignState.Defeat : CampaignState.Victory;
-            }
-        }
-
-        void DetectEngagement()
-        {
-            foreach (var s in Galaxy.Systems)
-            {
-                bool player = false, enemy = false;
-                foreach (var f in Fleets)
-                {
-                    if (!f.Alive || f.InTransit || f.System != s.Id) continue;
-                    if (f.Owner == PlayerFaction) player = true;
-                    else enemy = true;
-                }
-                if (!player || !enemy) continue;
-
-                var e = new Engagement { System = s.Id };
-                double latest = -1;
-                foreach (var f in Fleets)
-                {
-                    if (!f.Alive || f.InTransit || f.System != s.Id) continue;
-                    e.Fleets.Add(f.Id);
-                    // Stop there: nobody slips past a battle.
-                    f.Route.Clear();
-                    if (f.ArrivedHour > latest)
-                    {
-                        latest = f.ArrivedHour;
-                        e.Attacker = f.Owner;
-                    }
-                }
-                Pending = e;
-                Events.Add(new CampaignEvent { Kind = CampaignEventKind.BattleStarted, System = s.Id, Faction = e.Attacker });
-                return;
-            }
-        }
-
-        // Called once a battle is over and written back into the fleets.
-        public void EndEngagement(int retreatingFaction)
-        {
-            var e = Pending;
-            if (e == null) return;
-            Fleets.RemoveAll(f => !f.Alive);
-            if (retreatingFaction >= 0)
-            {
-                foreach (int id in e.Fleets)
-                {
-                    var f = FleetById(id);
-                    if (f == null || f.Owner != retreatingFaction) continue;
-                    int to = RetreatTarget(f);
-                    if (to >= 0)
-                    {
-                        f.Next = to;
-                        f.Progress = 0f;
-                        f.Route.Clear();
-                    }
-                }
-            }
-            Pending = null;
-            Events.Add(new CampaignEvent { Kind = CampaignEventKind.BattleResolved, System = e.System, Faction = retreatingFaction });
-        }
-
-        // Back along the lanes to the nearest friendly system, or any neighbour.
-        int RetreatTarget(Fleet f)
-        {
-            int best = -1;
-            float bestLen = float.MaxValue;
-            foreach (var l in Galaxy.LanesFrom(f.System))
-            {
-                int n = l.Other(f.System);
-                float score = l.Length + (Galaxy.Systems[n].Owner == f.Owner ? 0f : 100f);
-                if (score < bestLen)
-                {
-                    bestLen = score;
-                    best = n;
-                }
-            }
-            return best;
-        }
-
         public float Strength(int faction, int system)
         {
             float s = 0f;
             foreach (var f in Fleets)
                 if (f.Alive && f.Owner == faction && !f.InTransit && f.System == system) s += f.Strength;
             return s;
+        }
+
+        void CheckEnd()
+        {
+            foreach (var fac in Factions)
+            {
+                if (fac.Eliminated) continue;
+                bool any = false;
+                foreach (var s in Galaxy.Systems) if (s.Owner == fac.Id) { any = true; break; }
+                if (any) continue;
+                fac.Eliminated = true;
+                Emit(CampaignEventKind.FactionEliminated, faction: fac.Id);
+            }
+            var player = Factions[PlayerFaction];
+            if (Galaxy.Systems[player.Capital].Owner != PlayerFaction) State = CampaignState.Defeat;
+            else if (Galaxy.Systems[Factions[EnemyFaction].Capital].Owner == PlayerFaction) State = CampaignState.Victory;
         }
     }
 }

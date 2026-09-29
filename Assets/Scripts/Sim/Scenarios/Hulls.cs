@@ -49,8 +49,9 @@ namespace GalacticRupture.Sim
         public static readonly HullDef Destroyer = BuildDestroyer();
         public static readonly HullDef Frigate = BuildFrigate();
         public static readonly HullDef Corvette = BuildCorvette();
+        public static readonly HullDef Transport = BuildTransport();
 
-        public static readonly HullDef[] All = { Battleship, Destroyer, Frigate, Corvette };
+        public static readonly HullDef[] All = { Battleship, Destroyer, Frigate, Corvette, Transport };
 
         public static HullDef ById(string id)
         {
@@ -138,6 +139,22 @@ namespace GalacticRupture.Sim
                 HullHp = 420f, ShieldHp = 220f, ShieldRegen = 12f, ShieldRegenDelay = 5f,
             };
             h.Hardpoints.Add(Hp(CorvetteGun, 0f, 3.5f, 8f, 0f, 70f));
+            return h;
+        }
+
+        // A troop carrier: slow, well shielded, point defence only. Carries one army.
+        static HullDef BuildTransport()
+        {
+            var h = new HullDef
+            {
+                Id = "transport", Class = HullClass.Transport,
+                Cost = 110, BuildDays = 3f, LyPerDay = 5f, TroopCapacity = 1,
+                HalfLength = 55f, Radius = 13f,
+                MaxSpeed = 45f, Acceleration = 5f, TurnRateDeg = 7f, ClimbRate = 8f,
+                HullHp = 2800f, ShieldHp = 1100f, ShieldRegen = 35f, ShieldRegenDelay = 6f,
+            };
+            h.Hardpoints.Add(Hp(PointDefence, 0f, 9f, 34f, 0f, 150f));
+            h.Hardpoints.Add(Hp(PointDefence, 0f, 9f, -30f, 180f, 150f));
             return h;
         }
     }
