@@ -1,0 +1,24 @@
+{
+    "name": "GalacticRupture.Game",
+    "rootNamespace": "GalacticRupture.Game",
+    "references": [
+        "GalacticRupture.Sim",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.Cinemachine",
+        "Unity.VisualEffectGraph.Runtime",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
