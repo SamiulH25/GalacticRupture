@@ -198,20 +198,33 @@ Stellaris' transport-raid tension and EAW' cinematic battles without building tw
 
 ### 4.1 The First Campaign Map (as built)
 
-`PROPOSED` — the rules the mini campaign (§9 step 5) runs on today, to confirm or change:
+`PROPOSED` — the rules the campaign runs on today, to confirm or change:
 
-- **12 systems, joined by FTL lanes.** Travel only along lanes, at the speed of the slowest
-  hull (battleship 3.5 ly/day, corvette 8). Lanes answer §10 Q7 for now.
-- **Tiers 1–3.** Income 22 / 50 / 110 credits a day; tier 2+ has a shipyard, a capital yard
-  builds two hulls at once.
-- **Supply range 14 ly** from any owned system. Out of supply, nothing repairs (degrade, never kill).
+- **16 systems, joined by FTL lanes; four powers.** The Continuance (player) and the Remnant are
+  at war; two minors, the Serac Compact and the Ilium Directorate, start at peace with everyone.
+  Travel only along lanes, at the speed of the slowest hull. Fleets can turn back mid-lane.
+- **Tiers 1–3.** Income 22 / 50 / 110 credits and 0.5 / 1 / 3 influence a day; tier 2+ has a
+  shipyard, a capital yard builds two hulls at once.
+- **Supply range 14 ly** from any owned or allied system. Out of supply, nothing repairs.
 - **Repair at friendly yards:** hull back over days, lost turrets replaced one at a time.
-- **Capture by presence:** an undefended system falls after 18 h (unclaimed) to 96 h (capital),
-  then sits in unrest for 3 days with no income and no building. Half-built hulls are lost.
-- **Battles stop the clock.** The player takes command or leaves it to the fleet; both run the
-  same tactical sim with the fleets' real damage, and the damage stays (§2.2, §3). The loser,
-  or whoever withdraws, falls back a system.
-- **Win** by taking the enemy capital; **lose** by losing your own.
+- **Fog of war:** systems see 7 ly, fleets 5 ly; allies share. Everything else is last known,
+  with its age. Everyone starts with the charts (who held what), not with fleet positions.
+- **Armies take systems, not fleets** (§6). Armies (named commanders, four traits) are raised at
+  yards and carried by transports, one each. Landing is a choice with a forecast; the ground
+  war runs hour by hour against garrisons and militia, fortified at capitals. Troops die with
+  their transport. A captured system sits in unrest for 3 days; half-built hulls are lost.
+- **Transit is a combat space** (§4): hostile fleets meeting on a lane fight there; fleets
+  passing through a contested system are caught.
+- **Battles stop the clock** for the player: take command or leave it to the fleet — the same
+  tactical sim either way, with real damage carried out (§2.2, §3). Battles between AI powers
+  resolve unattended through the same sim. The loser, or whoever withdraws, falls back.
+- **Diplomacy** (§2.3): war, peace, non-aggression, alliance. Trust moves with shared enemies,
+  common threats, border friction and aggression; breaking a treaty costs trust with everyone.
+  Allies are drawn into each other's wars. Treaties cost influence; AI powers make offers.
+- **The council** sits every 20 days: censure of the aggressor (an embargo), a general
+  ceasefire, recognition of conquests, or an embargo a member tabled with influence. Seats are
+  systems held. It stops the clock for the player's vote.
+- **Win** by taking Veyl; **lose** by losing Aurel.
 
 ---
 
@@ -546,3 +559,5 @@ unity status / unity command ...                                           # dri
   URP (engine-free stack dropped, lock-in principle restated as "the rules don't live in the
   engine"), added the visual bar (§8.9) and build order (§9).
 - **2026-09-29 — First campaign.** Recorded the rules the mini campaign runs on (§4.1).
+- **2026-09-29 — Campaign depth.** Four powers, fog of war, armies and landings, lane
+  interception, diplomacy and the council (§4.1).

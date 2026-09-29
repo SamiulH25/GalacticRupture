@@ -52,7 +52,7 @@ namespace GalacticRupture.Game
             r.sharedMaterials = mats;
         }
 
-        [Header("Hull (per side)")]
+        [Header("Hull (per faction: Continuance, Remnant, Serac Compact, Ilium Directorate)")]
         public Material[] HullPaint = new Material[2];
         public Material[] Trim = new Material[2];
         public Material[] EngineGlow = new Material[2];
@@ -75,6 +75,16 @@ namespace GalacticRupture.Game
         public Material Shield;
         public Material ShieldField;
         public Material Scorch;
+
+        [Header("Galaxy map")]
+        public Material MapPlate;
+        public Material Star;
+        public Material Lane;
+        public Material Planet;
+
+        [Header("Interface")]
+        public Font UiFont;
+        public Font UiFontBold;
     }
 
     // Submesh slots shared by every generated ship mesh.

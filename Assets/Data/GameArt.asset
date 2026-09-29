@@ -21,6 +21,8 @@ MonoBehaviour:
     Prefab: {fileID: 919132149155446097, guid: c11f11ca890491a51ae0b40b36bdeef7, type: 3}
   - Id: frigate
     Prefab: {fileID: 919132149155446097, guid: 39c545c510ac9dccdbde9042cdf153d2, type: 3}
+  - Id: transport
+    Prefab: {fileID: 919132149155446097, guid: 006f4ae262bf9d591a1ffba1627f64f5, type: 3}
   TurretModels:
   - Id: corvette_gun
     Prefab: {fileID: 919132149155446097, guid: 1d48e07625f990aca91a40ee6c06408e, type: 3}
@@ -33,15 +35,23 @@ MonoBehaviour:
   HullPaint:
   - {fileID: 2100000, guid: ba79c1c336ad4a127b8f9ffec7893654, type: 2}
   - {fileID: 2100000, guid: 7b2bbbac448d23c4d9168a4efbe9a4c2, type: 2}
+  - {fileID: 2100000, guid: a06cec7f31e34f01dbc9753f8a298022, type: 2}
+  - {fileID: 2100000, guid: 8efba423480dca9b4a78597ef302ce4c, type: 2}
   Trim:
   - {fileID: 2100000, guid: 190874a7044b31e629017eea5ceb7ab6, type: 2}
   - {fileID: 2100000, guid: 54d5e867d88016c03a60586af9ea00e9, type: 2}
+  - {fileID: 2100000, guid: 56c240b2893f1d883b6a1ff125f2d25c, type: 2}
+  - {fileID: 2100000, guid: c15d179a0d096f6f8b50688b20f89f14, type: 2}
   EngineGlow:
   - {fileID: 2100000, guid: 9864d84431d58188d86e86dbc5f825b7, type: 2}
   - {fileID: 2100000, guid: 79203153ba0353aeab4e72d9d44690ef, type: 2}
+  - {fileID: 2100000, guid: 84057417a0a39ed4bae400afa703d41a, type: 2}
+  - {fileID: 2100000, guid: e02b6c1a59f6f0784873cb6ae5656b9d, type: 2}
   Plume:
   - {fileID: 2100000, guid: 59213e9dac4d2158ca950e19d1dea3dc, type: 2}
   - {fileID: 2100000, guid: e6ce81a4fb367c2e9be67bfc3857b7a2, type: 2}
+  - {fileID: 2100000, guid: d35b24e8d90890644b2b4af4a67c294a, type: 2}
+  - {fileID: 2100000, guid: 1b269cb15bcac251c8bbf8f8028a583b, type: 2}
   DarkMetal: {fileID: 2100000, guid: e2648402cb7cbe89f902c7d911f14aa8, type: 2}
   Windows: {fileID: 2100000, guid: 4686a883d9204d0f997a4d6d229f29b8, type: 2}
   Heat: {fileID: 2100000, guid: 9b59f17679653b83e8576fefd1c4a878, type: 2}
@@ -56,3 +66,9 @@ MonoBehaviour:
   Shield: {fileID: 2100000, guid: b5801c4221a8e400fb0d01b7ad75dab8, type: 2}
   ShieldField: {fileID: 2100000, guid: 2e2aa95191e603eaea8dbfdb30477696, type: 2}
   Scorch: {fileID: 2100000, guid: 16f3f428e97b4380285c828980770a90, type: 2}
+  MapPlate: {fileID: 2100000, guid: f3b16996f81100d958e3e7efa5a72d70, type: 2}
+  Star: {fileID: 2100000, guid: ecc969930a6d2bf9db96d3508b40c0ce, type: 2}
+  Lane: {fileID: 2100000, guid: dc01c4637624d291d8cef230728c75a5, type: 2}
+  Planet: {fileID: 2100000, guid: 43086d3da1c4ed241ab85120bd622528, type: 2}
+  UiFont: {fileID: 12800000, guid: 63a10952d41297276ba29fc3e1272a6e, type: 3}
+  UiFontBold: {fileID: 12800000, guid: 5847f708841c4b1ffb33357d926903e5, type: 3}

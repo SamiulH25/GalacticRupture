@@ -58,10 +58,12 @@ namespace GalacticRupture.Sim.Strategic
                     SeenHour = new double[n],
                     GarrisonSeen = new float[n],
                 };
+                // Everyone starts with the charts: who held what when the war began. Fleets are unknown.
                 for (int s = 0; s < n; s++)
                 {
                     i.OwnerSeen[s] = Galaxy.Systems[s].Owner;
-                    i.SeenHour[s] = -1;
+                    i.SeenHour[s] = 0;
+                    i.GarrisonSeen[s] = MaxMilitia(Galaxy.Systems[s]);
                 }
                 Intel.Add(i);
             }

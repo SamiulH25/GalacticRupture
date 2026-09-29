@@ -144,7 +144,7 @@ namespace GalacticRupture.Sim.Strategic
                         best = s.Id;
                     }
                 }
-                if (best >= 0 && (c.CountIn(f) == 0 || bestLen <= 2)) c.MoveFleet(f.Id, best);
+                if (best >= 0 && c.CountIn(f) == 0) c.MoveFleet(f.Id, best);
             }
         }
 

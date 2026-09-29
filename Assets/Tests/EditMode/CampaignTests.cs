@@ -222,14 +222,15 @@ namespace GalacticRupture.Tests
         [Test]
         public void TheCampaignMovesWithoutThePlayer()
         {
+            // The player does nothing: the other powers build, expand and fight on their own.
             var c = Maps.Rupture(7);
             int before = 0;
-            foreach (var s in c.Galaxy.Systems) if (s.Owner == Campaign.EnemyFaction) before++;
+            foreach (var s in c.Galaxy.Systems) if (s.Owner > Campaign.PlayerFaction) before++;
             RunHours(c, 24 * 40);
             int after = 0;
-            foreach (var s in c.Galaxy.Systems) if (s.Owner == Campaign.EnemyFaction) after++;
-            TestContext.WriteLine($"day {c.Hours / 24:F0}: enemy systems {before} -> {after}, state {c.State}");
-            Assert.Greater(after, before, "the enemy expands");
+            foreach (var s in c.Galaxy.Systems) if (s.Owner > Campaign.PlayerFaction) after++;
+            TestContext.WriteLine($"day {c.Hours / 24:F0}: AI-held systems {before} -> {after}, state {c.State}");
+            Assert.Greater(after, before, "the AI powers expand");
         }
 
         [Test]

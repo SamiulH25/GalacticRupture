@@ -10,6 +10,7 @@ if [[ "${2:-}" != "--no-build" ]]; then
     -executeMethod GalacticRupture.EditorTools.PlayerBuild.BuildAllAndLinux -logFile "$out/build.log" >/dev/null 2>&1 || {
     grep -E 'error CS|\[build\]|Shader error' "$out/build.log" | sort -u | head -20; exit 1; }
   grep -E '\[build\]' "$out/build.log" || true
+  grep -E 'Shader error' "$out/build.log" | sort -u | sed 's/^/shader errors: /' || true
 fi
 rm -f "$out"/rts_*.png
 timeout 300 ./Builds/Linux/GalacticRupture.x86_64 -screen-width 1920 -screen-height 1080 -screen-fullscreen 1 \

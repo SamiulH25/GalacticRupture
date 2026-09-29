@@ -7,7 +7,8 @@ Shader "GR/Additive"
         _MainTex ("Texture", 2D) = "white" {}
         [HDR] _Color ("Colour", Color) = (1, 1, 1, 1)
         _Intensity ("Intensity", Float) = 1
-        [Enum(Texture, 0, Tracer, 1)] _Mode ("Mode", Float) = 0
+        [Enum(Texture, 0, Tracer, 1, Flow, 2)] _Mode ("Mode", Float) = 0
+        _FlowSpeed ("Flow speed", Float) = 0.6
         _Softness ("Tracer core sharpness", Float) = 3
     }
 
@@ -36,6 +37,7 @@ Shader "GR/Additive"
                 float _Intensity;
                 float _Mode;
                 float _Softness;
+                float _FlowSpeed;
             CBUFFER_END
 
             struct Attributes
@@ -66,7 +68,16 @@ Shader "GR/Additive"
             half4 frag(Varyings i) : SV_Target
             {
                 float a;
-                if (_Mode > 0.5)
+                if (_Mode > 1.5)
+                {
+                    // Lanes: a soft core with pulses flowing along (LineRenderer in Tile mode: u in widths).
+                    float across = 1.0 - abs(i.uv.y * 2.0 - 1.0);
+                    float core = pow(across, 1.5);
+                    float pulse = frac(i.uv.x * 0.05 - _Time.y * _FlowSpeed);
+                    float dash = smoothstep(0.0, 0.15, pulse) * (1.0 - smoothstep(0.35, 0.6, pulse));
+                    a = core * (0.35 + 0.9 * dash);
+                }
+                else if (_Mode > 0.5)
                 {
                     float across = 1.0 - abs(i.uv.x * 2.0 - 1.0);
                     float core = pow(across, _Softness);

@@ -29,6 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _FlowSpeed: 0.6
     - _Intensity: 5
     - _Mode: 0
     - _Softness: 3

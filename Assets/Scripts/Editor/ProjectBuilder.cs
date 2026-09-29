@@ -129,11 +129,15 @@ namespace GalacticRupture.EditorTools
             {
                 Lit("Hull_Continuance", new Color(0.27f, 0.30f, 0.35f), 0.12f, 0.5f, tex.Panels),
                 Lit("Hull_Remnant", new Color(0.38f, 0.06f, 0.07f), 0.12f, 0.5f, tex.Panels),
+                Lit("Hull_Serac", new Color(0.14f, 0.30f, 0.27f), 0.12f, 0.5f, tex.Panels),
+                Lit("Hull_Ilium", new Color(0.42f, 0.31f, 0.16f), 0.12f, 0.5f, tex.Panels),
             };
             art.Trim = new[]
             {
                 Lit("Trim_Continuance", new Color(0.86f, 0.64f, 0.28f), 0.9f, 0.65f),
                 Lit("Trim_Remnant", new Color(0.72f, 0.68f, 0.58f), 0.05f, 0.35f),
+                Lit("Trim_Serac", new Color(0.82f, 0.80f, 0.70f), 0.05f, 0.4f),
+                Lit("Trim_Ilium", new Color(0.33f, 0.22f, 0.13f), 0.8f, 0.5f),
             };
             art.DarkMetal = Lit("DarkMetal", new Color(0.12f, 0.125f, 0.135f), 0.35f, 0.45f, tex.Panels, 0.4f);
             art.Windows = Emissive("Windows", Color.black, new Color(1f, 0.72f, 0.42f) * 2.2f);
@@ -141,6 +145,8 @@ namespace GalacticRupture.EditorTools
             {
                 Emissive("Engine_Continuance", Color.black, new Color(0.35f, 0.65f, 1f) * 5f),
                 Emissive("Engine_Remnant", Color.black, new Color(1f, 0.3f, 0.25f) * 5f),
+                Emissive("Engine_Serac", Color.black, new Color(0.3f, 1f, 0.75f) * 5f),
+                Emissive("Engine_Ilium", Color.black, new Color(1f, 0.7f, 0.3f) * 5f),
             };
             art.Heat = Emissive("Heat", Color.black, new Color(1f, 0.28f, 0.06f) * 1.6f);
             art.Wreck = Lit("Wreck", new Color(0.05f, 0.045f, 0.04f), 0.2f, 0.12f, tex.Panels, 1f);
@@ -149,6 +155,8 @@ namespace GalacticRupture.EditorTools
             {
                 Additive("Plume_Continuance", new Color(0.35f, 0.6f, 1f), 2.2f, true, softness: 1.4f),
                 Additive("Plume_Remnant", new Color(1f, 0.3f, 0.22f), 2.2f, true, softness: 1.4f),
+                Additive("Plume_Serac", new Color(0.3f, 1f, 0.7f), 2.2f, true, softness: 1.4f),
+                Additive("Plume_Ilium", new Color(1f, 0.65f, 0.25f), 2.2f, true, softness: 1.4f),
             };
             art.TracerBallistic = Additive("Tracer_Ballistic", new Color(1f, 0.6f, 0.28f), 14f, true, softness: 2.5f);
             art.TracerEnergy = Additive("Tracer_Energy", new Color(0.35f, 0.8f, 1f), 12f, true, softness: 2.5f);
@@ -162,6 +170,15 @@ namespace GalacticRupture.EditorTools
             art.Spark = Additive("Fx_Spark", Color.white, 7f, false, tex.Glow);
             art.Fire = Additive("Fx_Fire", Color.white, 2.2f, false, tex.Glow);
             art.Shield = Additive("Fx_Shield", Color.white, 3f, false, tex.Ring);
+
+            art.MapPlate = LoadOrCreate("Map_Plate", Shader.Find("GR/MapPlate"));
+            art.Star = LoadOrCreate("Map_Star", Shader.Find("GR/Star"));
+            art.Lane = Additive("Map_Lane", Color.white, 1.4f, false);
+            art.Lane.SetFloat("_Mode", 2f);
+            art.Planet = Lit("Map_Planet", new Color(0.5f, 0.5f, 0.5f), 0f, 0.25f);
+            art.Planet.enableInstancing = true;
+            art.UiFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Art/Fonts/Rajdhani-Medium.ttf");
+            art.UiFontBold = AssetDatabase.LoadAssetAtPath<Font>("Assets/Art/Fonts/Rajdhani-Bold.ttf");
 
             art.ShieldField = LoadOrCreate("Shield_Field", Shader.Find("GR/Shield"));
             art.Scorch = LoadOrCreate("Fx_Scorch", Shader.Find("GR/Scorch"));
@@ -316,6 +333,7 @@ namespace GalacticRupture.EditorTools
             campaignHud.Director = director;
             campaignHud.Map = map;
             campaignHud.Camera = cam;
+            campaignHud.Art = art;
             var campaignCapture = gameGo.AddComponent<CampaignCapture>();
             campaignCapture.Director = director;
             campaignCapture.Hud = campaignHud;

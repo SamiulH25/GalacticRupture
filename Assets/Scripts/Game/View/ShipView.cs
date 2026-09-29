@@ -55,6 +55,9 @@ namespace GalacticRupture.Game
         Vector3 _wreckDrift;
         float _wreckAge;
 
+        // Paint by faction; anything outside the four known powers borrows its side's colours.
+        static int FactionOf(Ship ship) => ship.Faction >= 0 && ship.Faction < 4 ? ship.Faction : ship.Side;
+
         public static ShipView Create(Ship ship, GameArt art, Transform parent)
         {
             var go = new GameObject($"{ship.Def.Id} #{ship.Id}");
@@ -77,7 +80,7 @@ namespace GalacticRupture.Game
                 var hull = Instantiate(hullPrefab, transform, false);
                 hull.name = "Hull";
                 _hull = hull.GetComponent<MeshRenderer>();
-                art.ApplyFaction(_hull, ship.Side);
+                art.ApplyFaction(_hull, FactionOf(ship));
                 foreach (var marker in Children(hull.transform, "Engine_"))
                 {
                     int r = marker.name.IndexOf("_r", System.StringComparison.Ordinal);
@@ -94,17 +97,17 @@ namespace GalacticRupture.Game
                 hullGo.transform.SetParent(transform, false);
                 hullGo.AddComponent<MeshFilter>().sharedMesh = model.Mesh;
                 _hull = hullGo.AddComponent<MeshRenderer>();
-                _hull.sharedMaterials = Slot.Materials(art, ship.Side);
+                _hull.sharedMaterials = Slot.Materials(art, FactionOf(ship));
                 engines.AddRange(model.Engines);
             }
 
             var hullMats = _hull.sharedMaterials;
             for (int i = 0; i < hullMats.Length; i++)
             {
-                if (hullMats[i] == art.HullPaint[ship.Side]) _paintIndex = i;
+                if (hullMats[i] == art.HullPaint[FactionOf(ship)]) _paintIndex = i;
                 if (hullMats[i] == art.Windows) _windowIndex = i;
             }
-            _paintColor = art.HullPaint[ship.Side].GetColor(BaseColorId);
+            _paintColor = art.HullPaint[FactionOf(ship)].GetColor(BaseColorId);
             _windowColor = art.Windows.GetColor(EmissionId);
             _block = new MaterialPropertyBlock();
             Shield = ShieldView.Create(transform, art.ShieldField, _hull.GetComponent<MeshFilter>().sharedMesh.bounds);
@@ -113,8 +116,8 @@ namespace GalacticRupture.Game
             {
                 var hp = mount.Hardpoint;
                 var mv = art.TurretModel(hp.Mount.Id) is GameObject tp
-                    ? ModelMount(tp, hp, ship.Side)
-                    : ProceduralMount(hp, ship.Side);
+                    ? ModelMount(tp, hp, FactionOf(ship))
+                    : ProceduralMount(hp, FactionOf(ship));
                 mv.Yaw.name = $"Mount {mount.Index}";
                 mv.Yaw.localPosition = hp.LocalPosition.ToUnity();
                 mv.Yaw.localRotation = Quaternion.Euler(0f, hp.BaseYawDeg, 0f);
@@ -138,7 +141,7 @@ namespace GalacticRupture.Game
                 p.localScale = new Vector3(e.Radius * 1.9f, e.Radius * 1.9f, e.Radius * 9f);
                 p.gameObject.AddComponent<MeshFilter>().sharedMesh = plumeMesh;
                 var r = p.gameObject.AddComponent<MeshRenderer>();
-                r.sharedMaterial = art.Plume[ship.Side];
+                r.sharedMaterial = art.Plume[FactionOf(ship)];
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 _plumes.Add(p);
             }

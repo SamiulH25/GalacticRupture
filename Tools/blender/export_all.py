@@ -21,11 +21,10 @@ def run(ships=None):
         k.export_fbx(path, [house])
         written.append(path)
     builders = {"battleship": battleship.build}
-    try:
-        import escorts
-        builders.update(escorts.BUILDERS)
-    except ImportError:
-        pass
+    import escorts
+    import transport
+    builders.update(escorts.BUILDERS)
+    builders["transport"] = transport.build
     x = 0.0
     for name, build in builders.items():
         if ships and name not in ships:
