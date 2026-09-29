@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f44f2a9b3853c7fe0879f290fb61d6b4, type: 3}
+  m_Name: GameArt
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.GameArt
+  HullPaint:
+  - {fileID: 2100000, guid: ba79c1c336ad4a127b8f9ffec7893654, type: 2}
+  - {fileID: 2100000, guid: 7b2bbbac448d23c4d9168a4efbe9a4c2, type: 2}
+  Trim:
+  - {fileID: 2100000, guid: 190874a7044b31e629017eea5ceb7ab6, type: 2}
+  - {fileID: 2100000, guid: 54d5e867d88016c03a60586af9ea00e9, type: 2}
+  EngineGlow:
+  - {fileID: 2100000, guid: 9864d84431d58188d86e86dbc5f825b7, type: 2}
+  - {fileID: 2100000, guid: 79203153ba0353aeab4e72d9d44690ef, type: 2}
+  Plume:
+  - {fileID: 2100000, guid: 59213e9dac4d2158ca950e19d1dea3dc, type: 2}
+  - {fileID: 2100000, guid: e6ce81a4fb367c2e9be67bfc3857b7a2, type: 2}
+  DarkMetal: {fileID: 2100000, guid: e2648402cb7cbe89f902c7d911f14aa8, type: 2}
+  Windows: {fileID: 2100000, guid: 4686a883d9204d0f997a4d6d229f29b8, type: 2}
+  Heat: {fileID: 2100000, guid: 9b59f17679653b83e8576fefd1c4a878, type: 2}
+  Wreck: {fileID: 2100000, guid: faa94bfdf5a1bb1a4948d91afe3dce77, type: 2}
+  TracerBallistic: {fileID: 2100000, guid: bb818d9728e748215b88646529eef2b2, type: 2}
+  TracerEnergy: {fileID: 2100000, guid: 47da0695bd1c8b441be38f21da0fdfcd, type: 2}
+  TracerPointDefence: {fileID: 2100000, guid: 92d759332a390f5adb48795e54078636, type: 2}
+  TracerEnemy: {fileID: 2100000, guid: 50f93217f146c019a84287cacdcc0392, type: 2}
+  Flash: {fileID: 2100000, guid: 31a93c41a1e8ab99b8d8b6ad25bcf352, type: 2}
+  Spark: {fileID: 2100000, guid: 14d7f7ed48725ed2e91b39cb0fc292b9, type: 2}
+  Fire: {fileID: 2100000, guid: 66e1414b54936221e819a7c8b83c7c5e, type: 2}
+  Shield: {fileID: 2100000, guid: b5801c4221a8e400fb0d01b7ad75dab8, type: 2}

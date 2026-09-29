@@ -12,7 +12,7 @@ namespace GalacticRupture.Sim
             YawRateDeg = 14f, PitchRateDeg = 10f, PitchMinDeg = -4f, PitchMaxDeg = 40f,
             Range = 4800f, Reload = 5.5f, Barrels = 2, BarrelStagger = 0.18f,
             ProjectileSpeed = 1500f, Damage = 150f, SpreadDeg = 0.2f, AimToleranceDeg = 1.2f,
-            MuzzleLength = 17f, PivotHeight = 5f, Hp = 600f,
+            MuzzleLength = 17f, PivotHeight = 3.8f, Hp = 600f,
         };
 
         public static readonly MountDef Secondary = new MountDef
@@ -21,7 +21,7 @@ namespace GalacticRupture.Sim
             YawRateDeg = 34f, PitchRateDeg = 28f, PitchMinDeg = -6f, PitchMaxDeg = 70f,
             Range = 3000f, Reload = 1.8f, Barrels = 2, BarrelStagger = 0.1f,
             ProjectileSpeed = 1700f, Damage = 38f, SpreadDeg = 0.35f, AimToleranceDeg = 2f,
-            MuzzleLength = 9f, PivotHeight = 3f, Hp = 220f,
+            MuzzleLength = 9f, PivotHeight = 2.2f, Hp = 220f,
         };
 
         public static readonly MountDef PointDefence = new MountDef
