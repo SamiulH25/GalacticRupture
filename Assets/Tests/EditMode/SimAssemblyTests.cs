@@ -8,7 +8,7 @@ namespace GalacticRupture.Tests
         [Test]
         public void SimAssemblyHasNoEngineReference()
         {
-            foreach (var reference in typeof(SimInfo).Assembly.GetReferencedAssemblies())
+            foreach (var reference in typeof(World).Assembly.GetReferencedAssemblies())
                 Assert.That(reference.Name, Does.Not.StartWith("UnityEngine"));
         }
     }
