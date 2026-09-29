@@ -21,12 +21,116 @@ We are keeping the galaxy map's tension and the combat's feel, and building 4x d
 around them.
 
 `LOCKED` — 4x depth in the overworld, with EAW's galactic conquest constraints.
-`LOCKED` — Combat is the star. Everything else serves it.
+~~`LOCKED` — Combat is the star. Everything else serves it.~~ Superseded 2026-09-29 by §1.1:
+strategy is where the time goes; combat is the reward.
 `LOCKED` — Operatic space opera, original IP.
 `LOCKED` — Full 3D.
 `LOCKED` — Ground combat is **simulated**. Armies are transported through space for
 assaults, in the manner of Stellaris.
 `LOCKED` — Major and minor powers (2–3 majors as mirrors, 2–3 minors as pawns).
+
+### 1.1 Scope and Game Shape
+
+Decided 2026-09-29. Where this conflicts with older text below, this wins.
+
+`LOCKED` — **A long campaign.** One campaign is played over about two weeks, 1–2 hours a day
+(roughly 15–30 hours). Saves, a mid game and a late game are therefore required, not extras.
+
+`LOCKED` — **Strategy is the activity; combat is the reward.** Most of the player's time goes
+into building the economy, designing and building fleets, preparing fronts and choosing whom
+to fight. A battle is the payoff for that preparation: where the plan is tested and the fleet
+you built either holds or doesn't.
+
+`LOCKED` — **The player chooses, per engagement, whether to command it** in the RTS or leave
+it to the fleet. Both go through the same tactical sim (§3).
+
+`LOCKED` — **Full vision, rough first.** The first complete version has every layer (economy,
+logistics, diplomacy/council, tech, designer, armies, RTS combat) working together at rough
+quality, then each is deepened. No layer is cut to polish another.
+
+`LOCKED` — **The galaxy is 60–120 systems**, shared by **4–5 major powers and 8–12 minors**.
+All majors are playable (they are mirrors; §5.4 gives their differences).
+
+`LOCKED` — **The campaign has a three-act arc:**
+1. **Rupture** — the old order has just broken. Powers reclaim derelict old-empire systems,
+   court or absorb minors, and position against each other.
+2. **Blocs** — alliances harden into blocs, the council fractures, fronts form between them.
+3. **Total war** — bloc against bloc for the old capital and the endgame thresholds (§2.3).
+
+`LOCKED` — **Expansion is reclamation, not colonisation.** There is no empty space to settle.
+Much of the galaxy is derelict old-empire territory (dead fabs, drifting stations, cut-off
+holdouts); powers send expeditions to reclaim and restore it. When the ruins run out, growth
+comes only from diplomacy or conquest, which pushes the game from act 1 into act 2.
+
+`LOCKED` — **Four strategy layers, all core:** economy & planets, logistics & fronts,
+diplomacy & council, tech & doctrine.
+
+`LOCKED` — **System economy is specialisation, not pops.** Each system has population,
+stability and a small number of building slots (fab, yard, refinery, garrison, research…).
+Deep enough to plan with, light enough to manage thirty of them.
+
+`LOCKED` — **Full hardpoint ship designer.** The player fills each hull's hardpoints
+(§5.2); the configuration is the faction's identity.
+
+`LOCKED` — **Governors.** The player can appoint a governor to a system. Governors have stats,
+and a governor auto-builds the system. In return they take a cut of what the system produces
+(`PROPOSED` about 5%, possibly varying with the governor's stats). This is the main tool for
+managing scale: hand off the systems you don't want to micromanage, and pay for it.
+
+`LOCKED` — **Session rhythm.** A 1–2 hour sitting should give a couple of battles and at least
+3–4 systems gained (reclaimed, absorbed or taken). A campaign is a sequence of these sittings.
+
+`LOCKED` — **What stops the clock:** battles and council votes. Nothing else does; everything
+else notifies.
+
+`LOCKED` — **Landings are automatic.** A fleet carrying an army that is over an enemy planet
+lands it without asking. The decision is made earlier, when you send the fleet. Armies can
+also be stationed on your own planets as a defensive garrison.
+
+### 1.2 Assumed Defaults
+
+Filled in by Claude on 2026-09-29 when the user said "just assume the rest". All `PROPOSED`:
+they stand until changed, and none needs sign-off before building.
+
+- **Map: about 100 systems** (the top of §1.1's range). At 3–4 systems a sitting over ~14
+  sittings the player gains 40–55, so the map must be big enough for that, and systems are
+  expected to change hands back and forth in acts 2–3. Generated from a seed, not hand-placed.
+- **Travel: FTL lanes with real travel time**, as built. Fleets move only along lanes, and a
+  lane is a combat space where fleets can be intercepted (§4). No gates, no free travel
+  through open space. Lanes are what make choke points, fronts and supply lines readable.
+- **Governors:**
+  - Three stats, 1–5: **Administration** (build speed and cost), **Industry** (bonus to the
+    system's output), **Loyalty** (stability; a disloyal governor skims more and can defect
+    with the system if the power is losing). Plus one trait.
+  - Cut is 5% of the system's output, from 3% for a loyal governor to 8% for a greedy one.
+  - The player sets a **focus** (industry, military, research, balanced); the governor
+    decides what to build within it.
+  - They come from a small candidate pool per power that refreshes over time. Reclaimed
+    systems sometimes offer a local notable, and retired army commanders can be appointed.
+- **Admirals, not front AIs.** A fleet can have an admiral with stats that apply when its
+  battles are left to the fleet. There is no automated front commander yet; positioning
+  fleets on fronts is the strategy the player came for.
+- **One tactical sim, several setups** (§10.1). Battles are the same RTS in different
+  situations: open lane (intercept/escort), a system with stations and defence platforms
+  (siege), and a system fight between fleets. The setup changes the map, not the rules.
+- **Gun mounts are bound to hardpoints, not hulls** (§10.2). A hardpoint has a size (S/M/L) and
+  a type (turret, spinal, missile, utility). Mount classes: point defence (anti-missile and
+  anti-small craft), line batteries (S/M/L), missile racks, spinal. The designer fills
+  hardpoints from these.
+- **Minors** are pawns. They never expand. A major absorbs one by holding enough trust and
+  paying influence over time, or conquers it. A minor aligned with a bloc lends its seats.
+- **Time:**
+  - The tactical sim runs at a fixed 30 ticks a second. The strategic sim ticks every in-game
+    hour.
+  - At normal speed a day takes about 20 s, so an hour of strategic play is about six in-game
+    months and a campaign is 6–8 in-game years.
+  - The council sits **every 60 days** instead of 20, so a sitting has a few votes rather than
+    a dozen clock stops.
+- **Two resolutions, confirmed as built** (§3, §10.6). A battle stops the strategic clock and
+  opens the tactical view on the same sim, attended or not. A seamless camera zoom from the
+  galaxy into the battle is deferred as presentation, not a rule change.
+- **The majors' identities** (names, ideologies, signature techs) are setting work for a
+  later session. The campaign's four existing powers stand in until then.
 
 ---
 
@@ -182,8 +286,11 @@ escort-intercept as three genuinely different games.
 
 ## 4. The Map
 
-`LOCKED` — Small node count. EAW's galaxy is ~10 systems and every one is adjacent to
-something that matters. It's a *board*, not a *space*. That's why it's tense in 20 minutes.
+~~`LOCKED` — Small node count. EAW's galaxy is ~10 systems and every one is adjacent to
+something that matters. It's a *board*, not a *space*. That's why it's tense in 20 minutes.~~
+Superseded 2026-09-29 by §1.1: 60–120 systems for a long campaign. The goal that survives:
+every system is named and matters, and the tension comes from fronts and supply rather than a
+small board.
 
 **The tension:** 4x depth and EAW's scale pull in opposite directions. Depth comes from
 systems interlocking; EAW's scale comes from density. A 200-system galaxy becomes admin.
@@ -210,7 +317,7 @@ Stellaris' transport-raid tension and EAW' cinematic battles without building tw
 - **Fog of war:** systems see 7 ly, fleets 5 ly; allies share. Everything else is last known,
   with its age. Everyone starts with the charts (who held what), not with fleet positions.
 - **Armies take systems, not fleets** (§6). Armies (named commanders, four traits) are raised at
-  yards and carried by transports, one each. Landing is a choice with a forecast; the ground
+  yards and carried by transports, one each. Landing is automatic when the fleet is over the target (§1.1); the ground
   war runs hour by hour against garrisons and militia, fortified at capitals. Troops die with
   their transport. A captured system sits in unrest for 3 days; half-built hulls are lost.
 - **Transit is a combat space** (§4): hostile fleets meeting on a lane fight there; fleets
@@ -221,7 +328,7 @@ Stellaris' transport-raid tension and EAW' cinematic battles without building tw
 - **Diplomacy** (§2.3): war, peace, non-aggression, alliance. Trust moves with shared enemies,
   common threats, border friction and aggression; breaking a treaty costs trust with everyone.
   Allies are drawn into each other's wars. Treaties cost influence; AI powers make offers.
-- **The council** sits every 20 days: censure of the aggressor (an embargo), a general
+- **The council** sits every 20 days (60 in the long campaign, §1.2): censure of the aggressor (an embargo), a general
   ceasefire, recognition of conquests, or an embargo a member tabled with influence. Seats are
   systems held. It stops the clock for the player's vote.
 - **Win** by taking Veyl; **lose** by losing Aurel.
@@ -332,7 +439,8 @@ Two rules to keep it from becoming sterile:
   and makes the galaxy fragile in a boring way.
 
 `PROPOSED` — The landing decision is the most tense moment in the game and it's pure space
-play: you have a fleet, an army, and a target. What goes in first, what screens the
+play: you have a fleet, an army, and a target. Since landings are automatic (§1.1), the
+decision is made when you *send* the fleet, so the forecast belongs on the move order. What goes in first, what screens the
 landing, what happens if the transport dies over the enemy.
 
 ---
@@ -536,16 +644,12 @@ unity status / unity command ...                                           # dri
 
 ## 10. Open Questions
 
-1. **One engagement type or several?** Fleet action, planetary siege, escort-intercept as
-   three different games, or one universal brawl?
-2. **Gun taxonomy** — how many mount classes, and bound to hulls or to hardpoints?
-3. **The three majors** — mirrors with one real ideological difference each, plus their
-   doctrine differences and default loadouts.
-4. **Minors** — do they fall out as the powers that picked a side?
-5. **Tick rates** at strategic and tactical resolution.
-6. **Does the two-resolution system get confirmed?** It is the structural spine and nothing
-   above is fully designed without it.
-7. **Map size and travel** — 12 systems or more, and FTL transit (§4) versus fixed gates.
+Items 1, 2 and 4–10 have assumed answers in §1.2. Still open:
+
+3. **The majors** — 4–5 of them: names, one real ideological difference each, tech-tree shape,
+   signature tech, default loadouts.
+11. **The endgame thresholds** (§2.3) — what they are, and what the old capital does in act 3.
+12. **Tech tree** — size, and how research is produced (a building slot, per §1.1).
 
 ---
 
@@ -561,3 +665,14 @@ unity status / unity command ...                                           # dri
 - **2026-09-29 — First campaign.** Recorded the rules the mini campaign runs on (§4.1).
 - **2026-09-29 — Campaign depth.** Four powers, fog of war, armies and landings, lane
   interception, diplomacy and the council (§4.1).
+- **2026-09-29 — Scope.** Added §1.1: a long campaign (~2 weeks of play), strategy as the
+  activity and combat as the reward, 60–120 systems, 4–5 playable majors and 8–12 minors,
+  a three-act arc (rupture → blocs → total war), reclamation instead of colonisation, system
+  specialisation, a full hardpoint designer. Superseded "combat is the star" (§1) and "small
+  node count" (§4).
+- **2026-09-29 — Scale and rhythm.** Governors with stats that auto-build a system for a cut
+  of its output; a sitting gives a couple of battles and 3–4 systems; only battles and council
+  votes stop the clock; landings are automatic and armies can garrison planets (§1.1).
+- **2026-09-29 — Assumed defaults.** Filled in the remaining open questions as §1.2 (map ~100,
+  lanes, governor stats and pool, admirals, one sim with several setups, hardpoint mounts,
+  minors, time scale, council every 60 days, two resolutions confirmed).
