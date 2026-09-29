@@ -126,7 +126,7 @@ namespace GalacticRupture.Game
 
         public void ShieldImpact(Vector3 pos, Vector3 normal, float scale)
         {
-            Emit(_shield, pos, Vector3.zero, scale * 14f, 0.35f, new Color(0.45f, 0.8f, 1f));
+            Emit(_shield, pos, Vector3.zero, scale * 7f, 0.3f, new Color(0.45f, 0.8f, 1f));
             Emit(_shield, pos, Vector3.zero, scale * 5f, 0.15f, Color.white);
             for (int i = 0; i < 4; i++)
             {
@@ -162,13 +162,13 @@ namespace GalacticRupture.Game
             var main = ps.main;
             main.loop = true;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.6f, 1.6f);
-            main.startSize = new ParticleSystem.MinMaxCurve(size * 0.6f, size * 1.4f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(size * 0.5f, size * 2f);
-            main.startColor = Color.white;
-            main.maxParticles = 200;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.9f);
+            main.startSize = new ParticleSystem.MinMaxCurve(size * 0.8f, size * 1.6f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(size * 0.2f, size * 0.9f);
+            main.startColor = new Color(1f, 1f, 1f, 0.7f);
+            main.maxParticles = 300;
             var emission = ps.emission;
-            emission.rateOverTime = 26f;
+            emission.rateOverTime = 70f;
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Hemisphere;
             shape.radius = size * 0.3f;

@@ -12,6 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f44f2a9b3853c7fe0879f290fb61d6b4, type: 3}
   m_Name: GameArt
   m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.GameArt
+  HullModels:
+  - Id: battleship
+    Prefab: {fileID: 919132149155446097, guid: bfe1f4e9fd5448f8786399de6cae0518, type: 3}
+  - Id: corvette
+    Prefab: {fileID: 919132149155446097, guid: 45e1a1e8c5abc239785c29c72a9b7a2f, type: 3}
+  - Id: destroyer
+    Prefab: {fileID: 919132149155446097, guid: c11f11ca890491a51ae0b40b36bdeef7, type: 3}
+  - Id: frigate
+    Prefab: {fileID: 919132149155446097, guid: 39c545c510ac9dccdbde9042cdf153d2, type: 3}
+  TurretModels:
+  - Id: corvette_gun
+    Prefab: {fileID: 919132149155446097, guid: 1d48e07625f990aca91a40ee6c06408e, type: 3}
+  - Id: main_battery
+    Prefab: {fileID: 919132149155446097, guid: b195f3bf12aba4d73a8cd86b4ac844d7, type: 3}
+  - Id: point_defence
+    Prefab: {fileID: 919132149155446097, guid: 695f2bc7393d10450a3c31c8aaf5b65d, type: 3}
+  - Id: secondary
+    Prefab: {fileID: 919132149155446097, guid: 4de1e9e3fdfc95467ba01467add9859f, type: 3}
   HullPaint:
   - {fileID: 2100000, guid: ba79c1c336ad4a127b8f9ffec7893654, type: 2}
   - {fileID: 2100000, guid: 7b2bbbac448d23c4d9168a4efbe9a4c2, type: 2}
@@ -36,3 +54,5 @@ MonoBehaviour:
   Spark: {fileID: 2100000, guid: 14d7f7ed48725ed2e91b39cb0fc292b9, type: 2}
   Fire: {fileID: 2100000, guid: 66e1414b54936221e819a7c8b83c7c5e, type: 2}
   Shield: {fileID: 2100000, guid: b5801c4221a8e400fb0d01b7ad75dab8, type: 2}
+  ShieldField: {fileID: 2100000, guid: 2e2aa95191e603eaea8dbfdb30477696, type: 2}
+  Scorch: {fileID: 2100000, guid: 16f3f428e97b4380285c828980770a90, type: 2}

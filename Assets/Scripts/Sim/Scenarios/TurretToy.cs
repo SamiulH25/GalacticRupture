@@ -72,26 +72,26 @@ namespace GalacticRupture.Sim
             float yaw = bearing + SimMath.Pi;
             Vector3 right = new Vector3(dir.Z, 0f, -dir.X);
 
-            int corvettes = 5 + System.Math.Min(Wave, 5);
+            int corvettes = 8 + System.Math.Min(Wave * 2, 10);
             for (int i = 0; i < corvettes; i++)
             {
                 Vector3 p = centre + right * ((i - corvettes * 0.5f) * 120f) + dir * rng.Range(-150f, 150f);
                 p.Y = rng.Range(-300f, 300f);
                 var c = world.Spawn(Hulls.Corvette, EnemySide, p, yaw);
                 c.Order = ShipOrder.AttackRun(PickTarget(world, flagship, ref rng));
-                c.Order.PassDistance = rng.Range(180f, 420f);
-                c.Order.RunOutDistance = rng.Range(1800f, 2800f);
+                c.Order.PassDistance = rng.Range(120f, 320f);
+                c.Order.RunOutDistance = rng.Range(1200f, 2000f);
             }
 
-            int frigates = 1 + System.Math.Min(Wave / 2, 3);
+            int frigates = 2 + System.Math.Min(Wave / 2, 4);
             for (int i = 0; i < frigates; i++)
             {
                 Vector3 p = centre - dir * 600f + right * ((i - frigates * 0.5f) * 300f);
                 p.Y = rng.Range(-150f, 150f);
                 var f = world.Spawn(Hulls.Frigate, EnemySide, p, yaw);
                 f.Order = ShipOrder.AttackRun(flagship.Id);
-                f.Order.PassDistance = rng.Range(500f, 800f);
-                f.Order.RunOutDistance = 2600f;
+                f.Order.PassDistance = rng.Range(350f, 650f);
+                f.Order.RunOutDistance = 2000f;
             }
         }
 

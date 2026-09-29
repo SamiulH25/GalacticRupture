@@ -219,6 +219,8 @@ namespace GalacticRupture.Sim
                 ship.Shield -= absorbed;
                 hullDamage = bleed + (toShield - absorbed);
                 Events.Add(new SimEvent { Kind = SimEventKind.ShieldHit, Ship = ship.Id, Position = point, Value = absorbed });
+                if (ship.Shield <= 0f)
+                    Events.Add(new SimEvent { Kind = SimEventKind.ShieldsDown, Ship = ship.Id, Position = point });
             }
 
             if (hullDamage <= 0f) return;

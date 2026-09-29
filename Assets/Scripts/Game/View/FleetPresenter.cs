@@ -15,6 +15,9 @@ namespace GalacticRupture.Game
 
         public IReadOnlyDictionary<int, ShipView> Views => _views;
 
+        // The most recent ship to take a shield hit: where the action is, for cameras.
+        public int LastShieldHit { get; private set; } = -1;
+
         public void Init(GameArt art, Fx fx, World world)
         {
             _art = art;
@@ -55,9 +58,23 @@ namespace GalacticRupture.Game
 
                 case SimEventKind.ShieldHit:
                 {
-                    Vector3 p = e.Position.ToUnity();
-                    Vector3 n = (p - ship.Position.ToUnity()).normalized;
-                    _fx.ShieldImpact(p + n * ship.Def.Radius * 0.4f, n, Mathf.Clamp(e.Value / 40f, 0.4f, 2.5f));
+                    var view = ViewOf(e.Ship);
+                    if (view == null) break;
+                    Vector3 p = view.Shield.SurfacePoint(e.Position.ToUnity());
+                    Vector3 n = (p - view.transform.position).normalized;
+                    view.Shield.Hit(p);
+                    LastShieldHit = e.Ship;
+                    _fx.ShieldImpact(p, n, Mathf.Clamp(e.Value / 60f, 0.3f, 1.6f));
+                    break;
+                }
+
+                case SimEventKind.ShieldsDown:
+                {
+                    var view = ViewOf(e.Ship);
+                    if (view == null) break;
+                    Vector3 p = view.Shield.SurfacePoint(e.Position.ToUnity());
+                    view.Shield.Collapse(p);
+                    _fx.ShieldImpact(p, (p - view.transform.position).normalized, 3f);
                     break;
                 }
 
@@ -67,6 +84,8 @@ namespace GalacticRupture.Game
                     Vector3 n = (p - ship.Position.ToUnity()).normalized;
                     _fx.HullImpact(p, n, Mathf.Clamp(e.Value / 50f, 0.4f, 3f));
                     var view = ViewOf(e.Ship);
+                    if (view != null && Random.value < 0.35f + e.Value / 200f)
+                        view.AddScorch(p, KeelNormal(ship, p), Mathf.Clamp(3f + e.Value / 15f, 3f, 16f) * (ship.Def.Radius > 15f ? 1f : 0.5f));
                     float damaged = 1f - ship.Hull / ship.Def.HullHp;
                     if (view != null && damaged > 0.35f && Random.value < 0.08f + e.Value / 1500f)
                         view.Ignite(p, Mathf.Clamp(ship.Def.Radius * 0.35f, 1.5f, 9f), 2 + (int)(damaged * 8f));
@@ -92,6 +111,17 @@ namespace GalacticRupture.Game
                     break;
                 }
             }
+        }
+
+        // Outward normal at a hull point, taken from the nearest point on the keel.
+        static Vector3 KeelNormal(Ship ship, Vector3 p)
+        {
+            ship.KeelSegment(out var bow, out var stern);
+            Vector3 a = stern.ToUnity(), b = bow.ToUnity();
+            Vector3 ab = b - a;
+            float t = Mathf.Clamp01(Vector3.Dot(p - a, ab) / ab.sqrMagnitude);
+            Vector3 n = p - (a + ab * t);
+            return n.sqrMagnitude > 1e-4f ? n.normalized : Vector3.up;
         }
 
         public void Sync(float alpha, float dt)

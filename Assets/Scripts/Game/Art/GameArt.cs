@@ -4,9 +4,54 @@ namespace GalacticRupture.Game
 {
     // Every material the runtime needs, created and saved by the editor builder so they ship
     // in the player. Index by side where a faction look applies.
+    [System.Serializable]
+    public struct ModelEntry
+    {
+        public string Id;
+        public GameObject Prefab;
+    }
+
     [CreateAssetMenu(menuName = "Galactic Rupture/Game Art")]
     public sealed class GameArt : ScriptableObject
     {
+        [Header("Models (Tools/blender), by hull and mount id")]
+        public ModelEntry[] HullModels = new ModelEntry[0];
+        public ModelEntry[] TurretModels = new ModelEntry[0];
+
+        public GameObject HullModel(string id) => Find(HullModels, id);
+        public GameObject TurretModel(string id) => Find(TurretModels, id);
+
+        static GameObject Find(ModelEntry[] entries, string id)
+        {
+            foreach (var e in entries)
+                if (e.Id == id) return e.Prefab;
+            return null;
+        }
+
+        // Blender material slots are named after these; anything else keeps its imported material.
+        public Material ForSlot(string slotName, int side) => slotName switch
+        {
+            "Paint" => HullPaint[side],
+            "Dark" => DarkMetal,
+            "Trim" => Trim[side],
+            "Windows" => Windows,
+            "Engine" => EngineGlow[side],
+            "Heat" => Heat,
+            _ => null,
+        };
+
+        public void ApplyFaction(Renderer r, int side)
+        {
+            var mats = r.sharedMaterials;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                if (mats[i] == null) continue;
+                var m = ForSlot(mats[i].name, side);
+                if (m != null) mats[i] = m;
+            }
+            r.sharedMaterials = mats;
+        }
+
         [Header("Hull (per side)")]
         public Material[] HullPaint = new Material[2];
         public Material[] Trim = new Material[2];
@@ -28,6 +73,8 @@ namespace GalacticRupture.Game
         public Material Spark;
         public Material Fire;
         public Material Shield;
+        public Material ShieldField;
+        public Material Scorch;
     }
 
     // Submesh slots shared by every generated ship mesh.

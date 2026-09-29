@@ -127,22 +127,22 @@ namespace GalacticRupture.EditorTools
 
             art.HullPaint = new[]
             {
-                Lit("Hull_Continuance", new Color(0.40f, 0.44f, 0.50f), 0.45f, 0.5f, tex.Panels),
-                Lit("Hull_Remnant", new Color(0.36f, 0.06f, 0.07f), 0.35f, 0.5f, tex.Panels),
+                Lit("Hull_Continuance", new Color(0.27f, 0.30f, 0.35f), 0.12f, 0.5f, tex.Panels),
+                Lit("Hull_Remnant", new Color(0.38f, 0.06f, 0.07f), 0.12f, 0.5f, tex.Panels),
             };
             art.Trim = new[]
             {
                 Lit("Trim_Continuance", new Color(0.86f, 0.64f, 0.28f), 0.9f, 0.65f),
-                Lit("Trim_Remnant", new Color(0.80f, 0.76f, 0.66f), 0.1f, 0.35f),
+                Lit("Trim_Remnant", new Color(0.72f, 0.68f, 0.58f), 0.05f, 0.35f),
             };
-            art.DarkMetal = Lit("DarkMetal", new Color(0.13f, 0.14f, 0.15f), 0.6f, 0.45f, tex.Panels, 0.4f);
-            art.Windows = Emissive("Windows", Color.black, new Color(1f, 0.8f, 0.55f) * 4f);
+            art.DarkMetal = Lit("DarkMetal", new Color(0.12f, 0.125f, 0.135f), 0.35f, 0.45f, tex.Panels, 0.4f);
+            art.Windows = Emissive("Windows", Color.black, new Color(1f, 0.72f, 0.42f) * 2.2f);
             art.EngineGlow = new[]
             {
-                Emissive("Engine_Continuance", Color.black, new Color(0.45f, 0.75f, 1f) * 14f),
-                Emissive("Engine_Remnant", Color.black, new Color(1f, 0.35f, 0.3f) * 14f),
+                Emissive("Engine_Continuance", Color.black, new Color(0.35f, 0.65f, 1f) * 5f),
+                Emissive("Engine_Remnant", Color.black, new Color(1f, 0.3f, 0.25f) * 5f),
             };
-            art.Heat = Emissive("Heat", Color.black, new Color(1f, 0.32f, 0.08f) * 2.5f);
+            art.Heat = Emissive("Heat", Color.black, new Color(1f, 0.28f, 0.06f) * 1.6f);
             art.Wreck = Lit("Wreck", new Color(0.05f, 0.045f, 0.04f), 0.2f, 0.12f, tex.Panels, 1f);
 
             art.Plume = new[]
@@ -155,13 +155,35 @@ namespace GalacticRupture.EditorTools
             art.TracerPointDefence = Additive("Tracer_PD", new Color(1f, 0.85f, 0.5f), 9f, true, softness: 2f);
             art.TracerEnemy = Additive("Tracer_Enemy", new Color(1f, 0.22f, 0.36f), 12f, true, softness: 2.5f);
 
+            art.HullModels = FindModels("hull_");
+            art.TurretModels = FindModels("turret_");
+
             art.Flash = Additive("Fx_Flash", Color.white, 5f, false, tex.Glow);
             art.Spark = Additive("Fx_Spark", Color.white, 7f, false, tex.Glow);
             art.Fire = Additive("Fx_Fire", Color.white, 2.2f, false, tex.Glow);
             art.Shield = Additive("Fx_Shield", Color.white, 3f, false, tex.Ring);
 
+            art.ShieldField = LoadOrCreate("Shield_Field", Shader.Find("GR/Shield"));
+            art.Scorch = LoadOrCreate("Fx_Scorch", Shader.Find("GR/Scorch"));
+            art.Scorch.SetTexture("_MainTex", tex.Glow);
+            art.Scorch.enableInstancing = true;
+
             EditorUtility.SetDirty(art);
             return art;
+        }
+
+        static ModelEntry[] FindModels(string prefix)
+        {
+            var list = new System.Collections.Generic.List<ModelEntry>();
+            foreach (var guid in AssetDatabase.FindAssets("t:Model", new[] { "Assets/Art/Models" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string file = Path.GetFileNameWithoutExtension(path);
+                if (!file.StartsWith(prefix)) continue;
+                list.Add(new ModelEntry { Id = file.Substring(prefix.Length), Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path) });
+            }
+            Debug.Log($"[builder] {prefix}: {string.Join(", ", list.ConvertAll(e => e.Id))}");
+            return list.ToArray();
         }
 
         static Material BuildSkybox()
@@ -189,7 +211,7 @@ namespace GalacticRupture.EditorTools
             tone.mode.Override(TonemappingMode.ACES);
 
             var color = profile.Add<ColorAdjustments>(true);
-            color.postExposure.Override(0.15f);
+            color.postExposure.Override(0.2f);
             color.contrast.Override(18f);
             color.saturation.Override(8f);
 
@@ -217,19 +239,18 @@ namespace GalacticRupture.EditorTools
             var sun = sunGo.AddComponent<Light>();
             sun.type = LightType.Directional;
             sun.color = new Color(1f, 0.9f, 0.78f);
-            sun.intensity = 2.4f;
+            sun.intensity = 1.85f;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.92f;
             sunGo.transform.rotation = Quaternion.Euler(14f, -118f, 0f);
 
-            // Cool fill from the opposite side so shadowed hulls keep their shape.
+            // Cool fill from the camera side so shadowed hulls keep their shape.
             var fillGo = new GameObject("Fill");
             var fill = fillGo.AddComponent<Light>();
             fill.type = LightType.Directional;
-            fill.color = new Color(0.55f, 0.65f, 0.9f);
-            fill.intensity = 0.28f;
+            fill.color = new Color(0.72f, 0.78f, 0.95f);
+            fill.intensity = 1.15f;
             fill.shadows = LightShadows.None;
-            fillGo.transform.rotation = Quaternion.Euler(-25f, 62f, 0f);
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
@@ -243,6 +264,7 @@ namespace GalacticRupture.EditorTools
             camData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
             camData.antialiasingQuality = AntialiasingQuality.High;
             var rig = camGo.AddComponent<CameraRig>();
+            fillGo.AddComponent<ViewFill>().Camera = camGo.transform;
 
             var volGo = new GameObject("Post Processing");
             var vol = volGo.AddComponent<Volume>();
@@ -275,8 +297,8 @@ namespace GalacticRupture.EditorTools
             RenderSettings.skybox = sky;
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.09f, 0.1f, 0.15f);
-            RenderSettings.ambientEquatorColor = new Color(0.055f, 0.055f, 0.075f);
+            RenderSettings.ambientSkyColor = new Color(0.13f, 0.145f, 0.2f);
+            RenderSettings.ambientEquatorColor = new Color(0.08f, 0.08f, 0.1f);
             RenderSettings.ambientGroundColor = new Color(0.02f, 0.015f, 0.02f);
             RenderSettings.fog = false;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;

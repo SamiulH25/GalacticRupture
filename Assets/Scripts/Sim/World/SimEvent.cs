@@ -10,6 +10,7 @@ namespace GalacticRupture.Sim
         MountDestroyed, // Ship, Mount, Position
         ShipDestroyed,  // Ship, Position
         ShipSpawned,    // Ship
+        ShieldsDown,    // Ship, Position = where the last hit broke through
     }
 
     // What happened this tick, for the presentation layer. Nothing in the sim reads these back.

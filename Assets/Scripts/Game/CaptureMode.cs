@@ -11,6 +11,7 @@ namespace GalacticRupture.Game
         {
             public float Time;
             public bool Enemy;      // frame the first living enemy instead of the flagship
+            public bool Action;     // frame the ship most recently hit on its shields
             public float RelYaw;    // relative to the ship's heading
             public float Pitch;
             public float Distance;
@@ -32,11 +33,12 @@ namespace GalacticRupture.Game
         {
             new Shot { Time = 36f, RelYaw = -35f, Pitch = 11f, Distance = 640f, Offset = new Vector3(0f, 14f, 10f), Name = "01_quarter" },
             new Shot { Time = 44f, RelYaw = 18f, Pitch = 4f, Distance = 380f, Offset = new Vector3(0f, 20f, 70f), Name = "02_bow_low" },
-            new Shot { Time = 52f, RelYaw = 60f, Pitch = 24f, Distance = 2400f, Offset = Vector3.zero, Name = "03_wide" },
+            new Shot { Time = 52f, Action = true, RelYaw = 70f, Pitch = 16f, Name = "03_action" },
             new Shot { Time = 60f, RelYaw = 115f, Pitch = 18f, Distance = 170f, Offset = new Vector3(0f, 24f, 72f), Name = "04_turret" },
             new Shot { Time = 68f, Enemy = true, RelYaw = 150f, Pitch = 10f, Distance = 150f, Offset = Vector3.zero, Name = "05_corvette" },
             new Shot { Time = 80f, RelYaw = 205f, Pitch = 9f, Distance = 720f, Offset = new Vector3(0f, 10f, -60f), Name = "06_stern" },
-            new Shot { Time = 95f, RelYaw = -80f, Pitch = 30f, Distance = 900f, Offset = Vector3.zero, Name = "07_broadside_top" },
+            new Shot { Time = 88f, Action = true, RelYaw = -60f, Pitch = 12f, Name = "07_action" },
+            new Shot { Time = 100f, RelYaw = -80f, Pitch = 30f, Distance = 1600f, Offset = Vector3.zero, Name = "08_battle_wide" },
         };
 
         void Awake()
@@ -69,12 +71,17 @@ namespace GalacticRupture.Game
 
             var shot = Shots[_next];
             float t = Runner.World.Time;
-            if (!_framed && t >= shot.Time - 2.5f)
+            if (!_framed && t >= shot.Time - (shot.Action ? 0.6f : 2.5f))
             {
                 int ship = shot.Enemy ? FirstEnemy() : Runner.Toy.Flagship;
+                float distance = shot.Distance;
+                var hit = Runner.World.ShipById(Runner.Presenter.LastShieldHit);
+                if (shot.Action && hit != null && hit.Alive)
+                    ship = hit.Id;
                 var view = Runner.Presenter.ViewOf(ship);
+                if (shot.Action && view != null) distance = view.Def.HalfLength * 3.2f + 60f;
                 float heading = view != null ? view.transform.eulerAngles.y : 0f;
-                Rig.SnapTo(ship, heading + shot.RelYaw, shot.Pitch, shot.Distance, shot.Offset);
+                Rig.SnapTo(ship, heading + shot.RelYaw, shot.Pitch, distance, shot.Offset);
                 _framed = true;
             }
             if (_framed && t >= shot.Time)
