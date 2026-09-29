@@ -42,7 +42,7 @@ namespace GalacticRupture.Game
 
         void Update()
         {
-            if (CaptureMode.Active || BenchMode.Active || RtsCapture.Active || Runner.World == null) return;
+            if (CaptureMode.Active || BenchMode.Active || RtsCapture.Active || CampaignCapture.Active || Runner.World == null) return;
             var mouse = Mouse.current;
             var kb = Keyboard.current;
             if (mouse == null || kb == null) return;

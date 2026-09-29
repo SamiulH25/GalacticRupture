@@ -196,6 +196,23 @@ that changes. 12 systems with real interiors beats 150 dots.
 time. The space *between* systems is where intercepts and escort fights happen. Gives
 Stellaris' transport-raid tension and EAW' cinematic battles without building two games.
 
+### 4.1 The First Campaign Map (as built)
+
+`PROPOSED` — the rules the mini campaign (§9 step 5) runs on today, to confirm or change:
+
+- **12 systems, joined by FTL lanes.** Travel only along lanes, at the speed of the slowest
+  hull (battleship 3.5 ly/day, corvette 8). Lanes answer §10 Q7 for now.
+- **Tiers 1–3.** Income 22 / 50 / 110 credits a day; tier 2+ has a shipyard, a capital yard
+  builds two hulls at once.
+- **Supply range 14 ly** from any owned system. Out of supply, nothing repairs (degrade, never kill).
+- **Repair at friendly yards:** hull back over days, lost turrets replaced one at a time.
+- **Capture by presence:** an undefended system falls after 18 h (unclaimed) to 96 h (capital),
+  then sits in unrest for 3 days with no income and no building. Half-built hulls are lost.
+- **Battles stop the clock.** The player takes command or leaves it to the fleet; both run the
+  same tactical sim with the fleets' real damage, and the damage stays (§2.2, §3). The loser,
+  or whoever withdraws, falls back a system.
+- **Win** by taking the enemy capital; **lose** by losing your own.
+
 ---
 
 ## 5. Combat Design
@@ -528,3 +545,4 @@ unity status / unity command ...                                           # dri
   retired; this file is the only design source carried forward. §8 rewritten for Unity 6 +
   URP (engine-free stack dropped, lock-in principle restated as "the rules don't live in the
   engine"), added the visual bar (§8.9) and build order (§9).
+- **2026-09-29 — First campaign.** Recorded the rules the mini campaign runs on (§4.1).

@@ -27,6 +27,7 @@ namespace GalacticRupture.Game
         Vector3 _focus;
         float _smoothDistance;
         bool _initialised;
+        bool _pointChosen;
         float _idle;
 
         public Camera Camera { get; private set; }
@@ -36,7 +37,7 @@ namespace GalacticRupture.Game
         void LateUpdate()
         {
             if (Runner == null || Runner.World == null) return;
-            if (!_initialised && FocusShip < 0)
+            if (!_initialised && FocusShip < 0 && !_pointChosen)
             {
                 var flag = Runner.Presenter.ViewOf(Runner.Flagship);
                 if (flag != null) FocusPoint = flag.transform.position;
@@ -70,7 +71,7 @@ namespace GalacticRupture.Game
 
         void HandleInput()
         {
-            if (CaptureMode.Active || BenchMode.Active || RtsCapture.Active) return;
+            if (CaptureMode.Active || BenchMode.Active || RtsCapture.Active || CampaignCapture.Active) return;
             float dt = Time.unscaledDeltaTime;
             _idle += dt;
             var mouse = Mouse.current;
@@ -118,6 +119,18 @@ namespace GalacticRupture.Game
             FocusShip = ship;
             FocusOffset = Vector3.zero;
             Distance = Mathf.Clamp(s.Def.HalfLength * 5f, MinDistance, MaxDistance);
+        }
+
+        // Frames a point in space rather than a ship: the start of a battle.
+        public void Frame(Vector3 point, float yaw, float pitch, float distance)
+        {
+            FocusShip = -1;
+            FocusPoint = point;
+            Yaw = yaw;
+            Pitch = pitch;
+            Distance = distance;
+            _pointChosen = true;
+            _initialised = false;
         }
 
         public void SnapTo(int ship, float yaw, float pitch, float distance, Vector3 offset)

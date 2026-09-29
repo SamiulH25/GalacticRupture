@@ -10,6 +10,7 @@ namespace GalacticRupture.Game
         public SimRunner Runner;
         public CameraRig Rig;
         public CommandInput Input;
+        public CampaignDirector Director;
 
         GUIStyle _label, _small, _banner;
         Texture2D _white;
@@ -66,13 +67,28 @@ namespace GalacticRupture.Game
             foreach (var s in world.Ships)
                 if (s.Alive) { if (s.Side == 0) own++; else enemy++; }
             GUI.Label(new Rect(24, 16, 600, 24), $"{time}     FLEET {own}     CONTACTS {enemy}", _label);
-            if (Runner.Battle != null && Runner.Battle.State != BattleState.Fighting)
+            bool campaign = Runner.CampaignBattle != null && Director != null;
+            if (Runner.State != BattleState.Fighting)
             {
-                bool won = Runner.Battle.State == BattleState.Victory;
-                _banner.normal.textColor = won ? new Color(0.6f, 0.95f, 1f) : new Color(1f, 0.45f, 0.4f);
-                GUI.Label(new Rect(0, Screen.height * 0.3f, Screen.width, 60), won ? "VICTORY" : "FLEET LOST", _banner);
-                GUI.Label(new Rect(0, Screen.height * 0.3f + 56, Screen.width, 24), "Ctrl+R for a new engagement",
-                    new GUIStyle(_small) { alignment = TextAnchor.MiddleCenter });
+                bool won = Runner.State == BattleState.Victory;
+                bool broke = Runner.State == BattleState.Withdrawn;
+                _banner.normal.textColor = won ? new Color(0.6f, 0.95f, 1f) : broke ? new Color(0.9f, 0.85f, 0.6f) : new Color(1f, 0.45f, 0.4f);
+                GUI.Label(new Rect(0, Screen.height * 0.3f, Screen.width, 60), won ? "VICTORY" : broke ? "DISENGAGED" : "FLEET LOST", _banner);
+                if (campaign)
+                {
+                    if (GUI.Button(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.3f + 70, 280, 34), "Return to the galaxy"))
+                        Director.ReturnToMap();
+                }
+                else
+                {
+                    GUI.Label(new Rect(0, Screen.height * 0.3f + 56, Screen.width, 24), "Ctrl+R for a new engagement",
+                        new GUIStyle(_small) { alignment = TextAnchor.MiddleCenter });
+                }
+            }
+            else if (campaign)
+            {
+                if (GUI.Button(new Rect(Screen.width - 204, 12, 184, 30), "Withdraw from the system"))
+                    Director.Withdraw();
             }
 
             // Bottom left: selection cards.

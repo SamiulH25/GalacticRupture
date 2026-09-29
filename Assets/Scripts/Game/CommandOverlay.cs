@@ -107,6 +107,21 @@ namespace GalacticRupture.Game
                 }
             }
 
+            // Contact rings: at a distance every ship gets a faint marker in its side's colour, so
+            // the whole battle reads even when hulls are a few pixels long.
+            foreach (var kv in Runner.Presenter.Views)
+            {
+                var ship = Runner.World.ShipById(kv.Key);
+                if (ship == null || !ship.Alive || Input.Selected.Contains(ship.Id)) continue;
+                Vector3 p = kv.Value.transform.position;
+                float d = Vector3.Distance(cam.transform.position, p);
+                if (d < 1800f) continue;
+                float fade = Mathf.Clamp01((d - 1800f) / 1500f);
+                var c = ship.Side == Input.PlayerSide ? Own : Attack;
+                c.a *= 0.55f * fade;
+                Ring(p, Mathf.Max(ship.Def.HalfLength * 1.2f, d * 0.012f), d * 0.0012f, c);
+            }
+
             if (Input.Hovered >= 0 && !Input.Selected.Contains(Input.Hovered))
             {
                 var ship = Runner.World.ShipById(Input.Hovered);

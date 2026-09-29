@@ -40,6 +40,11 @@ namespace GalacticRupture.Sim
         public float ShieldRegen = 40f;    // per second
         public float ShieldRegenDelay = 6f; // seconds after the last hit
 
+        // Campaign: what it costs, how long a yard takes, how fast it crosses lanes.
+        public int Cost = 100;
+        public float BuildDays = 3f;
+        public float LyPerDay = 5f;
+
         public List<HardpointDef> Hardpoints = new List<HardpointDef>();
     }
 }

@@ -7,6 +7,7 @@ namespace GalacticRupture.Sim
         Fighting,
         Victory,
         Defeat,
+        Withdrawn, // both sides still standing: someone pulled out, or time ran out
     }
 
     // The player's fleet against a Remnant squadron. Player ships do only what they are told;
@@ -62,49 +63,7 @@ namespace GalacticRupture.Sim
             _aiTimer -= World.Dt;
             if (_aiTimer > 0f) return;
             _aiTimer = 2f;
-            EnemyAi(world);
-        }
-
-        // Idle enemies pick the nearest player ship: escorts make attack runs, destroyers slug it out.
-        static void EnemyAi(World world)
-        {
-            foreach (var s in world.Ships)
-            {
-                if (!s.Alive || s.Side != EnemySide) continue;
-                var current = world.ShipById(s.Order.OtherShip);
-                bool busy = (s.Order.Kind == OrderKind.Attack || s.Order.Kind == OrderKind.AttackRun) && current != null && current.Alive;
-                if (busy) continue;
-                var target = Nearest(world, s, PlayerSide);
-                if (target == null) continue;
-                if (s.Def.Class <= HullClass.Frigate)
-                {
-                    var o = ShipOrder.AttackRun(target.Id);
-                    o.PassDistance = s.Def.Class == HullClass.Corvette ? world.Rng.Range(150f, 350f) : world.Rng.Range(400f, 700f);
-                    o.RunOutDistance = world.Rng.Range(1400f, 2200f);
-                    world.Issue(s.Id, o);
-                }
-                else
-                {
-                    world.Issue(s.Id, ShipOrder.Attack(target.Id));
-                }
-            }
-        }
-
-        static Ship Nearest(World world, Ship from, int side)
-        {
-            Ship best = null;
-            float bestD = float.MaxValue;
-            foreach (var s in world.Ships)
-            {
-                if (!s.Alive || s.Side != side) continue;
-                float d = Vector3.DistanceSquared(s.Position, from.Position);
-                if (d < bestD)
-                {
-                    bestD = d;
-                    best = s;
-                }
-            }
-            return best;
+            FleetAi.Command(world, EnemySide);
         }
     }
 }

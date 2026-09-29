@@ -20,6 +20,13 @@ namespace GalacticRupture.Game
             _smoke = Make("Glow", art.Fire, ParticleSystemRenderMode.Billboard, fadeFast: false, grow: 1.8f, fireGradient: true);
         }
 
+        // Drops every effect in flight (leaving a battle).
+        public void Clear()
+        {
+            foreach (var ps in new[] { _flash, _sparks, _fireball, _embers, _shield, _smoke })
+                if (ps != null) ps.Clear();
+        }
+
         ParticleSystem Make(string name, Material mat, ParticleSystemRenderMode mode, bool fadeFast, float grow,
             bool fireGradient = false, float drag = 0f)
         {

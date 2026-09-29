@@ -50,6 +50,15 @@ namespace GalacticRupture.Sim
         public static readonly HullDef Frigate = BuildFrigate();
         public static readonly HullDef Corvette = BuildCorvette();
 
+        public static readonly HullDef[] All = { Battleship, Destroyer, Frigate, Corvette };
+
+        public static HullDef ById(string id)
+        {
+            foreach (var h in All)
+                if (h.Id == id) return h;
+            return null;
+        }
+
         static HardpointDef Hp(MountDef m, float x, float y, float z, float baseYaw, float halfArc) =>
             new HardpointDef { Mount = m, LocalPosition = new Vector3(x, y, z), BaseYawDeg = baseYaw, YawHalfArcDeg = halfArc };
 
@@ -58,6 +67,7 @@ namespace GalacticRupture.Sim
             var h = new HullDef
             {
                 Id = "battleship", Class = HullClass.Battleship,
+                Cost = 1200, BuildDays = 16f, LyPerDay = 3.5f,
                 HalfLength = 170f, Radius = 24f,
                 MaxSpeed = 40f, Acceleration = 3f, TurnRateDeg = 3f, ClimbRate = 6f,
                 HullHp = 26000f, ShieldHp = 7000f, ShieldRegen = 140f, ShieldRegenDelay = 5f,
@@ -90,6 +100,7 @@ namespace GalacticRupture.Sim
             var h = new HullDef
             {
                 Id = "destroyer", Class = HullClass.Destroyer,
+                Cost = 340, BuildDays = 6f, LyPerDay = 5f,
                 HalfLength = 70f, Radius = 11f,
                 MaxSpeed = 70f, Acceleration = 7f, TurnRateDeg = 8f, ClimbRate = 12f,
                 HullHp = 5200f, ShieldHp = 1800f, ShieldRegen = 50f, ShieldRegenDelay = 5f,
@@ -106,6 +117,7 @@ namespace GalacticRupture.Sim
             var h = new HullDef
             {
                 Id = "frigate", Class = HullClass.Frigate,
+                Cost = 150, BuildDays = 3.5f, LyPerDay = 6f,
                 HalfLength = 42f, Radius = 8f,
                 MaxSpeed = 110f, Acceleration = 14f, TurnRateDeg = 22f, ClimbRate = 25f,
                 HullHp = 1500f, ShieldHp = 700f, ShieldRegen = 25f, ShieldRegenDelay = 5f,
@@ -120,6 +132,7 @@ namespace GalacticRupture.Sim
             var h = new HullDef
             {
                 Id = "corvette", Class = HullClass.Corvette,
+                Cost = 60, BuildDays = 1.5f, LyPerDay = 8f,
                 HalfLength = 22f, Radius = 6f,
                 MaxSpeed = 170f, Acceleration = 30f, TurnRateDeg = 45f, ClimbRate = 40f,
                 HullHp = 420f, ShieldHp = 220f, ShieldRegen = 12f, ShieldRegenDelay = 5f,

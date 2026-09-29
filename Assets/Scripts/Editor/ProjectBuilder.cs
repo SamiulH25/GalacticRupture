@@ -298,6 +298,31 @@ namespace GalacticRupture.EditorTools
             hud.Runner = runner;
             hud.Rig = rig;
             hud.Input = input;
+
+            // The campaign: galaxy map, its camera and screen, and the director that hands
+            // battles to the tactical view and back.
+            var mapGo = new GameObject("Galaxy Map");
+            var map = mapGo.AddComponent<MapView>();
+            map.Art = art;
+            map.LineMaterial = overlay.LineMaterial;
+            var mapCam = camGo.AddComponent<MapCamera>();
+            var director = gameGo.AddComponent<CampaignDirector>();
+            director.Runner = runner;
+            director.TacticalCamera = rig;
+            director.MapCamera = mapCam;
+            director.Map = map;
+            hud.Director = director;
+            var campaignHud = gameGo.AddComponent<CampaignHud>();
+            campaignHud.Director = director;
+            campaignHud.Map = map;
+            campaignHud.Camera = cam;
+            var campaignCapture = gameGo.AddComponent<CampaignCapture>();
+            campaignCapture.Director = director;
+            campaignCapture.Hud = campaignHud;
+            campaignCapture.Map = map;
+            campaignCapture.Input = input;
+            campaignCapture.Runner = runner;
+
             var bench = gameGo.AddComponent<BenchMode>();
             bench.Runner = runner;
             bench.Rig = rig;
