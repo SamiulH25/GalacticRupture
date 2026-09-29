@@ -73,7 +73,7 @@ namespace GalacticRupture.Game
             float t = Runner.World.Time;
             if (!_framed && t >= shot.Time - (shot.Action ? 0.6f : 2.5f))
             {
-                int ship = shot.Enemy ? FirstEnemy() : Runner.Toy.Flagship;
+                int ship = shot.Enemy ? FirstEnemy() : Runner.Flagship;
                 float distance = shot.Distance;
                 var hit = Runner.World.ShipById(Runner.Presenter.LastShieldHit);
                 if (shot.Action && hit != null && hit.Alive)
@@ -117,7 +117,7 @@ namespace GalacticRupture.Game
         {
             foreach (var s in Runner.World.Ships)
                 if (s.Alive && s.Side != Sim.TurretToy.PlayerSide && s.Def.Class == Sim.HullClass.Corvette) return s.Id;
-            return Runner.Toy.Flagship;
+            return Runner.Flagship;
         }
     }
 }

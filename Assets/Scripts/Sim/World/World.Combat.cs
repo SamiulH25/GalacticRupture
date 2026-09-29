@@ -63,8 +63,9 @@ namespace GalacticRupture.Sim
             {
                 target = null;
                 m.Target = -1;
+                m.RetargetTimer = 0f;
             }
-            if (m.RetargetTimer <= 0f || target == null)
+            if (m.RetargetTimer <= 0f)
             {
                 m.RetargetTimer = RetargetInterval;
                 target = ChooseTarget(ship, m, target);
@@ -107,9 +108,13 @@ namespace GalacticRupture.Sim
         {
             Ship best = null;
             float bestScore = float.MaxValue;
-            foreach (var other in Ships)
+            Vector3 pivot = MountPivot(ship, m);
+            foreach (int id in ship.Enemies)
             {
-                if (!other.Alive || other.Side == ship.Side) continue;
+                var other = Ships[id];
+                if (!other.Alive) continue;
+                float reach = m.Def.Range + other.Def.HalfLength;
+                if (Vector3.DistanceSquared(pivot, other.Position) > reach * reach) continue;
                 var sol = Solve(ship, m, other);
                 if (!sol.Bears) continue;
 
@@ -182,8 +187,11 @@ namespace GalacticRupture.Sim
                 {
                     Vector3 mid = (p.PrevPosition + p.Position) * 0.5f;
                     float segHalf = (p.Position - p.PrevPosition).Length() * 0.5f;
-                    foreach (var ship in Ships)
+                    _query.Clear();
+                    Grid.Query(mid, 200f + segHalf, _query);
+                    foreach (int id in _query)
                     {
+                        var ship = Ships[id];
                         if (!ship.Alive || ship.Side == p.Side) continue;
                         float reach = ship.Def.HalfLength + ship.Def.Radius + segHalf;
                         if (Vector3.DistanceSquared(mid, ship.Position) > reach * reach) continue;

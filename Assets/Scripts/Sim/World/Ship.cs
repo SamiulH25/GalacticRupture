@@ -94,6 +94,11 @@ namespace GalacticRupture.Sim
         internal bool RunOutbound;
         internal Vector3 RunExitPoint;
 
+        // Enemies near enough for any of this ship's guns, refreshed a few times a second.
+        internal readonly List<int> Enemies = new List<int>();
+        internal float ScanTimer;
+        public readonly float MaxGunRange;
+
         public Ship(int id, int side, HullDef def, Vector3 position, float yaw)
         {
             Id = id;
@@ -105,7 +110,14 @@ namespace GalacticRupture.Sim
             Hull = def.HullHp;
             Shield = def.ShieldHp;
             for (int i = 0; i < def.Hardpoints.Count; i++)
-                Mounts.Add(new Mount(def.Hardpoints[i], i));
+            {
+                var m = new Mount(def.Hardpoints[i], i);
+                // Spread retargeting across ticks so a big fleet doesn't all think at once.
+                m.RetargetTimer = ((id * 7 + i * 3) % 15) / 30f;
+                Mounts.Add(m);
+                MaxGunRange = System.MathF.Max(MaxGunRange, def.Hardpoints[i].Mount.Range);
+            }
+            ScanTimer = (id % 15) / 30f;
         }
 
         public Vector3 Forward => SimMath.HeadingToDir(Yaw);

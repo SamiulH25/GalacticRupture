@@ -31,7 +31,7 @@ namespace GalacticRupture.Game
             if (Runner == null || Runner.World == null) return;
             HandleInput();
 
-            if (FocusShip < 0 || Runner.Presenter.ViewOf(FocusShip) == null) FocusShip = Runner.Toy.Flagship;
+            if (FocusShip < 0 || Runner.Presenter.ViewOf(FocusShip) == null) FocusShip = Runner.Flagship;
             var view = Runner.Presenter.ViewOf(FocusShip);
             Vector3 target = view != null
                 ? view.transform.position + Quaternion.Euler(0f, view.transform.eulerAngles.y, 0f) * FocusOffset
@@ -77,7 +77,7 @@ namespace GalacticRupture.Game
             if (kb != null)
             {
                 if (kb.tabKey.wasPressedThisFrame) CycleFocus(kb.shiftKey.isPressed ? -1 : 1);
-                if (kb.fKey.wasPressedThisFrame) FocusShip = Runner.Toy.Flagship;
+                if (kb.fKey.wasPressedThisFrame) FocusShip = Runner.Flagship;
                 if (kb.cKey.wasPressedThisFrame) Cinematic = !Cinematic;
             }
         }

@@ -20,25 +20,40 @@ namespace GalacticRupture.Game
         public float Alpha { get; private set; }
 
         ProjectileRenderer _projectiles;
+        Fx _fx;
         float _accumulator;
+
+        // Wall-clock cost of the last frame's sim steps, for the benchmark.
+        public double LastStepMs { get; private set; }
+        readonly System.Diagnostics.Stopwatch _watch = new System.Diagnostics.Stopwatch();
+
+        // The ship the camera starts on.
+        public int Flagship => Toy != null ? Toy.Flagship : 0;
 
         static readonly float[] Speeds = { 0.25f, 1f, 2f, 4f };
 
         void Awake()
         {
-            var fx = new GameObject("Fx").AddComponent<Fx>();
-            fx.transform.SetParent(transform, false);
-            fx.Init(Art);
-
-            Presenter = new GameObject("Fleet").AddComponent<FleetPresenter>();
-            Presenter.transform.SetParent(transform, false);
+            _fx = new GameObject("Fx").AddComponent<Fx>();
+            _fx.transform.SetParent(transform, false);
+            _fx.Init(Art);
 
             _projectiles = gameObject.AddComponent<ProjectileRenderer>();
             _projectiles.Init(Art);
 
-            World = TurretToy.Create(Seed);
-            Toy = (TurretToy)World.Director;
-            Presenter.Init(Art, fx, World);
+            Load(TurretToy.Create(Seed));
+        }
+
+        // Replaces the running battle, views and all.
+        public void Load(World world)
+        {
+            if (Presenter != null) Destroy(Presenter.gameObject);
+            Presenter = new GameObject("Fleet").AddComponent<FleetPresenter>();
+            Presenter.transform.SetParent(transform, false);
+            World = world;
+            Toy = world.Director as TurretToy;
+            Presenter.Init(Art, _fx, World);
+            _accumulator = 0f;
             Dispatch();
         }
 
@@ -49,6 +64,7 @@ namespace GalacticRupture.Game
             {
                 _accumulator += Time.deltaTime * TimeScale;
                 int steps = 0;
+                _watch.Restart();
                 while (_accumulator >= World.Dt && steps < 12)
                 {
                     World.Step();
@@ -57,6 +73,7 @@ namespace GalacticRupture.Game
                     steps++;
                 }
                 if (steps == 12) _accumulator = 0f;
+                LastStepMs = _watch.Elapsed.TotalMilliseconds;
             }
             Alpha = Mathf.Clamp01(_accumulator / World.Dt);
         }

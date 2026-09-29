@@ -438,6 +438,22 @@ which number we're near.
 A benchmark scene answers it: N instanced hulls with turrets, one shadow cascade, bloom on, no
 gameplay. Measure at three camera distances. Re-run when real models land.
 
+**First result (2026-09-29, `Tools/bench.sh`, GTX 1080 Ti, 1080p, Blender models, mixed hulls):**
+
+| Ships | Close (700 m) | Mid (3.5 km) | Far (14 km) |
+|---|---|---|---|
+| 100 | 252 fps | 192 fps | 204 fps |
+| 250 | 235 fps | 153 fps | 100 fps |
+| 500 | 148 fps | 105 fps | 53 fps |
+| 1000 | 87 fps | 69 fps | 29 fps |
+| 2000 | 47 fps | 40 fps | 19 fps |
+
+The sim costs under 3 ms at 2000 ships once targeting uses a spatial grid. Rendering is the
+limit, and it falls off at the far view, where every ship and turret is on screen with full
+detail; the far-distance LOD in §2.1 (merged mounts, no barrel animation) is the fix.
+**Working size: a few hundred ships per battle** — EAW's scale ×10, well short of Stellaris.
+Combat design is sized for that.
+
 ### 8.9 The Visual Bar
 
 `LOCKED` — **Stunning is a requirement, not polish.** The game is judged by feel and look.

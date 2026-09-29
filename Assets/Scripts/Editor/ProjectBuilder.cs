@@ -290,6 +290,9 @@ namespace GalacticRupture.EditorTools
             var hud = gameGo.AddComponent<Hud>();
             hud.Runner = runner;
             hud.Rig = rig;
+            var bench = gameGo.AddComponent<BenchMode>();
+            bench.Runner = runner;
+            bench.Rig = rig;
             var capture = gameGo.AddComponent<CaptureMode>();
             capture.Runner = runner;
             capture.Rig = rig;

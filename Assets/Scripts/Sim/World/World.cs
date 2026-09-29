@@ -32,6 +32,9 @@ namespace GalacticRupture.Sim
         public readonly List<Projectile> Projectiles = new List<Projectile>();
         public readonly List<SimEvent> Events = new List<SimEvent>();
         public IDirector Director;
+        public readonly SpatialGrid Grid = new SpatialGrid(1000f);
+        readonly List<int> _query = new List<int>();
+        const float ScanInterval = 0.5f;
 
         public int Tick { get; private set; }
         public float Time => Tick * Dt;
@@ -71,6 +74,10 @@ namespace GalacticRupture.Sim
             foreach (var ship in Ships)
                 if (ship.Alive) Pilot(ship);
 
+            Grid.Rebuild(Ships);
+            foreach (var ship in Ships)
+                if (ship.Alive) ScanForEnemies(ship);
+
             foreach (var ship in Ships)
                 if (ship.Alive) UpdateShields(ship);
 
@@ -104,6 +111,25 @@ namespace GalacticRupture.Sim
         }
 
         public Ship ShipById(int id) => id >= 0 && id < Ships.Count ? Ships[id] : null;
+
+        void ScanForEnemies(Ship ship)
+        {
+            ship.ScanTimer -= Dt;
+            if (ship.ScanTimer > 0f) return;
+            ship.ScanTimer = ScanInterval;
+            ship.Enemies.Clear();
+            if (ship.MaxGunRange <= 0f) return;
+            _query.Clear();
+            float reach = ship.MaxGunRange + 400f;
+            Grid.Query(ship.Position, reach, _query);
+            foreach (int id in _query)
+            {
+                var other = Ships[id];
+                if (other.Side == ship.Side || !other.Alive) continue;
+                if (Vector3.DistanceSquared(other.Position, ship.Position) > reach * reach) continue;
+                ship.Enemies.Add(id);
+            }
+        }
 
         void UpdateShields(Ship ship)
         {
