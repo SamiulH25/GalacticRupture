@@ -41,12 +41,18 @@ namespace GalacticRupture.EditorTools
             var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/PC_RPAsset.asset");
             var so = new SerializedObject(asset);
             so.FindProperty("m_SupportsHDR").boolValue = true;
-            so.FindProperty("m_HDRColorBufferPrecision").intValue = 1; // 64-bit: smoother bloom
+            // 32-bit HDR (R11G11B10): half the bandwidth of 64-bit, and with 4x MSAA that matters.
+            so.FindProperty("m_HDRColorBufferPrecision").intValue = 0;
             so.FindProperty("m_MSAA").intValue = 4;
             so.FindProperty("m_ShadowDistance").floatValue = 3500f;
             so.FindProperty("m_ShadowCascadeCount").intValue = 2;
-            so.FindProperty("m_MainLightShadowmapResolution").intValue = 4096;
+            so.FindProperty("m_MainLightShadowmapResolution").intValue = 2048;
             so.FindProperty("m_SoftShadowsSupported").boolValue = true;
+            so.FindProperty("m_SoftShadowQuality").intValue = 2;
+            // Nothing samples the depth or opaque textures; asking for them costs a copy a frame.
+            so.FindProperty("m_RequireDepthTexture").boolValue = false;
+            so.FindProperty("m_RequireOpaqueTexture").boolValue = false;
+            so.FindProperty("m_AdditionalLightShadowsSupported").boolValue = false;
             so.FindProperty("m_ShadowDepthBias").floatValue = 1.2f;
             so.FindProperty("m_ShadowNormalBias").floatValue = 0.8f;
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -125,21 +131,46 @@ namespace GalacticRupture.EditorTools
                 AssetDatabase.CreateAsset(art, ArtAssetPath);
             }
 
+            // Hull paint per faction. Finish is doing real identity work here: these ships are
+            // read at 700 m to 14 km, and at that range a hue difference between two dark
+            // values is invisible while a finish difference is not. Continuity's worn
+            // steel and Remnant's bare plate stay noticeably metallic; Serac's basalt and
+            // Ilium's ceramic are matte. Continuity is kept light and Serac is darkened
+            // well below it, so the two dark cool factions stay separable at 14 km.
             art.HullPaint = new[]
             {
-                Lit("Hull_Continuance", new Color(0.27f, 0.30f, 0.35f), 0.12f, 0.5f, tex.Panels),
-                Lit("Hull_Remnant", new Color(0.38f, 0.06f, 0.07f), 0.12f, 0.5f, tex.Panels),
-                Lit("Hull_Serac", new Color(0.14f, 0.30f, 0.27f), 0.12f, 0.5f, tex.Panels),
-                Lit("Hull_Ilium", new Color(0.42f, 0.31f, 0.16f), 0.12f, 0.5f, tex.Panels),
+                Lit("Hull_Continuance", new Color(0.27f, 0.30f, 0.35f), 0.45f, 0.46f, tex.Panels),
+                Lit("Hull_Remnant", new Color(0.38f, 0.06f, 0.07f), 0.55f, 0.36f, tex.Panels),
+                Lit("Hull_Serac", new Color(0.09f, 0.20f, 0.18f), 0.06f, 0.24f, tex.Panels),
+                Lit("Hull_Ilium", new Color(0.42f, 0.31f, 0.16f), 0.04f, 0.30f, tex.Panels),
             };
+            // Trim carries each power's block colour and its edge markings. Continuity's is amber
+            // over bare machined metal; the other three wear it as painted plate over
+            // large hull areas -- bone for Remnant, cream for Serac, neutral grey for
+            // Ilium -- so those read as paint (low metallic) rather than as raw metal.
+            // All four get the panel maps with a light bump, which they did not have before.
             art.Trim = new[]
             {
-                Lit("Trim_Continuance", new Color(0.86f, 0.64f, 0.28f), 0.9f, 0.65f),
-                Lit("Trim_Remnant", new Color(0.72f, 0.68f, 0.58f), 0.05f, 0.35f),
-                Lit("Trim_Serac", new Color(0.82f, 0.80f, 0.70f), 0.05f, 0.4f),
-                Lit("Trim_Ilium", new Color(0.33f, 0.22f, 0.13f), 0.8f, 0.5f),
+                Lit("Trim_Continuance", new Color(0.86f, 0.64f, 0.28f), 0.9f, 0.65f, tex.Panels, 0.25f),
+                Lit("Trim_Remnant", new Color(0.70f, 0.65f, 0.56f), 0.08f, 0.38f, tex.Panels, 0.25f),
+                Lit("Trim_Serac", new Color(0.80f, 0.78f, 0.70f), 0.06f, 0.36f, tex.Panels, 0.25f),
+                Lit("Trim_Ilium", new Color(0.36f, 0.34f, 0.33f), 0.8f, 0.5f, tex.Panels, 0.25f),
             };
-            art.DarkMetal = Lit("DarkMetal", new Color(0.12f, 0.125f, 0.135f), 0.35f, 0.45f, tex.Panels, 0.4f);
+            // The `Dark` slot, per faction: armour, recesses, machinery, engine throats.
+            // This is by a wide margin the most-used detail slot in the fleet -- 58 to 112
+            // calls per faction -- so it has to stay the dark structural tone for every
+            // power. Tinting it to a faction's block colour (as an earlier pass did, bone
+            // for Remnant and cream for Serac) paints every recess and every nozzle throat
+            // near-white and collapses the depth the panel and throat work depends on.
+            // Block colours live in `Trim` instead, on the plate areas that actually wear
+            // them in the reference art.
+            art.Structure = new[]
+            {
+                Lit("Structure_Continuance", new Color(0.12f, 0.125f, 0.135f), 0.35f, 0.45f, tex.Panels, 0.4f),
+                Lit("Structure_Remnant", new Color(0.13f, 0.125f, 0.12f), 0.3f, 0.4f, tex.Panels, 0.4f),
+                Lit("Structure_Serac", new Color(0.26f, 0.27f, 0.26f), 0.25f, 0.42f, tex.Panels, 0.4f),
+                Lit("Structure_Ilium", new Color(0.24f, 0.25f, 0.26f), 0.3f, 0.45f, tex.Panels, 0.4f),
+            };
             art.Windows = Emissive("Windows", Color.black, new Color(1f, 0.72f, 0.42f) * 2.2f);
             art.EngineGlow = new[]
             {
@@ -189,6 +220,9 @@ namespace GalacticRupture.EditorTools
             return art;
         }
 
+        // Hull files are hull_<class>_<faction>.fbx; a bare hull_<class>.fbx is the
+        // faction-agnostic fallback. Turret files stay keyed by mount id alone, since a
+        // trailing word that is not a faction name is left as part of the id.
         static ModelEntry[] FindModels(string prefix)
         {
             var list = new System.Collections.Generic.List<ModelEntry>();
@@ -197,9 +231,27 @@ namespace GalacticRupture.EditorTools
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 string file = Path.GetFileNameWithoutExtension(path);
                 if (!file.StartsWith(prefix)) continue;
-                list.Add(new ModelEntry { Id = file.Substring(prefix.Length), Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path) });
+                string id = file.Substring(prefix.Length);
+                int faction = -1;
+                int cut = id.LastIndexOf('_');
+                if (cut > 0)
+                {
+                    int found = GameArt.FactionIndex(id.Substring(cut + 1));
+                    if (found >= 0)
+                    {
+                        faction = found;
+                        id = id.Substring(0, cut);
+                    }
+                }
+                list.Add(new ModelEntry
+                {
+                    Id = id,
+                    Faction = faction,
+                    Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path),
+                });
             }
-            Debug.Log($"[builder] {prefix}: {string.Join(", ", list.ConvertAll(e => e.Id))}");
+            list.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+            Debug.Log($"[builder] {prefix}: {string.Join(", ", list.ConvertAll(e => $"{e.Id}[{e.Faction}]"))}");
             return list.ToArray();
         }
 
@@ -221,14 +273,14 @@ namespace GalacticRupture.EditorTools
             bloom.threshold.Override(0.95f);
             bloom.intensity.Override(0.9f);
             bloom.scatter.Override(0.72f);
-            bloom.highQualityFiltering.Override(true);
+            bloom.highQualityFiltering.Override(false);
             bloom.tint.Override(new Color(1f, 0.96f, 0.92f));
 
             var tone = profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
 
             var color = profile.Add<ColorAdjustments>(true);
-            color.postExposure.Override(0.2f);
+            color.postExposure.Override(0.35f);
             color.contrast.Override(18f);
             color.saturation.Override(8f);
 
@@ -256,7 +308,7 @@ namespace GalacticRupture.EditorTools
             var sun = sunGo.AddComponent<Light>();
             sun.type = LightType.Directional;
             sun.color = new Color(1f, 0.9f, 0.78f);
-            sun.intensity = 1.85f;
+            sun.intensity = 2.4f;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.92f;
             sunGo.transform.rotation = Quaternion.Euler(14f, -118f, 0f);
@@ -266,7 +318,7 @@ namespace GalacticRupture.EditorTools
             var fill = fillGo.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = new Color(0.72f, 0.78f, 0.95f);
-            fill.intensity = 1.15f;
+            fill.intensity = 1.6f;
             fill.shadows = LightShadows.None;
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
@@ -278,8 +330,8 @@ namespace GalacticRupture.EditorTools
             cam.clearFlags = CameraClearFlags.Skybox;
             var camData = camGo.AddComponent<UniversalAdditionalCameraData>();
             camData.renderPostProcessing = true;
-            camData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
-            camData.antialiasingQuality = AntialiasingQuality.High;
+            // MSAA (the pipeline asset) already smooths hull edges and tracers; no post AA on top.
+            camData.antialiasing = AntialiasingMode.None;
             var rig = camGo.AddComponent<CameraRig>();
             fillGo.AddComponent<ViewFill>().Camera = camGo.transform;
 
@@ -297,16 +349,22 @@ namespace GalacticRupture.EditorTools
             probe.size = Vector3.one * 200000f;
             probe.resolution = 256;
             probe.hdr = true;
-            probe.intensity = 0.8f;
+            probe.intensity = 1f;
 
             var gameGo = new GameObject("Game");
             var runner = gameGo.AddComponent<SimRunner>();
             runner.Art = art;
             rig.Runner = runner;
-            gameGo.AddComponent<SkyController>().Sun = sun;
+            var skyController = gameGo.AddComponent<SkyController>();
+            skyController.Sun = sun;
+            skyController.BakeShader = Shader.Find("Hidden/GR/SkyBake");
             var input = gameGo.AddComponent<CommandInput>();
             input.Runner = runner;
             input.Rig = rig;
+            // CursorSkin loads its textures in Awake, so it must be added before the
+            // first frame renders with the OS cursor still showing.
+            input.Skin = gameGo.AddComponent<CursorSkin>();
+            gameGo.AddComponent<CursorProbe>();
             var overlay = gameGo.AddComponent<CommandOverlay>();
             overlay.Runner = runner;
             overlay.Input = input;
@@ -355,12 +413,12 @@ namespace GalacticRupture.EditorTools
             RenderSettings.skybox = sky;
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.13f, 0.145f, 0.2f);
-            RenderSettings.ambientEquatorColor = new Color(0.08f, 0.08f, 0.1f);
-            RenderSettings.ambientGroundColor = new Color(0.02f, 0.015f, 0.02f);
+            RenderSettings.ambientSkyColor = new Color(0.24f, 0.26f, 0.33f);
+            RenderSettings.ambientEquatorColor = new Color(0.14f, 0.14f, 0.17f);
+            RenderSettings.ambientGroundColor = new Color(0.05f, 0.045f, 0.05f);
             RenderSettings.fog = false;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
-            RenderSettings.reflectionIntensity = 0.6f;
+            RenderSettings.reflectionIntensity = 1f;
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };

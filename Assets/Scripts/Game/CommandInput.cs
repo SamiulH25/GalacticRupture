@@ -7,8 +7,11 @@ namespace GalacticRupture.Game
 {
     // The player's hands on the fleet.
     //   Left click / drag       select (Shift adds, Ctrl+A all, double-click selects that class)
-    //   Right click space       move there, the group keeping its shape
-    //   Right click enemy       attack: close to gun range, turn broadside, focus fire
+    //   Right click space       move there in formation: the line in front, escorts behind,
+    //                           facing the way it travelled; everyone keeps the slowest's pace
+    //   Right drag              the same, facing the way you dragged
+    //   Alt + right click       move there keeping the group's present shape
+    //   Right click enemy       attack together: close to gun range, turn broadside, focus fire
     //   Ctrl + right click      face that point (turn the broadside you want)
     //   H                       hold position
     //   F                       follow the selection
@@ -18,6 +21,8 @@ namespace GalacticRupture.Game
         public SimRunner Runner;
         public CameraRig Rig;
         public int PlayerSide = 0;
+        // Cosmetic only; the sim never reads it.
+        public CursorSkin Skin;
 
         public readonly List<int> Selected = new List<int>();
         readonly Dictionary<int, List<int>> _groups = new Dictionary<int, List<int>>();
@@ -31,7 +36,16 @@ namespace GalacticRupture.Game
         public float LastOrderTime { get; private set; } = -10f;
         public bool LastOrderWasAttack { get; private set; }
 
+        // A right-button order in progress: where it went down, and the drag that sets facing.
+        public bool Planning { get; private set; }
+        public bool PlanDragged { get; private set; }
+        public Vector3 PlanPoint { get; private set; }
+        public float PlanYaw { get; private set; }
+        Vector2 _rightStart;
+        int _rightEnemy = -1;
+
         Vector2 _dragStart;
+        bool _pressOnUi;
         float _lastClickTime;
         int _lastClickShip = -1;
 
@@ -50,19 +64,28 @@ namespace GalacticRupture.Game
 
             Vector2 mp = mouse.position.ReadValue();
             Hovered = PickShip(mp, -1);
+            UpdateCursor(mp, mouse, kb);
 
+            // Clicks on the HUD are the HUD's.
+            bool overUi = Hud.Over(mp);
             if (mouse.leftButton.wasPressedThisFrame)
             {
                 _dragStart = mp;
                 Dragging = false;
+                _pressOnUi = overUi;
             }
-            if (mouse.leftButton.isPressed && (mp - _dragStart).sqrMagnitude > 64f)
+            if (_pressOnUi)
+            {
+                if (mouse.leftButton.wasReleasedThisFrame) _pressOnUi = false;
+                mouse = null;
+            }
+            if (mouse != null && mouse.leftButton.isPressed && (mp - _dragStart).sqrMagnitude > 64f)
             {
                 Dragging = true;
                 DragRect = Rect.MinMaxRect(Mathf.Min(mp.x, _dragStart.x), Mathf.Min(mp.y, _dragStart.y),
                     Mathf.Max(mp.x, _dragStart.x), Mathf.Max(mp.y, _dragStart.y));
             }
-            if (mouse.leftButton.wasReleasedThisFrame)
+            if (mouse != null && mouse.leftButton.wasReleasedThisFrame)
             {
                 bool add = kb.shiftKey.isPressed;
                 if (Dragging) BoxSelect(DragRect, add);
@@ -70,8 +93,11 @@ namespace GalacticRupture.Game
                 Dragging = false;
             }
 
-            if (mouse.rightButton.wasPressedThisFrame && Selected.Count > 0)
-                RightClick(mp, kb.ctrlKey.isPressed);
+            RightButton(mp, Mouse.current, kb, overUi);
+
+            if (kb.zKey.wasPressedThisFrame) UseAbility(Ability.Engines);
+            if (kb.xKey.wasPressedThisFrame) UseAbility(Ability.Shields);
+            if (kb.vKey.wasPressedThisFrame) UseAbility(Ability.Weapons);
 
             if (kb.hKey.wasPressedThisFrame) IssueAll(_ => ShipOrder.Hold());
             if (kb.fKey.wasPressedThisFrame && Selected.Count > 0) Rig.Follow(Selected[0]);
@@ -173,24 +199,129 @@ namespace GalacticRupture.Game
                 if (Own(s)) Selected.Add(s.Id);
         }
 
-        // The same orders the mouse gives, for scripts and tests.
-        public void OrderAttack(int enemy) => IssueAll(_ => ShipOrder.Attack(enemy));
-
-        public void OrderMove(Vector3 point)
+        // Every selected ship that can, diverts power (Empire at War's ship abilities).
+        public void UseAbility(Ability a)
         {
-            Vector3 centre = SelectionCentre();
-            IssueAll(ship => ShipOrder.MoveTo((point + (ship.Position.ToUnity() - centre)).ToSim()));
+            foreach (int id in Selected)
+            {
+                var ship = Runner.World.ShipById(id);
+                if (Own(ship) && ship.CanUse(a)) Runner.World.Use(id, a);
+            }
+        }
+
+        // The same orders the mouse gives, for scripts and tests.
+        public void OrderAttack(int enemy)
+        {
+            int group = Selected.Count > 1 ? Runner.World.NewGroup() : -1;
+            IssueAll(_ =>
+            {
+                var o = ShipOrder.Attack(enemy);
+                o.Group = group;
+                return o;
+            });
+        }
+
+        public void OrderMove(Vector3 point) => OrderMove(point, DefaultYaw(point));
+
+        public void OrderMove(Vector3 point, float yaw)
+        {
+            var ships = OwnSelected();
+            if (ships.Count == 0) return;
+            Formation.Move(Runner.World, ships, point.ToSim(), yaw);
             LastOrderPoint = point;
             LastOrderWasAttack = false;
             LastOrderTime = Time.unscaledTime;
         }
 
-        void RightClick(Vector2 mp, bool face)
+        // Where the ships of a planned move would end up, for the overlay.
+        public System.Numerics.Vector3[] PlanSlots() => Formation.Slots(OwnSelected(), PlanPoint.ToSim(), PlanYaw);
+
+        List<Ship> OwnSelected()
         {
-            int enemy = PickShip(mp, 1 - PlayerSide);
-            if (enemy >= 0 && !face)
+            var list = new List<Ship>();
+            foreach (int id in Selected)
             {
-                IssueAll(_ => ShipOrder.Attack(enemy));
+                var s = Runner.World.ShipById(id);
+                if (Own(s) && s.Def.MaxSpeed > 0f) list.Add(s);
+            }
+            return list;
+        }
+
+        // Facing the way the group travels; for a short hop, the way it already faces.
+        float DefaultYaw(Vector3 point)
+        {
+            Vector3 d = point - SelectionCentre();
+            d.y = 0f;
+            if (d.magnitude > 400f) return Mathf.Atan2(d.x, d.z);
+            float sx = 0f, sz = 0f;
+            foreach (var s in OwnSelected())
+            {
+                sx += Mathf.Sin(s.Yaw);
+                sz += Mathf.Cos(s.Yaw);
+            }
+            return Mathf.Atan2(sx, sz);
+        }
+
+        /// The cursor promises the order that `RightClick` would actually give. That mapping is
+        /// not free: `RightClick` picks attack before move, and treats Ctrl as face
+        /// regardless of what is under the pointer, so the cursor has to test in the same
+        /// order or it will show amber over an enemy that a plain click would attack.
+        void UpdateCursor(Vector2 mp, Mouse mouse, Keyboard kb)
+        {
+            if (Skin == null) return;
+            if (Hud.Over(mp)) { Skin.Apply(CursorState.Default); return; }
+
+            // A marquee is a drag in progress, whatever is underneath it.
+            if (Dragging) { Skin.Apply(CursorState.BoxSelect); return; }
+
+            // Right button held: show the order that releasing here would produce.
+            if (Selected.Count > 0 && mouse.rightButton.isPressed)
+            {
+                if (kb.ctrlKey.isPressed) { Skin.Apply(CursorState.Face); return; }
+                Skin.Apply(PickShip(mp, 1 - PlayerSide) >= 0 ? CursorState.Attack : CursorState.Move);
+                return;
+            }
+
+            int hover = PickShip(mp, -1);
+            if (hover < 0) { Skin.Apply(CursorState.Default); return; }
+            Skin.Apply(Own(Runner.World.ShipById(hover)) ? CursorState.OwnShip : CursorState.Select);
+        }
+
+        // Orders go on release, so a drag can set the formation's facing first.
+        void RightButton(Vector2 mp, Mouse mouse, Keyboard kb, bool overUi)
+        {
+            if (mouse.rightButton.wasPressedThisFrame)
+            {
+                Planning = PlanDragged = false;
+                if (Selected.Count == 0 || overUi) return;
+                _rightStart = mp;
+                _rightEnemy = PickShip(mp, 1 - PlayerSide);
+                if (!GroundPoint(mp, out Vector3 p)) return;
+                PlanPoint = p;
+                PlanYaw = DefaultYaw(p);
+                Planning = true;
+                return;
+            }
+            if (!Planning) return;
+            bool dragged = PlanDragged = (mp - _rightStart).sqrMagnitude > 400f;
+            if (dragged && GroundPoint(mp, out Vector3 to))
+            {
+                Vector3 d = to - PlanPoint;
+                if (new Vector2(d.x, d.z).magnitude > 30f) PlanYaw = Mathf.Atan2(d.x, d.z);
+            }
+            if (!mouse.rightButton.wasReleasedThisFrame) return;
+            Planning = false;
+            if (Selected.Count == 0) return;
+            if (dragged) OrderMove(PlanPoint, PlanYaw);
+            else RightClick(_rightStart, kb.ctrlKey.isPressed, kb.altKey.isPressed);
+        }
+
+        void RightClick(Vector2 mp, bool face, bool keepShape)
+        {
+            int enemy = _rightEnemy;
+            if (enemy >= 0 && !face && Runner.World.ShipById(enemy) is Ship e && e.Alive)
+            {
+                OrderAttack(enemy);
                 LastOrderPoint = Runner.Presenter.ViewOf(enemy).transform.position;
                 LastOrderWasAttack = true;
                 LastOrderTime = Time.unscaledTime;
@@ -207,6 +338,11 @@ namespace GalacticRupture.Game
                 IssueAll(_ => ShipOrder.Face(point.ToSim()));
                 return;
             }
+            if (!keepShape)
+            {
+                OrderMove(point, PlanYaw);
+                return;
+            }
 
             // The group keeps its shape around the click, squeezed if it was spread wide.
             Vector3 centre = SelectionCentre();
@@ -214,10 +350,13 @@ namespace GalacticRupture.Game
             foreach (int id in Selected)
                 spread = Mathf.Max(spread, (Runner.World.ShipById(id).Position.ToUnity() - centre).magnitude);
             float squeeze = spread > 1500f ? 1500f / spread : 1f;
+            int group = Selected.Count > 1 ? Runner.World.NewGroup() : -1;
             IssueAll(ship =>
             {
                 Vector3 offset = (ship.Position.ToUnity() - centre) * squeeze;
-                return ShipOrder.MoveTo((point + offset).ToSim());
+                var o = ShipOrder.MoveTo((point + offset).ToSim());
+                o.Group = group;
+                return o;
             });
         }
 
