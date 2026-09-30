@@ -15,6 +15,23 @@ namespace GalacticRupture.Sim
         Large,
     }
 
+    // What kind of gun it is, beyond its size: sets its look and what it's good at (IDEAS.md §5.4).
+    public enum WeaponFamily
+    {
+        MassDriver,     // ballistic shells from a heavy gunhouse
+        Autocannon,     // light ballistic, rapid
+        Rotary,         // many spinning barrels, a hail of small rounds
+        Railgun,        // long thin rails, very fast slugs, long reach
+        Accelerator,    // one huge coil gun; the round goes through ships
+        Turbolaser,     // energy bolts from short, hot emitters
+        Pulse,          // clustered quad emitters, rapid short bolts
+        Lance,          // one long emitter, a slow heavy bolt
+        ShieldBurner,   // energy tuned to tear shields down
+        Ion,            // disruptive: kills guns, not hulls
+        Flak,           // bursts to screen small craft
+        PointDefence,   // tiny rapid guns
+    }
+
     public enum DamageChannel
     {
         Ballistic,
@@ -31,6 +48,10 @@ namespace GalacticRupture.Sim
         public DamageChannel Channel;
         public MountSize Size;
         public int Cost = 10;               // credits, on top of the hull
+        public WeaponFamily Family;
+        public string Tech = "";            // the technology that unlocks it; empty: known from the start
+        public float ShieldFactor = 1f;     // multiplier on what it does to shields
+        public int Pierce;                  // ships a round can pass through
 
         public float YawRateDeg = 20f;      // traverse, degrees per second
         public float PitchRateDeg = 15f;

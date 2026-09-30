@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scripted skirmish through the command API, fullscreen screenshots with UI.
-# Usage: Tools/rts.sh <output-dir> [--no-build]
+# Usage: Tools/rts.sh <output-dir> [--no-build|--build] [player args, e.g. -grArsenal]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out="${1:?output dir}"
@@ -14,5 +14,5 @@ if [[ "${2:-}" != "--no-build" ]]; then
 fi
 rm -f "$out"/rts_*.png
 timeout 300 ./Builds/Linux/GalacticRupture.x86_64 -screen-width 1920 -screen-height 1080 -screen-fullscreen 1 \
-  -grCaptureRts "$out" -logFile "$out/player.log"
+  -grCaptureRts "$out" -logFile "$out/player.log" "${@:3}"
 grep -E '\[rts\]|Exception' "$out/player.log" | sort -u

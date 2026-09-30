@@ -10,7 +10,7 @@ namespace GalacticRupture.Sim.Strategic
     public sealed partial class Campaign
     {
         const int SaveMagic = 0x56535247;   // "GRSV"
-        const int SaveVersion = 1;
+        const int SaveVersion = 2;
 
         public bool CanSave => Pending == null && Council == null;
 
@@ -97,6 +97,14 @@ namespace GalacticRupture.Sim.Strategic
                 var pool = Pool(f.Id);
                 w.Write(pool.Count);
                 foreach (var g in pool) WriteGovernor(w, g);
+                var known = new List<string>(f.Known);
+                known.Sort(System.StringComparer.Ordinal);
+                w.Write(known.Count);
+                foreach (string k in known) w.Write(k);
+                w.Write(f.ResearchQueue.Count);
+                foreach (string k in f.ResearchQueue) w.Write(k);
+                w.Write(f.ResearchBank);
+                w.Write(f.TechVersion);
             }
 
             // Fleets and ships.
@@ -306,6 +314,13 @@ namespace GalacticRupture.Sim.Strategic
                 var pool = c.Pool(f.Id);
                 int pooled = r.ReadInt32();
                 for (int g = 0; g < pooled; g++) pool.Add(ReadGovernor(r));
+                int known = r.ReadInt32();
+                for (int k = 0; k < known; k++) f.Known.Add(r.ReadString());
+                int queued = r.ReadInt32();
+                for (int k = 0; k < queued; k++) f.ResearchQueue.Add(r.ReadString());
+                f.ResearchBank = r.ReadSingle();
+                f.TechVersion = r.ReadInt32();
+                c.ApplyKnown(f);
             }
 
             int fleets = r.ReadInt32();
@@ -442,6 +457,11 @@ namespace GalacticRupture.Sim.Strategic
             w.Write(d.Design ?? "");
             w.Write(d.Hardpoints.Count);
             foreach (var hp in d.Hardpoints) w.Write(hp.Mount.Id);
+            // Research improves hulls as they are built; the numbers travel with the ship.
+            w.Write(d.HullHp);
+            w.Write(d.ShieldHp);
+            w.Write(d.ShieldRegen);
+            w.Write(d.LyPerDay);
         }
 
         static HullDef ReadDef(BinaryReader r)
@@ -456,7 +476,15 @@ namespace GalacticRupture.Sim.Strategic
                 mounts[i] = Hulls.MountById(r.ReadString());
                 if (i >= stock.Hardpoints.Count || mounts[i] != stock.Hardpoints[i].Mount) same = false;
             }
-            return same ? stock : stock.WithMounts(design, mounts);
+            float hull = r.ReadSingle(), shield = r.ReadSingle(), regen = r.ReadSingle(), speed = r.ReadSingle();
+            same &= hull == stock.HullHp && shield == stock.ShieldHp && regen == stock.ShieldRegen && speed == stock.LyPerDay;
+            if (same) return stock;
+            var def = stock.WithMounts(design, mounts);
+            def.HullHp = hull;
+            def.ShieldHp = shield;
+            def.ShieldRegen = regen;
+            def.LyPerDay = speed;
+            return def;
         }
 
         static void WriteGovernor(BinaryWriter w, Governor g)

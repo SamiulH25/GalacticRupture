@@ -6,18 +6,18 @@ namespace GalacticRupture.Sim.Strategic
     // taken by landing an army.
     public sealed partial class Campaign
     {
-        public int ReclaimCost(StarSystem s)
+        public int ReclaimCost(int faction, StarSystem s)
         {
             int dormant = 0;
             foreach (var b in s.Buildings) if (b.Dormant) dormant++;
-            return 150 + 60 * dormant;
+            return (int)((150 + 60 * dormant) * Factions[faction].Mods.ReclaimFactor);
         }
 
-        public float ReclaimDays(StarSystem s)
+        public float ReclaimDays(int faction, StarSystem s)
         {
             int dormant = 0;
             foreach (var b in s.Buildings) if (b.Dormant) dormant++;
-            return 30f + 8f * dormant;
+            return (30f + 8f * dormant) * Factions[faction].Mods.ReclaimFactor;
         }
 
         public int CourtCost(StarSystem s) => 30 + (int)(6f * s.Population);
@@ -42,14 +42,14 @@ namespace GalacticRupture.Sim.Strategic
             if (s.Owner >= 0 || s.Derelict != Derelict.Ruin) return false;
             if (s.Reclaimer >= 0 && s.Reclaimer != faction && OnStation(s.Reclaimer, system)) return false;
             if (s.Reclaimer == faction) return false;
-            return OnStation(faction, system) && Factions[faction].Credits >= ReclaimCost(s);
+            return OnStation(faction, system) && Factions[faction].Credits >= ReclaimCost(faction, s);
         }
 
         public bool StartReclaim(int faction, int system)
         {
             if (!CanReclaim(faction, system)) return false;
             var s = Galaxy.Systems[system];
-            Factions[faction].Credits -= ReclaimCost(s);
+            Factions[faction].Credits -= ReclaimCost(faction, s);
             s.Reclaimer = faction;
             s.Reclaim = 0f;
             Emit(CampaignEventKind.ReclamationStarted, system, faction);
@@ -84,7 +84,7 @@ namespace GalacticRupture.Sim.Strategic
                 if (s.Owner >= 0) continue;
                 if (s.Reclaimer >= 0 && OnStation(s.Reclaimer, s.Id))
                 {
-                    s.Reclaim += 1f / (ReclaimDays(s) * 24f);
+                    s.Reclaim += 1f / (ReclaimDays(s.Reclaimer, s) * 24f);
                     if (s.Reclaim >= 1f) Restore(s, s.Reclaimer);
                 }
                 else if (s.Courter >= 0 && OnStation(s.Courter, s.Id))
@@ -111,7 +111,7 @@ namespace GalacticRupture.Sim.Strategic
                 s.Stability = 50f;
             }
             else s.Stability = 45f;
-            s.Militia = MaxMilitia(s) * 0.5f;
+            s.Militia = MilitiaCap(s) * 0.5f;
             Emit(ruin ? CampaignEventKind.SystemReclaimed : CampaignEventKind.HoldoutJoined, s.Id, faction);
             OfferNotable(faction, s);
         }

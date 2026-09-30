@@ -290,6 +290,7 @@ namespace GalacticRupture.Sim.Strategic
                 s.Buildings.Add(new Building(BuildingKind.Fab));
                 s.Buildings.Add(new Building(BuildingKind.Admin));
                 s.Buildings.Add(new Building(BuildingKind.Garrison));
+                s.Buildings.Add(new Building(BuildingKind.Lab));
             }
             else if (tier == 2)
             {

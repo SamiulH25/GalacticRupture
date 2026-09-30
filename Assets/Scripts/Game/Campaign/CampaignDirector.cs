@@ -271,6 +271,16 @@ namespace GalacticRupture.Game
                         Say(ours ? $"{Date}: {SysName(e.System)} joins us."
                                  : $"{Date}: {SysName(e.System)} throws in with the {Tag(e.Faction)}.");
                         break;
+                    case CampaignEventKind.TechLearned when ours:
+                    {
+                        var t = Techs.ById(e.Text);
+                        var guns = string.Join(", ", System.Linq.Enumerable.Select(Techs.Unlocks(t), m => m.Name.ToLowerInvariant()));
+                        Say($"{Date}: <b>research complete: {t.Name}.</b> {(guns.Length > 0 ? $"New guns for the designer: {guns}." : t.Text + ".")}");
+                        break;
+                    }
+                    case CampaignEventKind.ShipDeserted when ours:
+                        Say($"{Date}: <color=#ff8a70>unpaid, the crew of {e.Text} walk off. The treasury is in debt.</color>");
+                        break;
                     case CampaignEventKind.ProposalReceived:
                         Say($"{Date}: an envoy from the {Tag(e.Faction)} waits with an offer.");
                         break;

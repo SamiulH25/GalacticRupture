@@ -89,6 +89,10 @@ namespace GalacticRupture.Sim.Strategic
                 foreach (var s in Galaxy.Systems) if (s.Owner == fac.Id) { any = true; break; }
                 if (any) continue;
                 fac.Eliminated = true;
+                // With nowhere left to put in, its fleets scatter and its armies lay down arms.
+                foreach (var f in Fleets) if (f.Owner == fac.Id && (Pending == null || !Pending.Fleets.Contains(f.Id))) f.Ships.Clear();
+                Armies.RemoveAll(a => a.Owner == fac.Id && (a.Fleet < 0 || FleetById(a.Fleet) == null || !FleetById(a.Fleet).Alive));
+                Fleets.RemoveAll(f => !f.Alive);
                 Emit(CampaignEventKind.FactionEliminated, faction: fac.Id);
             }
             var player = Factions[PlayerFaction];

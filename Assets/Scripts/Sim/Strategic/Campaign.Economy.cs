@@ -12,6 +12,7 @@ namespace GalacticRupture.Sim.Strategic
         Admin,      // influence and stability
         Habitat,    // room for more people
         Depot,      // stretches supply range from this system
+        Lab,        // research
     }
 
     public sealed class Building
@@ -45,6 +46,7 @@ namespace GalacticRupture.Sim.Strategic
             BuildingKind.Fab => 150,
             BuildingKind.Refinery => 150,
             BuildingKind.Depot => 140,
+            BuildingKind.Lab => 180,
             _ => 120,
         };
 
@@ -66,6 +68,7 @@ namespace GalacticRupture.Sim.Strategic
             BuildingKind.Admin => "+1 influence a day, +10 stability",
             BuildingKind.Habitat => "+3 population ceiling",
             BuildingKind.Depot => "+8 ly supply range from here",
+            BuildingKind.Lab => "+3 research a day",
             _ => "",
         };
 
@@ -75,13 +78,14 @@ namespace GalacticRupture.Sim.Strategic
         {
             var o = new SystemOutput();
             if (s.Owner < 0) return o;
-            o.Influence = 0.2f + s.Count(BuildingKind.Admin) + (s.Capital ? 2f : 0f);
+            var mods = Factions[s.Owner].Mods;
+            o.Influence = 0.2f + (1f + mods.AdminInfluence) * s.Count(BuildingKind.Admin) + (s.Capital ? 2f : 0f);
             if (s.Unrest <= 0f)
             {
                 float stab = s.Stability >= 50f ? 1f : 0.4f + 0.6f * s.Stability / 50f;
                 float gov = s.Governor != null ? 1f + 0.05f * (s.Governor.Industry - 3) : 1f;
-                o.Credits = (3f * s.Population + 20f * s.Count(BuildingKind.Refinery)) * stab * gov;
-                o.Industry = (0.5f * s.Population + 8f * s.Count(BuildingKind.Fab)) * stab * gov;
+                o.Credits = (3f * s.Population + (20f + mods.RefineryCredits) * s.Count(BuildingKind.Refinery)) * stab * gov;
+                o.Industry = (0.5f * s.Population + (8f + mods.FabIndustry) * s.Count(BuildingKind.Fab)) * stab * gov;
                 if (Factions[s.Owner].EmbargoHours > 0f) o.Credits *= 0.7f;
             }
             if (s.Governor != null)
@@ -95,7 +99,14 @@ namespace GalacticRupture.Sim.Strategic
         }
 
         // How fast the yard and the builders here work: 1 is standard.
-        public float YardRate(StarSystem s) => System.MathF.Min(3f, System.MathF.Max(0.5f, 0.5f + Output(s).Industry / 12f));
+        public float YardRate(StarSystem s) =>
+            System.MathF.Min(3f, System.MathF.Max(0.5f, 0.5f + Output(s).Industry / 12f)) * (s.Owner >= 0 ? Factions[s.Owner].Mods.YardRate : 1f);
+
+        public float MaxPopulation(StarSystem s) =>
+            s.MaxPopulation + (s.Owner >= 0 ? Factions[s.Owner].Mods.HabitatPop * s.Count(BuildingKind.Habitat) : 0f);
+
+        // The militia a system can raise, research included.
+        public float MilitiaCap(StarSystem s) => MaxMilitia(s) * (s.Owner >= 0 ? Factions[s.Owner].Mods.Militia : 1f);
 
         public float BuilderRate(StarSystem s)
         {
@@ -132,7 +143,7 @@ namespace GalacticRupture.Sim.Strategic
         public float StabilityTarget(StarSystem s)
         {
             if (s.Owner < 0) return s.Stability;
-            float t = 55f + 10f * s.Count(BuildingKind.Admin) + 5f * s.Count(BuildingKind.Garrison) + (s.Capital ? 15f : 0f);
+            float t = 55f + (10f + Factions[s.Owner].Mods.AdminStability) * s.Count(BuildingKind.Admin) + 5f * s.Count(BuildingKind.Garrison) + (s.Capital ? 15f : 0f);
             if (s.Governor != null)
                 t += 4f * (s.Governor.Loyalty - 3) + (s.Governor.Trait == GovernorTrait.Populist ? 10f : 0f);
             if (s.Unrest > 0f) t -= 30f;
@@ -156,7 +167,7 @@ namespace GalacticRupture.Sim.Strategic
             return 6f * s.Population + 40f * s.Count(BuildingKind.Garrison) + (s.Capital ? 60f : 0f) + (s.OldCapital ? 80f : 0f);
         }
 
-        public float SupplyRangeOf(StarSystem s) => Factions[s.Owner].SupplyRange + 8f * s.Count(BuildingKind.Depot);
+        public float SupplyRangeOf(StarSystem s) => Factions[s.Owner].SupplyRange + Factions[s.Owner].Mods.SupplyRange + 8f * s.Count(BuildingKind.Depot);
 
         // --- Hourly and daily ---------------------------------------------------------------------
 
@@ -193,7 +204,7 @@ namespace GalacticRupture.Sim.Strategic
             foreach (var s in Galaxy.Systems)
             {
                 // People: growth toward the ceiling while the place is calm; decline above it.
-                float max = s.MaxPopulation;
+                float max = MaxPopulation(s);
                 if (s.Owner >= 0 || s.Derelict == Derelict.Holdout)
                 {
                     if (s.Population > max) s.Population = System.MathF.Max(max, s.Population - 0.1f);
@@ -208,6 +219,35 @@ namespace GalacticRupture.Sim.Strategic
                 if (s.Governor != null) GovernorDay(s);
             }
             GovernorPools();
+            Debts();
+        }
+
+        public const float DebtLimit = -300f;
+
+        // Crews that go unpaid leave: a power deep in debt loses its cheapest hull each day
+        // until the treasury recovers, and its worlds grow restless.
+        void Debts()
+        {
+            foreach (var fac in Factions)
+            {
+                if (fac.Eliminated || fac.Credits >= DebtLimit) continue;
+                Fleet from = null;
+                int index = -1;
+                foreach (var f in Fleets)
+                {
+                    if (!f.Alive || f.Owner != fac.Id || f.Held) continue;
+                    if (Pending != null && Pending.Fleets.Contains(f.Id)) continue;
+                    for (int i = 0; i < f.Ships.Count; i++)
+                        if (index < 0 || f.Ships[i].Def.Cost < from.Ships[index].Def.Cost) { from = f; index = i; }
+                }
+                if (from == null) continue;
+                var ship = from.Ships[index];
+                from.Ships.RemoveAt(index);
+                DropExcessTroops(from);
+                if (!from.Alive) Fleets.Remove(from);
+                Emit(CampaignEventKind.ShipDeserted, from.System, fac.Id, text: ship.Name);
+                foreach (var s in Galaxy.Systems) if (s.Owner == fac.Id) s.Stability = System.MathF.Max(0f, s.Stability - 1f);
+            }
         }
 
         // --- Player (and AI) orders ---------------------------------------------------------------
@@ -264,7 +304,7 @@ namespace GalacticRupture.Sim.Strategic
         public int Advise(StarSystem s, GovernorFocus focus)
         {
             if (s.FreeSlots <= 0 || Constructing(s)) return -1;
-            bool crowded = s.Population >= s.MaxPopulation * 0.85f;
+            bool crowded = s.Population >= MaxPopulation(s) * 0.85f;
             if (s.Stability < 40f && s.Count(BuildingKind.Admin) < 2) return (int)BuildingKind.Admin;
             if (crowded && s.FreeSlots > 1 && s.Count(BuildingKind.Habitat) < 2) return (int)BuildingKind.Habitat;
             bool yardOk = s.Population >= 3f && s.Count(BuildingKind.Yard) < 2;
@@ -273,7 +313,8 @@ namespace GalacticRupture.Sim.Strategic
                 GovernorFocus.Economy => new[] { BuildingKind.Refinery, BuildingKind.Habitat, BuildingKind.Refinery, BuildingKind.Admin },
                 GovernorFocus.Industry => new[] { BuildingKind.Fab, BuildingKind.Yard, BuildingKind.Fab, BuildingKind.Refinery },
                 GovernorFocus.Military => new[] { BuildingKind.Yard, BuildingKind.Garrison, BuildingKind.Fab, BuildingKind.Depot, BuildingKind.Yard },
-                _ => new[] { BuildingKind.Refinery, BuildingKind.Garrison, BuildingKind.Fab, BuildingKind.Yard, BuildingKind.Admin, BuildingKind.Habitat },
+                GovernorFocus.Research => new[] { BuildingKind.Lab, BuildingKind.Lab, BuildingKind.Habitat, BuildingKind.Admin, BuildingKind.Lab },
+                _ => new[] { BuildingKind.Refinery, BuildingKind.Garrison, BuildingKind.Fab, BuildingKind.Lab, BuildingKind.Yard, BuildingKind.Admin, BuildingKind.Habitat },
             };
             foreach (var k in order)
             {

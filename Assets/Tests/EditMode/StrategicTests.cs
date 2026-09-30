@@ -106,7 +106,7 @@ namespace GalacticRupture.Tests
             RunHours(c, 24 * 5);
             Assert.AreEqual(-1, b.Owner);
             c.MoveFleet(f.Id, 1);
-            RunHours(c, (int)(c.ReclaimDays(b) * 24f) + 48);
+            RunHours(c, (int)(c.ReclaimDays(0, b) * 24f) + 48);
             Assert.AreEqual(0, b.Owner, "restored once the expedition finishes the work");
             Assert.AreEqual(Derelict.None, b.Derelict);
             Assert.IsTrue(b.Has(BuildingKind.Refinery), "the old plant comes back online");
@@ -205,6 +205,59 @@ namespace GalacticRupture.Tests
             RunHours(c, 24 * 120);
             Assert.Less(c.DerelictsLeft, derelicts, "the other powers reclaim the ruins");
             Assert.AreEqual(1, c.Act, "act 1 is still running after four months");
+        }
+
+        [Test]
+        public void ResearchUnlocksGunsAndImprovesHulls()
+        {
+            var c = Line();
+            Assert.IsFalse(c.CanUse(0, Hulls.HeavyTurbolaser), "not known at the start");
+            Assert.IsTrue(c.CanUse(0, Hulls.MainBattery));
+            c.Enqueue(0, "rails");
+            Assert.AreEqual("rotary", c.Current(0).Id, "prerequisites are queued first");
+            c.Factions[0].ResearchBank = 100000f;
+            RunHours(c, 2);
+            Assert.IsTrue(c.Knows(0, "rotary"));
+            Assert.IsTrue(c.Knows(0, "rails"));
+            Assert.IsTrue(c.CanUse(0, Hulls.Railgun));
+
+            var design = c.DesignFor(0, HullClass.Destroyer);
+            float before = c.Buildable(0, design).ShieldHp;
+            c.Learn(0, Techs.ById("deflectors"));
+            Assert.Greater(c.Buildable(0, design).ShieldHp, before, "new hulls get the better shields");
+        }
+
+        [Test]
+        public void ResearchSurvivesASave()
+        {
+            var a = Line();
+            a.Learn(0, Techs.ById("armour"));
+            a.Enqueue(0, "reactive_shields");
+            a.Factions[0].ResearchBank = 123f;
+            var ms = new MemoryStream();
+            a.Save(ms);
+            var b = Campaign.Load(new MemoryStream(ms.ToArray()));
+            Assert.IsTrue(b.Knows(0, "armour"));
+            Assert.AreEqual(1.15f, b.Factions[0].Mods.Hull, 1e-4f);
+            CollectionAssert.AreEqual(a.Factions[0].ResearchQueue, b.Factions[0].ResearchQueue);
+        }
+
+        [Test]
+        public void AcceleratorRoundsGoThroughShips()
+        {
+            var w = new World(2);
+            var a = w.Spawn(Hulls.Corvette, 1, new System.Numerics.Vector3(0f, 0f, 1000f), 0f);
+            var b = w.Spawn(Hulls.Corvette, 1, new System.Numerics.Vector3(0f, 0f, 1100f), 0f);
+            w.Projectiles.Add(new Projectile
+            {
+                Position = System.Numerics.Vector3.Zero, PrevPosition = System.Numerics.Vector3.Zero,
+                Velocity = new System.Numerics.Vector3(0f, 0f, 5000f), Life = 2f, Damage = 700f,
+                Side = 0, Shooter = -1, Channel = DamageChannel.Ballistic, Class = MountClass.Line,
+                Family = WeaponFamily.Accelerator, ShieldFactor = 1f, Pierce = 2, LastHit = -1,
+            });
+            for (int i = 0; i < 20; i++) w.Step();
+            Assert.Less(a.Hull + a.Shield, Hulls.Corvette.HullHp + Hulls.Corvette.ShieldHp);
+            Assert.Less(b.Hull + b.Shield, Hulls.Corvette.HullHp + Hulls.Corvette.ShieldHp, "the one behind is hit too");
         }
     }
 }

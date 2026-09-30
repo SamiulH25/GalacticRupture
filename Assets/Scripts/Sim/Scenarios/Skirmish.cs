@@ -22,28 +22,49 @@ namespace GalacticRupture.Sim
 
         float _aiTimer;
 
-        public static World Create(ulong seed)
+        // `arsenal`: every ship carries a different mix of weapon families, to see them side by side.
+        public static World Create(ulong seed, bool arsenal = false)
         {
             var world = new World(seed);
             var s = new Skirmish();
             world.Director = s;
 
-            var bs = world.Spawn(Hulls.Battleship, PlayerSide, new Vector3(0f, 0f, -2500f), 0f);
+            var bs = world.Spawn(arsenal ? ArsenalBattleship.Built : Hulls.Battleship, PlayerSide, new Vector3(0f, 0f, -2500f), 0f);
             bs.Speed = 0f;
             s.Flagship = bs.Id;
+            int k = 0;
             foreach (var x in new[] { -340f, 340f, 0f })
-                world.Spawn(Hulls.Destroyer, PlayerSide, new Vector3(x, x == 0f ? -60f : 20f, x == 0f ? -2250f : -2650f), 0f).Speed = 0f;
+                world.Spawn(arsenal ? ArsenalDestroyers[k++].Built : Hulls.Destroyer, PlayerSide, new Vector3(x, x == 0f ? -60f : 20f, x == 0f ? -2250f : -2650f), 0f).Speed = 0f;
 
             ref var rng = ref world.Rng;
             float yaw = SimMath.Pi;
             for (int i = 0; i < 2; i++)
-                world.Spawn(Hulls.Destroyer, EnemySide, new Vector3((i - 0.5f) * 500f, 0f, 3000f), yaw);
+                world.Spawn(arsenal ? ArsenalDestroyers[i].Built : Hulls.Destroyer, EnemySide, new Vector3((i - 0.5f) * 500f, 0f, 3000f), yaw);
             for (int i = 0; i < 4; i++)
                 world.Spawn(Hulls.Frigate, EnemySide, new Vector3((i - 1.5f) * 380f, rng.Range(-100f, 100f), 3400f), yaw);
             for (int i = 0; i < 10; i++)
                 world.Spawn(Hulls.Corvette, EnemySide, new Vector3((i - 4.5f) * 160f, rng.Range(-200f, 200f), 3900f), yaw);
             return world;
         }
+
+        static ShipDesign Loadout(string name, HullDef hull, params MountDef[] mounts)
+        {
+            var d = new ShipDesign(name, hull);
+            for (int i = 0; i < mounts.Length; i++) d.Set(i, mounts[i]);
+            return d;
+        }
+
+        static readonly ShipDesign ArsenalBattleship = Loadout("Arsenal", Hulls.Battleship,
+            Hulls.HeavyTurbolaser, Hulls.HeavyRailgun, Hulls.LanceBattery, Hulls.MassAccelerator,
+            Hulls.Railgun, Hulls.Railgun, Hulls.IonBattery, Hulls.IonBattery, Hulls.FlakBattery, Hulls.FlakBattery,
+            Hulls.PulseLaser, Hulls.PulseLaser, Hulls.RotaryCannon, Hulls.RotaryCannon, Hulls.LightIon, Hulls.LightIon);
+
+        static readonly ShipDesign[] ArsenalDestroyers =
+        {
+            Loadout("Rotary", Hulls.Destroyer, Hulls.RotaryDriver, Hulls.RotaryDriver, Hulls.AutoCannon, Hulls.AutoCannon),
+            Loadout("Burner", Hulls.Destroyer, Hulls.ShieldBurner, Hulls.ShieldBurner, Hulls.PulseLaser, Hulls.PulseLaser),
+            Loadout("Driver", Hulls.Destroyer, Hulls.MassDriver, Hulls.FlakBattery, Hulls.RotaryCannon, Hulls.LightIon),
+        };
 
         public void Tick(World world)
         {

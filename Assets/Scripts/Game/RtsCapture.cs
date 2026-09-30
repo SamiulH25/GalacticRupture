@@ -47,6 +47,12 @@ namespace GalacticRupture.Game
             }
             var w = Runner.World;
             float t = w.Time;
+            // -grArsenal: close-ups of the gun families first, in real time with the battle paused.
+            if (_closeup < Closeups.Length && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-grArsenal") >= 0)
+            {
+                Closeup(w);
+                return;
+            }
             switch (_step)
             {
                 case 0 when t > 0.5f:
@@ -97,6 +103,45 @@ namespace GalacticRupture.Game
                     break;
             }
         }
+
+        int _closeup;
+        float _closeupAt;
+
+        // Ship index on the player's side, yaw, pitch, distance, and a local offset to look at.
+        static readonly (int Ship, float Yaw, float Pitch, float Distance, Vector3 Offset)[] Closeups =
+        {
+            (0, 150f, 22f, 230f, new Vector3(0f, 10f, 70f)),
+            (0, 30f, 22f, 230f, new Vector3(0f, 10f, -60f)),
+            (0, 90f, 30f, 150f, new Vector3(10f, 10f, 20f)),
+            (1, 140f, 25f, 120f, new Vector3(0f, 5f, 0f)),
+            (2, 140f, 25f, 120f, new Vector3(0f, 5f, 0f)),
+            (3, 140f, 25f, 120f, new Vector3(0f, 5f, 0f)),
+        };
+
+        void Closeup(World w)
+        {
+            Runner.TimeScale = 0f;
+            if (Time.unscaledTime < _closeupAt) return;
+            var c = Closeups[_closeup];
+            int id = -1, n = 0;
+            foreach (var s in w.Ships)
+                if (s.Side == 0 && n++ == c.Ship) id = s.Id;
+            if (_phase == 0)
+            {
+                Rig.SnapTo(id, c.Yaw, c.Pitch, c.Distance, c.Offset);
+                _phase = 1;
+                _closeupAt = Time.unscaledTime + 1.5f;
+                return;
+            }
+            ScreenCapture.CaptureScreenshot(Path.Combine(_dir, $"arsenal_{_closeup}.png"));
+            Debug.Log($"[rts] arsenal close-up {_closeup}");
+            _closeup++;
+            _phase = 0;
+            _closeupAt = Time.unscaledTime + 0.3f;
+            if (_closeup >= Closeups.Length) Runner.TimeScale = 1f;
+        }
+
+        int _phase;
 
         int NearestEnemy(World w, bool Destroyer)
         {

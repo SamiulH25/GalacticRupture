@@ -14,6 +14,11 @@ namespace GalacticRupture.Sim
         public int Shooter;
         public DamageChannel Channel;
         public MountClass Class;
+        public WeaponFamily Family;   // for the look of the round
+        public MountSize Size;
+        public float ShieldFactor;    // shield-burners: how hard it bites into shields
+        public int Pierce;            // accelerators: ships it can still pass through
+        public int LastHit;           // the ship it just passed through, -1 none
     }
 
     // Anything that drives a scenario forward: spawning waves, scripted events.

@@ -107,6 +107,7 @@ namespace GalacticRupture.Sim.Strategic
                     var ship = world.Spawn(r.Def, side, p, side == 0 ? 0f : SimMath.Pi);
                     ship.Faction = f.Owner;
                     if (f.Admiral != null && !(side == 0 && playerCommands)) ship.ReloadScale = f.Admiral.ReloadScale;
+                    ship.ReloadScale *= c.Factions[f.Owner].Mods.Reload;
                     ship.Speed = r.Def.MaxSpeed * 0.3f;
                     ship.Hull = r.Hull;
                     for (int m = 0; m < ship.Mounts.Count && m < r.MountAlive.Length; m++)

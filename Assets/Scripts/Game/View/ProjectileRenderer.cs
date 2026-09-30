@@ -5,7 +5,9 @@ using UnityEngine.Rendering;
 
 namespace GalacticRupture.Game
 {
-    // Draws every round in flight as an instanced tracer streak, grouped by look.
+    // Draws every round in flight as an instanced tracer streak, grouped by look: each weapon
+    // family and size has its own streak (WeaponLook), and energy bolts take the colour of the
+    // side that fired them.
     public sealed class ProjectileRenderer : MonoBehaviour
     {
         struct Look
@@ -18,32 +20,31 @@ namespace GalacticRupture.Game
         const int Batch = 1023;
 
         GameArt _art;
-        readonly List<Matrix4x4>[] _buckets = new List<Matrix4x4>[4];
-        Look[] _looks;
+        readonly List<Look> _looks = new List<Look>();
+        readonly List<List<Matrix4x4>> _buckets = new List<List<Matrix4x4>>();
+        readonly Dictionary<int, int> _index = new Dictionary<int, int>();
         readonly Matrix4x4[] _scratch = new Matrix4x4[Batch];
 
-        public void Init(GameArt art)
-        {
-            _art = art;
-            _looks = new[]
-            {
-                new Look { Material = art.TracerBallistic, Length = 70f, Width = 2.2f },
-                new Look { Material = art.TracerEnergy, Length = 34f, Width = 1.3f },
-                new Look { Material = art.TracerPointDefence, Length = 16f, Width = 0.5f },
-                new Look { Material = art.TracerEnemy, Length = 26f, Width = 1.1f },
-            };
-            for (int i = 0; i < _buckets.Length; i++) _buckets[i] = new List<Matrix4x4>(4096);
-        }
+        public void Init(GameArt art) => _art = art;
 
-        static int LookFor(in Projectile p)
+        int LookFor(in Projectile p)
         {
-            if (p.Side != TurretToy.PlayerSide) return 3;
-            return p.Class switch
-            {
-                MountClass.Line => 0,
-                MountClass.PointDefence => 2,
-                _ => 1,
-            };
+            var wl = WeaponLook.Of(p.Family, p.Size);
+            bool player = p.Side == TurretToy.PlayerSide;
+            int key = ((int)p.Family * 3 + (int)p.Size) * 2 + (wl.SideColoured && !player ? 1 : 0);
+            if (_index.TryGetValue(key, out int i)) return i;
+
+            var source = wl.SideColoured ? _art.TracerEnergy : _art.TracerBallistic;
+            var m = new Material(source) { name = $"Tracer_{p.Family}_{p.Size}", enableInstancing = true };
+            Color c = wl.SideColoured ? (player ? WeaponLook.PlayerBolt : WeaponLook.EnemyBolt) : wl.Color;
+            m.SetColor("_Color", c);
+            m.SetFloat("_Intensity", wl.Intensity);
+            if (p.Family == WeaponFamily.Ion) m.SetFloat("_Softness", 4f);
+            i = _looks.Count;
+            _looks.Add(new Look { Material = m, Length = wl.Length, Width = wl.Width });
+            _buckets.Add(new List<Matrix4x4>(1024));
+            _index[key] = i;
+            return i;
         }
 
         public void Draw(World world, float alpha)
@@ -63,7 +64,7 @@ namespace GalacticRupture.Game
                 _buckets[look].Add(Matrix4x4.TRS(head - dir * l.Length, Quaternion.LookRotation(dir), new Vector3(l.Width, l.Width, l.Length)));
             }
 
-            for (int b = 0; b < _buckets.Length; b++)
+            for (int b = 0; b < _buckets.Count; b++)
             {
                 var bucket = _buckets[b];
                 if (bucket.Count == 0) continue;

@@ -18,6 +18,7 @@ namespace GalacticRupture.Sim.Strategic
         Economy,
         Industry,
         Military,
+        Research,
     }
 
     public enum GovernorOrigin
@@ -174,7 +175,7 @@ namespace GalacticRupture.Sim.Strategic
         void GovernorDay(StarSystem s)
         {
             var g = s.Governor;
-            if (g.Trait == GovernorTrait.Martial) s.Militia = System.MathF.Min(MaxMilitia(s) * 1.25f, s.Militia + 2f);
+            if (g.Trait == GovernorTrait.Martial) s.Militia = System.MathF.Min(MilitiaCap(s) * 1.25f, s.Militia + 2f);
 
             // A disloyal governor of a miserable border system can take it out of the war.
             if (g.Loyalty <= 2 && s.Stability < 20f && !s.Capital && BordersEnemy(s) && _rng.NextFloat() < 0.015f * (3 - g.Loyalty))

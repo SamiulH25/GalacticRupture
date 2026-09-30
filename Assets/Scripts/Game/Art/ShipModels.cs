@@ -48,7 +48,10 @@ namespace GalacticRupture.Game
         public static TurretModel Turret(MountDef def)
         {
             if (TurretCache.TryGetValue(def.Id, out var t)) return t;
-            t = def.Class switch
+            // The first four guns keep their original look (and have Blender models); every
+            // other gun is built by family (WeaponModels).
+            bool legacy = def.Id == "main_battery" || def.Id == "secondary" || def.Id == "point_defence" || def.Id == "corvette_gun";
+            t = !legacy ? WeaponModels.Build(def) : def.Class switch
             {
                 MountClass.Line => BuildTurret(def, width: 13f, back: -9f, front: 6f, height: 7.5f, radius: 0.85f, spacing: 2.6f, recoil: 2.4f, rangefinder: true),
                 MountClass.PointDefence => BuildTurret(def, 3.2f, -1.6f, 1.4f, 2.8f, 0.22f, 0.7f, 0.5f, false),

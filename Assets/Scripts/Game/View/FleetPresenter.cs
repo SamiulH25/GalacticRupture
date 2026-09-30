@@ -43,15 +43,12 @@ namespace GalacticRupture.Game
                     if (view == null) break;
                     view.OnFired(e.Mount, e.Barrel);
                     var def = ship.Mounts[e.Mount].Def;
-                    float scale = def.Class switch
-                    {
-                        MountClass.Line => 4.5f,
-                        MountClass.PointDefence => 0.6f,
-                        _ => def.Id == "corvette_gun" ? 0.9f : 1.8f,
-                    };
-                    Color tint = ship.Side != TurretToy.PlayerSide ? new Color(1f, 0.35f, 0.4f)
-                        : def.Channel == DamageChannel.Energy ? new Color(0.5f, 0.85f, 1f)
-                        : new Color(1f, 0.75f, 0.45f);
+                    // Flash size and colour by weapon family (WeaponLook).
+                    var look = WeaponLook.Of(def.Family, def.Size);
+                    float scale = look.Muzzle;
+                    Color tint = look.SideColoured
+                        ? (ship.Side == TurretToy.PlayerSide ? WeaponLook.PlayerBolt : WeaponLook.EnemyBolt)
+                        : look.Color;
                     _fx.MuzzleFlash(view.MuzzleWorld(e.Mount, e.Barrel), view.BarrelForward(e.Mount), ship.Velocity.ToUnity(), scale, tint);
                     break;
                 }

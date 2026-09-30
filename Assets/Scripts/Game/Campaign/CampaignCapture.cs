@@ -188,11 +188,26 @@ namespace GalacticRupture.Game
                 case 7:
                     Shot("designer");
                     _wait = 0.3f;
-                    _step++;
+                    _step = 40;
+                    break;
+                case 40:
+                    Hud.ShowDesigner = false;
+                    c.Learn(Campaign.PlayerFaction, Techs.ById("heavy_turbolasers"));
+                    c.Enqueue(Campaign.PlayerFaction, "lances");
+                    c.Enqueue(Campaign.PlayerFaction, "armour");
+                    c.Factions[Campaign.PlayerFaction].ResearchBank = 700f;
+                    Hud.ShowResearch = true;
+                    _wait = 0.8f;
+                    _step = 41;
+                    break;
+                case 41:
+                    Shot("research");
+                    _wait = 0.3f;
+                    _step = 8;
                     break;
                 case 8:
                 {
-                    Hud.ShowDesigner = false;
+                    Hud.ShowResearch = false;
                     _ruin = Nearest(s => s.Owner < 0 && s.Derelict == Derelict.Ruin);
                     _holdout = Nearest(s => s.Owner < 0 && s.Derelict == Derelict.Holdout && !s.OldCapital);
                     var exp = Named("First Expedition");

@@ -103,6 +103,13 @@ namespace GalacticRupture.Sim.Strategic
         public float EmbargoHours;      // council sanction: income cut while > 0
         public readonly List<ShipDesign> Designs = new List<ShipDesign>();
 
+        // Research (Tech.cs).
+        public readonly HashSet<string> Known = new HashSet<string>();
+        public readonly List<string> ResearchQueue = new List<string>();
+        public float ResearchBank;
+        public TechMods Mods = new TechMods();
+        public int TechVersion;
+
         public ShipDesign Design(string name)
         {
             foreach (var d in Designs) if (d.Name == name) return d;
@@ -151,6 +158,8 @@ namespace GalacticRupture.Sim.Strategic
         HoldoutJoined,
         ProposalReceived,
         ActBegan,
+        TechLearned,
+        ShipDeserted,
     }
 
     public struct CampaignEvent
@@ -258,6 +267,7 @@ namespace GalacticRupture.Sim.Strategic
             BuildQueue();
             Repair();
             Reclamation();
+            ResearchTick();
             AutoLand();
             GroundWar();
             Acts();

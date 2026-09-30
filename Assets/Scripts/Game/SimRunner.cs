@@ -58,7 +58,7 @@ namespace GalacticRupture.Game
                     break;
                 case Launch.Skirmish:
                 case Launch.RtsCapture:
-                    Load(Skirmish.Create(Seed));
+                    Load(Skirmish.Create(Seed, System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-grArsenal") >= 0));
                     break;
             }
         }

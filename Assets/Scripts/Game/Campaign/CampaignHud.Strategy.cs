@@ -22,13 +22,14 @@ namespace GalacticRupture.Game
         static readonly BuildingKind[] Kinds =
         {
             BuildingKind.Refinery, BuildingKind.Fab, BuildingKind.Yard, BuildingKind.Garrison,
-            BuildingKind.Admin, BuildingKind.Habitat, BuildingKind.Depot,
+            BuildingKind.Admin, BuildingKind.Habitat, BuildingKind.Depot, BuildingKind.Lab,
         };
 
         static string Name(BuildingKind k) => k switch
         {
             BuildingKind.Admin => "Administration",
             BuildingKind.Depot => "Supply depot",
+            BuildingKind.Lab => "Laboratory",
             _ => k.ToString(),
         };
 
@@ -67,7 +68,7 @@ namespace GalacticRupture.Game
             }
 
             GUI.Label(new Rect(x, y, cw, 20),
-                $"population {s.Population:0.0} / {s.MaxPopulation:0} · {s.Slots} slots" + (s.Owner >= 0 ? $" · stability {s.Stability:0} <color=#8aa0b8>(→{C.StabilityTarget(s):0})</color>" : ""), _small);
+                $"population {s.Population:0.0} / {C.MaxPopulation(s):0} · {s.Slots} slots" + (s.Owner >= 0 ? $" · stability {s.Stability:0} <color=#8aa0b8>(→{C.StabilityTarget(s):0})</color>" : ""), _small);
             y += 20;
             if (s.Unrest > 0f)
             {
@@ -115,7 +116,7 @@ namespace GalacticRupture.Game
                 if (s.Reclaimer != me)
                 {
                     bool can = C.CanReclaim(me, s.Id);
-                    if (Button(new Rect(x, y, cw, 30), $"RECLAIM   <color=#d9b870>{C.ReclaimCost(s)} cr</color>   <color=#8aa0b8>{C.ReclaimDays(s):0} days on station</color>", can, can))
+                    if (Button(new Rect(x, y, cw, 30), $"RECLAIM   <color=#d9b870>{C.ReclaimCost(me, s)} cr</color>   <color=#8aa0b8>{C.ReclaimDays(me, s):0} days on station</color>", can, can))
                         C.StartReclaim(me, s.Id);
                     y += 34;
                     if (!can && !C.OnStation(me, s.Id))
@@ -204,13 +205,13 @@ namespace GalacticRupture.Game
                 y += 20;
                 GUI.Label(new Rect(x, y, cw, 20), $"administration {g.Administration} · industry {g.Industry} · loyalty {g.Loyalty} · takes {g.Cut:P0}", _tiny);
                 y += 22;
-                float fw = (cw - 18) / 4f;
-                for (int i = 0; i < 4; i++)
+                float fw = (cw - 12) / 3f;
+                for (int i = 0; i < 5; i++)
                 {
                     var f = (GovernorFocus)i;
-                    if (Button(new Rect(x + i * (fw + 6), y, fw, 24), FocusName(f), true, g.Focus == f)) C.SetFocus(me, s.Id, f);
+                    if (Button(new Rect(x + i % 3 * (fw + 6), y + i / 3 * 28, fw, 24), FocusName(f), true, g.Focus == f)) C.SetFocus(me, s.Id, f);
                 }
-                y += 30;
+                y += 58;
                 if (Button(new Rect(x, y, cw, 24), "DISMISS  <color=#8aa0b8>stability suffers</color>")) C.Dismiss(me, s.Id);
                 y += 30;
             }
@@ -252,7 +253,7 @@ namespace GalacticRupture.Game
             GUI.Label(new Rect(x, y, cw, 20), Caps("Garrison"), _caps);
             y += 22;
             GUI.Label(new Rect(x, y, 200, 20), $"militia {s.Militia:0}", _label);
-            Bar(new Rect(x + cw - 114, y + 8, 114, 4), s.Militia / Mathf.Max(1f, Campaign.MaxMilitia(s)), ArmyBar);
+            Bar(new Rect(x + cw - 114, y + 8, 114, 4), s.Militia / Mathf.Max(1f, C.MilitiaCap(s)), ArmyBar);
             y += 24;
             foreach (var a in C.ArmiesAt(s.Id))
             {
@@ -287,7 +288,7 @@ namespace GalacticRupture.Game
                 }
             foreach (var d in C.Factions[me].Designs)
             {
-                var hull = d.Built;
+                var hull = C.Buildable(me, d);
                 bool can = C.CanBuild(me, s.Id, hull);
                 if (Button(new Rect(x, y, cw, 28), $"{d.Name.ToUpperInvariant()}   <color=#d9b870>{hull.Cost} cr</color>   <color=#8aa0b8>{hull.BuildDays / rate:0.#} days</color>", can)
                     && C.QueueBuild(me, s.Id, hull))
@@ -314,7 +315,7 @@ namespace GalacticRupture.Game
                     Bar(new Rect(r.x + 16, y + 21, 348, 3), here.Reclaim, ArmyBar);
                     return y + 30;
                 }
-                if (Button(new Rect(r.x + 16, y, 348, 30), $"RECLAIM {here.Name.ToUpperInvariant()}   <color=#d9b870>{C.ReclaimCost(here)} cr</color>", C.CanReclaim(me, here.Id), true))
+                if (Button(new Rect(r.x + 16, y, 348, 30), $"RECLAIM {here.Name.ToUpperInvariant()}   <color=#d9b870>{C.ReclaimCost(me, here)} cr</color>", C.CanReclaim(me, here.Id), true))
                     C.StartReclaim(me, here.Id);
                 return y + 36;
             }
@@ -396,7 +397,9 @@ namespace GalacticRupture.Game
             float w = 1000, h = Mathf.Min(760, Screen.height - 120);
             var r = Box(Screen.width * 0.5f - w * 0.5f, 70, w, h, FactionStyle.Of(me), solid: true);
             GUI.Label(new Rect(r.x + 20, r.y + 14, 400, 30), "Ship designs", _title);
-            GUI.Label(new Rect(r.x + 20, r.y + 44, 600, 20), "Every hull's hardpoints take any gun of their size or smaller. Yards build what is listed here.", _small);
+            int locked = Hulls.Mounts.Count(m => !C.CanUse(Campaign.PlayerFaction, m));
+            GUI.Label(new Rect(r.x + 20, r.y + 44, 900, 20), "Every hull's hardpoints take any gun of their size or smaller. Yards build what is listed here." +
+                (locked > 0 ? $"  <color=#ffb070>{locked} more guns wait on research (R).</color>" : ""), _small);
             if (Button(new Rect(r.xMax - 120, r.y + 14, 100, 28), "CLOSE")) _showDesigner = false;
 
             // The list.
@@ -449,7 +452,7 @@ namespace GalacticRupture.Game
             }
             dy += 42;
 
-            var built = d.Built;
+            var built = C.Buildable(me, d);
             GUI.Label(new Rect(dx, dy, dw, 20),
                 $"{d.Hull.Class} hull · <b>{built.Cost}</b> cr · {built.BuildDays:0.#} days · upkeep {built.Cost * Campaign.ShipUpkeep:0.#} cr/day", _label);
             dy += 22;
@@ -473,18 +476,27 @@ namespace GalacticRupture.Game
                 string side = hp.LocalPosition.X > 1f ? " starboard" : hp.LocalPosition.X < -1f ? " port" : " centreline";
                 GUI.Label(new Rect(0, yy + 6, 150, 20), $"{hp.Size.ToString().ToLowerInvariant()} · {where}{side}", _tiny);
                 if (GUI.Button(new Rect(150, yy, 30, 30), "<", _button)) Cycle(d, i, -1);
-                GUI.Label(new Rect(188, yy + 4, 150, 22), m.Name, _label);
+                Fill(new Rect(186, yy + 6, 3, 18), FamilyColour(m));
+                GUI.Label(new Rect(194, yy + 4, 144, 22), m.Name, _label);
                 if (GUI.Button(new Rect(336, yy, 30, 30), ">", _button)) Cycle(d, i, 1);
                 GUI.Label(new Rect(378, yy + 6, dw - 400, 20),
-                    $"{m.Channel.ToString().ToLowerInvariant()} · {m.Damage * m.Barrels / m.Reload:0} dps · {m.Range / 1000f:0.#} km · {m.Cost} cr", _tiny);
+                    $"{m.Channel.ToString().ToLowerInvariant()} · {m.Damage * m.Barrels / m.Reload:0} dps · {m.Range / 1000f:0.#} km · {m.Cost} cr" + (m.Pierce > 0 ? " · pierces" : "") + (m.ShieldFactor > 1f ? " · burns shields" : ""), _tiny);
             }
             GUI.EndScrollView();
         }
 
-        static void Cycle(ShipDesign d, int hardpoint, int dir)
+        static Color FamilyColour(MountDef m) => m.Channel switch
+        {
+            DamageChannel.Energy => new Color(0.4f, 0.8f, 1f),
+            DamageChannel.Disruptive => new Color(0.6f, 0.62f, 1f),
+            _ => m.Class == MountClass.PointDefence ? new Color(0.9f, 0.85f, 0.45f) : new Color(1f, 0.62f, 0.3f),
+        };
+
+        void Cycle(ShipDesign d, int hardpoint, int dir)
         {
             var hp = d.Hull.Hardpoints[hardpoint];
-            var fits = Hulls.Mounts.Where(m => ShipDesign.Fits(m, hp)).ToList();
+            var fits = Hulls.Mounts.Where(m => ShipDesign.Fits(m, hp) && C.CanUse(Campaign.PlayerFaction, m)).ToList();
+            if (!fits.Contains(d.Mounts[hardpoint])) fits.Insert(0, d.Mounts[hardpoint]);
             int i = fits.IndexOf(d.Mounts[hardpoint]);
             i = ((i + dir) % fits.Count + fits.Count) % fits.Count;
             d.Set(hardpoint, fits[i]);

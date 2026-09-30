@@ -240,7 +240,7 @@ namespace GalacticRupture.Sim.Strategic
             foreach (var a in attackers)
             {
                 atk.Add(a.Strength);
-                mult.Add(a.Commander.Attack);
+                mult.Add(a.Commander.Attack * Factions[a.Owner].Mods.ArmyAttack);
             }
             var def = new List<float>();
             var dmult = new List<float>();
@@ -305,7 +305,7 @@ namespace GalacticRupture.Sim.Strategic
                 {
                     s.Besieger = -1;
                     s.Siege = 0f;
-                    float max = MaxMilitia(s);
+                    float max = MilitiaCap(s);
                     s.Militia = System.MathF.Min(max, s.Militia + max / 96f);
                     foreach (var a in Armies)
                         if (a.System == s.Id && a.Fleet < 0 && a.Owner == s.Owner)
@@ -327,7 +327,7 @@ namespace GalacticRupture.Sim.Strategic
                 foreach (var a in atkArmies)
                 {
                     atk.Add(a.Strength);
-                    amult.Add(a.Commander.Attack);
+                    amult.Add(a.Commander.Attack * Factions[a.Owner].Mods.ArmyAttack);
                 }
                 var def = new List<float>();
                 var dmult = new List<float>();

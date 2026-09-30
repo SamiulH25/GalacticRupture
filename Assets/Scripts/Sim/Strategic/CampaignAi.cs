@@ -29,13 +29,18 @@ namespace GalacticRupture.Sim.Strategic
             foreach (var s in c.Galaxy.Systems)
             {
                 if (s.Owner != faction || s.Governor != null) continue;
-                var focus = s.Capital ? GovernorFocus.Industry : Frontier(c, s) ? GovernorFocus.Military : GovernorFocus.Balanced;
+                var focus = FocusFor(c, s);
                 int k = c.Advise(s, focus);
                 if (k < 0) continue;
                 if (fac.Credits < c.CostHere(s, (BuildingKind)k) + reserve) return;
                 c.Construct(faction, s.Id, (BuildingKind)k);
             }
         }
+
+        // The capital builds industry, the border builds for war, and every third quiet world
+        // becomes a research world.
+        static GovernorFocus FocusFor(Campaign c, StarSystem s) =>
+            s.Capital ? GovernorFocus.Industry : Frontier(c, s) ? GovernorFocus.Military : s.Id % 3 == 0 ? GovernorFocus.Research : GovernorFocus.Balanced;
 
         static bool Frontier(Campaign c, StarSystem s)
         {
@@ -61,7 +66,7 @@ namespace GalacticRupture.Sim.Strategic
             int pick = 0;
             for (int i = 1; i < pool.Count; i++)
                 if (pool[i].Loyalty + pool[i].Industry + pool[i].Administration > pool[pick].Loyalty + pool[pick].Industry + pool[pick].Administration) pick = i;
-            c.Appoint(faction, best.Id, pick, Frontier(c, best) ? GovernorFocus.Military : GovernorFocus.Balanced);
+            c.Appoint(faction, best.Id, pick, FocusFor(c, best));
         }
 
         static bool Working(Campaign c, Fleet f)
@@ -157,7 +162,11 @@ namespace GalacticRupture.Sim.Strategic
                     foreach (var r in f.Ships) if (r.Def.Class == HullClass.Transport) transports++;
             int wantArmies = fac.Major ? 4 + Owned(c, faction) / 2 : 1 + Owned(c, faction) / 3;
 
-            HullDef D(HullClass cls, HullDef stock) => c.DesignFor(faction, cls)?.Built ?? stock;
+            HullDef D(HullClass cls, HullDef stock)
+            {
+                var d = c.DesignFor(faction, cls);
+                return d != null ? c.Buildable(faction, d) : stock;
+            }
             foreach (var s in c.Galaxy.Systems)
             {
                 if (s.Owner != faction || !s.Shipyard || s.Unrest > 0f) continue;
@@ -343,6 +352,70 @@ namespace GalacticRupture.Sim.Strategic
                 if (h < stageHops || h == stageHops && stage >= 0 && c.Galaxy.Hops(f.System, s.Id) < c.Galaxy.Hops(f.System, stage)) { stageHops = h; stage = s.Id; }
             }
             if (stage >= 0 && stage != f.System) c.MoveFleet(f.Id, stage);
+        }
+
+        // --- Research and designs ---------------------------------------------------------------
+
+        // Each major leans toward two branches: the shape of its tech tree is its identity
+        // (IDEAS.md §5.4). Minors look to their defences and their economies.
+        static TechBranch[] Doctrine(Campaign c, int faction) => c.Factions[faction].Name switch
+        {
+            "Continuance" => new[] { TechBranch.Energy, TechBranch.Defence },
+            "Remnant" => new[] { TechBranch.Ballistic, TechBranch.Logistics },
+            "Hierarchate" => new[] { TechBranch.Disruptive, TechBranch.Industry },
+            "Free Yards" => new[] { TechBranch.Ballistic, TechBranch.Industry },
+            "Lantern Synod" => new[] { TechBranch.Energy, TechBranch.Disruptive },
+            _ => new[] { TechBranch.Defence, TechBranch.Industry },
+        };
+
+        public static TechDef PickResearch(Campaign c, int faction)
+        {
+            var doctrine = Doctrine(c, faction);
+            TechDef best = null;
+            float bestScore = float.MinValue;
+            foreach (var t in Techs.All)
+            {
+                if (!c.CanResearch(faction, t)) continue;
+                float score = 1000f / t.Cost * (System.Array.IndexOf(doctrine, t.Branch) >= 0 ? 3f : 1f) * (0.7f + 0.6f * c.Rng.NextFloat());
+                if (score > bestScore) { bestScore = score; best = t; }
+            }
+            if (best != null) c.Enqueue(faction, best.Id);
+            return best;
+        }
+
+        // New guns: draw up a fresh design for every hull and build that from now on.
+        public static void Redesign(Campaign c, int faction)
+        {
+            var fac = c.Factions[faction];
+            var doctrine = Doctrine(c, faction);
+            foreach (var hull in Hulls.All)
+            {
+                var stock = hull;
+                var d = new ShipDesign($"{hull.Class} Mk {fac.TechVersion + 1}", hull);
+                for (int i = 0; i < hull.Hardpoints.Count; i++)
+                {
+                    var hp = hull.Hardpoints[i];
+                    bool screen = hp.Mount.Class == MountClass.PointDefence;
+                    MountDef pick = hp.Mount;
+                    float best = float.MinValue;
+                    foreach (var m in Hulls.Mounts)
+                    {
+                        if (!ShipDesign.Fits(m, hp) || !c.CanUse(faction, m)) continue;
+                        // Screening slots stay screens; the rest carry the heaviest gun that fits.
+                        if (screen != (m.Class == MountClass.PointDefence)) continue;
+                        float dps = m.Damage * m.Barrels / m.Reload * m.ShieldFactor * (1f + m.Pierce * 0.3f);
+                        float score = dps * System.MathF.Sqrt(m.Range / 3000f) * (m.Size == hp.Size ? 1.3f : 1f);
+                        if (m.Channel == DamageChannel.Disruptive) score *= System.Array.IndexOf(doctrine, TechBranch.Disruptive) >= 0 ? 1.1f : 0.6f;
+                        if (m.Channel == DamageChannel.Energy && System.Array.IndexOf(doctrine, TechBranch.Energy) >= 0) score *= 1.2f;
+                        if (m.Channel == DamageChannel.Ballistic && System.Array.IndexOf(doctrine, TechBranch.Ballistic) >= 0) score *= 1.2f;
+                        if (score > best) { best = score; pick = m; }
+                    }
+                    d.Set(i, pick);
+                }
+                // Replace the last generated design of this class, keep hand-made ones.
+                fac.Designs.RemoveAll(o => o.Hull == stock && o.Name.StartsWith($"{hull.Class} Mk "));
+                fac.Designs.Insert(0, d);
+            }
         }
     }
 }

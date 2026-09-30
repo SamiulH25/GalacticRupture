@@ -162,6 +162,11 @@ namespace GalacticRupture.Sim
                 Shooter = ship.Id,
                 Channel = def.Channel,
                 Class = def.Class,
+                Family = def.Family,
+                Size = def.Size,
+                ShieldFactor = def.ShieldFactor,
+                Pierce = def.Pierce,
+                LastHit = -1,
             });
 
             int barrel = m.NextBarrel;
@@ -193,7 +198,7 @@ namespace GalacticRupture.Sim
                     foreach (int id in _query)
                     {
                         var ship = Ships[id];
-                        if (!ship.Alive || ship.Side == p.Side) continue;
+                        if (!ship.Alive || ship.Side == p.Side || ship.Id == p.LastHit) continue;
                         float reach = ship.Def.HalfLength + ship.Def.Radius + segHalf;
                         if (Vector3.DistanceSquared(mid, ship.Position) > reach * reach) continue;
 
@@ -201,8 +206,15 @@ namespace GalacticRupture.Sim
                         float r = ship.Def.Radius;
                         if (SimMath.SegmentSegmentDistSq(p.PrevPosition, p.Position, bow, stern, out var hit) <= r * r)
                         {
-                            ApplyHit(ship, hit, p.Damage, p.Channel);
-                            spent = true;
+                            ApplyHit(ship, hit, p.Damage, p.Channel, p.ShieldFactor);
+                            // An accelerator round goes on through, weaker, into whatever is behind.
+                            if (p.Pierce > 0)
+                            {
+                                p.Pierce--;
+                                p.Damage *= 0.5f;
+                                p.LastHit = ship.Id;
+                            }
+                            else spent = true;
                             break;
                         }
                     }
@@ -213,7 +225,7 @@ namespace GalacticRupture.Sim
             Projectiles.RemoveRange(write, Projectiles.Count - write);
         }
 
-        public void ApplyHit(Ship ship, Vector3 point, float damage, DamageChannel channel)
+        public void ApplyHit(Ship ship, Vector3 point, float damage, DamageChannel channel, float shieldFactor = 1f)
         {
             var def = ship.Def;
             ship.ShieldDelay = def.ShieldRegenDelay;
@@ -222,7 +234,7 @@ namespace GalacticRupture.Sim
             if (ship.Shield > 0f && channel != DamageChannel.Disruptive)
             {
                 // Energy burns shields efficiently; ballistic partly punches through (IDEAS.md §5.1).
-                float toShield = channel == DamageChannel.Energy ? damage * 1.25f : damage * 0.8f;
+                float toShield = (channel == DamageChannel.Energy ? damage * 1.25f : damage * 0.8f) * shieldFactor;
                 float bleed = channel == DamageChannel.Ballistic ? damage * 0.2f : 0f;
                 float absorbed = System.MathF.Min(ship.Shield, toShield);
                 ship.Shield -= absorbed;

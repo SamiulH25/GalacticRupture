@@ -354,7 +354,7 @@ tuning from headless runs of the AI playing itself, not from play.
 - **Output a day:** credits 3 × population + refineries; industry 0.5 × population + fabs;
   influence 0.2 + admin (+2 at the capital). Industry speeds the yard (0.5×–3×) and construction.
 - **Upkeep:** 1.5% of a hull's cost a day, 1 cr per army. This is what caps navies.
-- **Governors:** as §1.2. Research focus is replaced by **Economy** until a tech tree exists.
+- **Governors:** as §1.2, with five focuses: balanced, economy, industry, military, research.
   Appointing costs 10 influence. Candidate pool of three per power, one replaced every 30 days.
 - **Reclamation:** a ruin costs 150 + 60 per dormant building and takes 30 + 8 days per dormant
   building with a fleet on station and no hostile warships; work pauses when the fleet leaves.
@@ -363,10 +363,48 @@ tuning from headless runs of the AI playing itself, not from play.
   The old capital can only be taken by force.
 - **Admirals:** 8 influence, tactics and nerve 1–5. Unattended, a side withdraws when it falls
   below ~35% of its starting strength (earlier with low nerve); tactics shortens reloads up to 10%.
-- **Designer:** hardpoints are Small / Medium / Large; a mount fits its size or larger. Mounts:
-  main battery and lance battery (L), energy, flak and ion batteries (M), light gun, autocannon
-  and point defence (S). A design's cost is the hull plus its mounts; build time scales with it.
-  Missiles and spinal mounts wait on tactical support.
+- **Designer:** hardpoints are Small / Medium / Large; a mount fits its size or larger. A
+  design's cost is the hull plus its mounts; build time scales with it. Only researched guns can
+  be fitted. Missiles and spinal mounts wait on tactical support.
+- **Research:** 0.05 × population plus 3 per laboratory a day (a capital starts with one). Tier
+  costs 300 / 1,200 / 5,000 / 14,000. The player queues technologies (prerequisites come along);
+  what is not spent is banked. Research improves hulls **as they are built** (shields, armour,
+  speed); guns are fitted in the designer. 29 technologies in six branches:
+  - *Ballistic:* rotary cannon → rotary driver / railgun → heavy railgun → mass accelerator.
+  - *Energy:* heavy turbolaser → pulse laser → beam lance → shield burner.
+  - *Disruptive:* ion cannon → light ion cannon → heavy ion cannon → ion doctrine (reload −10%).
+  - *Defence:* flak → heavy flak; deflector lattice (shields +20%), layered armour (hull +15%) →
+    reactive shields, fortress worlds.
+  - *Industry:* automated fabs, orbital refining, research institutes → arcologies, slipway automation.
+  - *Logistics & command:* salvage doctrine, forward depots → lane drives, civic administration,
+    drop doctrine → staff college.
+- **AI doctrine** (IDEAS §5.4, the shape of the tree is identity): Continuance energy and
+  defence; Remnant ballistic and logistics; Hierarchate disruptive and industry; Free Yards
+  ballistic and industry; Lantern Synod energy and disruptive. The AI redraws its designs with
+  the best guns it knows whenever it learns a technology.
+- **Debt:** below −300 credits, a power loses its cheapest hull a day to desertion and its
+  worlds' stability slips. Eliminated powers' fleets disband.
+
+`PROPOSED` — **Weapon families.** Every gun belongs to a family with its own silhouette, round
+and flash, and comes in sizes (light / standard / heavy):
+
+| Family | Guns | Look |
+|---|---|---|
+| Mass driver | mass driver, heavy mass driver | armoured gunhouse, thick barrels with brakes; amber shells |
+| Autocannon | autocannon | small house, one long barrel, side drum; short amber rounds |
+| Rotary | rotary cannon, rotary driver | round drum, ring of barrels; a hail of tiny tracers |
+| Railgun | railgun, heavy railgun | low wedge, flat twin rails with a glowing gap; long white streaks |
+| Accelerator | mass accelerator | one huge coil-wound barrel; a violet-white bar that passes through ships |
+| Turbolaser | light turbolaser, turbolaser, heavy turbolaser | dome with finned emitters and hot tips; bolts in the side's colour |
+| Pulse | pulse laser | small dome, 2×2 emitters; short rapid bolts |
+| Lance | beam lance | long house, one square emitter with a glowing slit; a long heavy bolt |
+| Shield burner | shield burner | dome, emitters ringed with glowing coils; magenta bolts |
+| Ion | light ion, ion cannon, heavy ion | drum house, pronged fork with a coil; fat soft blue bolts |
+| Flak | flak battery, heavy flak | box behind a shield plate, four stubby barrels; short yellow dashes |
+| Point defence | point defence | ball mount, twin needles; tiny white tracers |
+
+The looks are code-built placeholders; a Blender model named for the mount id replaces one.
+
 - **Acts:** act 2 begins when 85% of the ruins are taken or at day 540; act 3 when a bloc holds
   half the galaxy after a year of act 2, or at day 1460. In act 3, holding the old capital for 90
   days wins (or loses, if a rival does). The last major standing wins at any time.
@@ -782,3 +820,6 @@ Items 1, 2 and 4–10 have assumed answers in §1.2. Still open:
 - **2026-09-30 — Long campaign built.** Recorded its rules as §4.2: generated galaxy, system
   economy and buildings, governors, reclamation and courting, admirals, the designer, acts and
   the throne, upkeep, saves. Governor focus "research" became "economy" until tech exists.
+- **2026-09-30 — Research and weapon families.** Tech tree (29 technologies, six branches),
+  laboratories, research governors, AI doctrines and redesigns, research-improved hulls, debt.
+  Twelve weapon families with their own turret, tracer and flash; 20 guns in all (§4.2).

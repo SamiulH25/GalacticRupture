@@ -47,8 +47,9 @@ namespace GalacticRupture.Game
             {
                 if (kb.dKey.wasPressedThisFrame && !kb.ctrlKey.isPressed) _showDiplomacy = !_showDiplomacy;
                 if (kb.tabKey.wasPressedThisFrame) Map.ShowSupply = !Map.ShowSupply;
-                if (kb.bKey.wasPressedThisFrame) _showDesigner = !_showDesigner;
-                if (kb.escapeKey.wasPressedThisFrame) _showDiplomacy = _showDesigner = false;
+                if (kb.bKey.wasPressedThisFrame) { _showDesigner = !_showDesigner; _showResearch = _showDiplomacy = false; }
+                if (kb.rKey.wasPressedThisFrame) { _showResearch = !_showResearch; _showDesigner = _showDiplomacy = false; }
+                if (kb.escapeKey.wasPressedThisFrame) _showDiplomacy = _showDesigner = _showResearch = false;
             }
             var mouse = Mouse.current;
             if (mouse == null) return;
@@ -199,7 +200,7 @@ namespace GalacticRupture.Game
             if (Event.current.type == EventType.Layout) _panels.Clear();
             Styles();
 
-            bool modal = _showDiplomacy || _showDesigner || C.Pending != null || C.Council != null;
+            bool modal = _showDiplomacy || _showDesigner || _showResearch || C.Pending != null || C.Council != null;
             MapLabels();
             TopBar();
             if (!modal)
@@ -213,6 +214,7 @@ namespace GalacticRupture.Game
             Hints();
             if (_showDiplomacy) DiplomacyWindow();
             if (_showDesigner) DesignerWindow();
+            if (_showResearch) ResearchWindow();
             if (C.Pending != null) BattlePrompt();
             else if (C.Council != null) CouncilWindow();
             EndBanner();
@@ -281,21 +283,38 @@ namespace GalacticRupture.Game
             GUI.Label(new Rect(48, 13, 200, 28), wide ? Caps(fac.Name) : fac.Name.ToUpperInvariant(), new GUIStyle(_caps) { fontSize = 16, normal = { textColor = Ink } });
             string time = Director.Waiting ? "HELD" : Director.Paused ? "PAUSED" : $"×{Director.Speed:0.#}";
             float next = Campaign.CouncilIntervalDays * 24f - (float)(C.Hours % (Campaign.CouncilIntervalDays * 24f));
-            string act = C.Act switch { 1 => "act I: rupture", 2 => "act II: blocs", _ => "act III: total war" };
-            string throne = C.Act >= 3 && C.ThroneHolder >= 0 ? $"     <color=#{FactionStyle.Hex(C.ThroneHolder)}>{C.Factions[C.ThroneHolder].Name} holds the throne {C.ThroneHeldDays:0}/{Campaign.ThroneDays:0}d</color>" : "";
-            GUI.Label(new Rect(wide ? 260 : 210, 13, Screen.width - (wide ? 700 : 640), 28),
-                $"<b>{Director.Date}</b>  <color=#8aa0b8>{time} · {act}</color>     " +
-                $"<b>{fac.Credits:0}</b> <color=#8aa0b8>cr ({(net >= 0 ? "+" : "")}{net:0})</color>     " +
-                $"<b>{t.Industry:0}</b> <color=#8aa0b8>ind</color>     " +
-                $"<b>{fac.Influence:0}</b> <color=#8aa0b8>inf (+{t.Influence:0.#})</color>" +
-                (wide ? $"     <color=#8aa0b8>council in {next / 24f:0}d</color>" : "") + throne +
-                (fac.EmbargoHours > 0f ? $"     <color=#ff8a70>EMBARGOED {fac.EmbargoHours / 24f:0}d</color>" : ""),
-                _text);
+            string act = C.Act switch { 1 => "act I", 2 => "act II", _ => "act III" };
+            var cur = C.Current(Campaign.PlayerFaction);
+
+            // Most important first; whatever doesn't fit before the buttons is left off.
+            var parts = new List<string>
+            {
+                $"<b>{Director.Date}</b>  <color=#8aa0b8>{time} · {act}</color>",
+                $"<b>{fac.Credits:0}</b> <color=#8aa0b8>cr ({(net >= 0 ? "+" : "")}{net:0})</color>",
+                $"<b>{fac.Influence:0}</b> <color=#8aa0b8>inf (+{t.Influence:0.#})</color>",
+                $"<b>{C.ResearchPerDay(Campaign.PlayerFaction):0.#}</b> <color=#8aa0b8>res</color>" +
+                    (cur != null ? $" <color=#8aa0b8>{cur.Name} {Mathf.Min(1f, fac.ResearchBank / cur.Cost):P0}</color>" : " <color=#ffb070>idle</color>"),
+                $"<b>{t.Industry:0}</b> <color=#8aa0b8>ind</color>",
+            };
+            if (fac.EmbargoHours > 0f) parts.Insert(1, $"<color=#ff8a70>EMBARGOED {fac.EmbargoHours / 24f:0}d</color>");
+            if (C.Act >= 3 && C.ThroneHolder >= 0)
+                parts.Insert(1, $"<color=#{FactionStyle.Hex(C.ThroneHolder)}>{C.Factions[C.ThroneHolder].Name} holds the throne {C.ThroneHeldDays:0}/{Campaign.ThroneDays:0}d</color>");
+            parts.Add($"<color=#8aa0b8>council in {next / 24f:0}d</color>");
+            float x0 = wide ? 230 : 190, room = Screen.width - 16 - 5 * 126 - x0 - 10;
+            string line = "";
+            foreach (var part in parts)
+            {
+                string tryLine = line.Length == 0 ? part : line + "     " + part;
+                if (_text.CalcSize(new GUIContent(tryLine)).x > room) break;
+                line = tryLine;
+            }
+            GUI.Label(new Rect(x0, 13, room, 28), line, _text);
             float bx = Screen.width - 16;
             bx -= 90; if (Button(new Rect(bx, 10, 82, 32), "SAVE", C.CanSave)) Director.Say(Director.TrySave(CampaignDirector.QuickSave) ? $"{Director.Date}: saved." : "Could not save.");
             bx -= 110; if (Button(new Rect(bx, 10, 102, 32), "SUPPLY", true, Map.ShowSupply)) Map.ShowSupply = !Map.ShowSupply;
-            bx -= 132; if (Button(new Rect(bx, 10, 124, 32), "DIPLOMACY", true, _showDiplomacy)) { _showDiplomacy = !_showDiplomacy; _showDesigner = false; }
-            bx -= 126; if (Button(new Rect(bx, 10, 118, 32), "DESIGNS", true, _showDesigner)) { _showDesigner = !_showDesigner; _showDiplomacy = false; }
+            bx -= 132; if (Button(new Rect(bx, 10, 124, 32), "DIPLOMACY", true, _showDiplomacy)) { _showDiplomacy = !_showDiplomacy; _showDesigner = _showResearch = false; }
+            bx -= 126; if (Button(new Rect(bx, 10, 118, 32), "DESIGNS", true, _showDesigner)) { _showDesigner = !_showDesigner; _showDiplomacy = _showResearch = false; }
+            bx -= 126; if (Button(new Rect(bx, 10, 118, 32), "RESEARCH", true, _showResearch)) { _showResearch = !_showResearch; _showDiplomacy = _showDesigner = false; }
         }
 
         // --- Fleet ---------------------------------------------------------------------------
@@ -440,7 +459,7 @@ namespace GalacticRupture.Game
         void Hints()
         {
             GUI.Label(new Rect(18, Screen.height - 30, Screen.width - 620, 22),
-                "left-click select · right-click a system: send the fleet · WASD pan · Q/E turn · wheel zoom · Space pause · +/- speed · D diplomacy · B designs · Tab supply · F5 save · F9 load",
+                "left-click select · right-click a system: send the fleet · WASD pan · wheel zoom · Space pause · +/- speed · R research · B designs · D diplomacy · Tab supply · F5 save · F9 load",
                 _tiny);
         }
 
