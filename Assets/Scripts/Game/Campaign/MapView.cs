@@ -51,9 +51,9 @@ namespace GalacticRupture.Game
         static readonly int ColorId = Shader.PropertyToID("_Color");
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         static readonly int IntensityId = Shader.PropertyToID("_Intensity");
-        readonly Vector4[] _sysData = new Vector4[32];
-        readonly Vector4[] _sysFlags = new Vector4[32];
-        readonly Vector4[] _colours = new Vector4[8];
+        readonly Vector4[] _sysData = new Vector4[128];
+        readonly Vector4[] _sysFlags = new Vector4[128];
+        readonly Vector4[] _colours = new Vector4[16];
 
         public int SelectedFleet = -1;
         public int SelectedSystem = -1;
@@ -257,7 +257,7 @@ namespace GalacticRupture.Game
             float t = Time.time;
 
             // Plate data: what the player knows of who holds what, and what is unseen.
-            int n = Mathf.Min(32, _c.Galaxy.Systems.Count);
+            int n = Mathf.Min(128, _c.Galaxy.Systems.Count);
             for (int i = 0; i < n; i++)
             {
                 var s = _c.Galaxy.Systems[i];
@@ -267,7 +267,7 @@ namespace GalacticRupture.Game
                 bool source = s.Owner == Viewer || (s.Owner >= 0 && _c.Stance(Viewer, s.Owner) == DiplomaticStance.Alliance);
                 _sysFlags[i] = new Vector4(source ? 1f : 0f, s.Capital ? 1f : 0f, 0f, 0f);
             }
-            for (int f = 0; f < 8; f++) _colours[f] = FactionStyle.Of(f);
+            for (int f = 0; f < 16; f++) _colours[f] = FactionStyle.Of(f);
             Shader.SetGlobalVectorArray("_GR_Systems", _sysData);
             Shader.SetGlobalVectorArray("_GR_SysFlags", _sysFlags);
             Shader.SetGlobalVectorArray("_GR_Colors", _colours);

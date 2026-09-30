@@ -11,7 +11,7 @@ namespace GalacticRupture.Game
         public float Pitch = 58f;
         public float Distance = 6500f;
         public float MinDistance = 800f;
-        public float MaxDistance = 14000f;
+        public float MaxDistance = 30000f;
 
         Vector3 _focus;
         float _distance;

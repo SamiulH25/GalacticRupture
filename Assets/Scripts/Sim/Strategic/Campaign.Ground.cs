@@ -28,6 +28,17 @@ namespace GalacticRupture.Sim.Strategic
         };
     }
 
+    // Commands a fleet's battles when the player leaves them to the fleet (IDEAS.md §1.2).
+    public sealed class Admiral
+    {
+        public string Name = "";
+        public int Tactics = 3;   // 1..5: how well the guns are handled
+        public int Nerve = 3;     // 1..5: how long the fleet stays in a losing fight
+
+        public float ReloadScale => 1f - 0.05f * (Tactics - 3);
+        public float BreakAt => 0.35f - 0.07f * (Nerve - 3);   // withdraw below this share of the starting strength
+    }
+
     // Ground war is simulated, but it has faces (IDEAS.md §6): every army has a named commander.
     public sealed class Army
     {
@@ -102,12 +113,32 @@ namespace GalacticRupture.Sim.Strategic
             return n;
         }
 
-        public static float MaxMilitia(StarSystem s) => s.Owner < 0 ? 30f * s.Tier : 20f * s.Tier + (s.Capital ? 60f : 0f);
+        public const int AdmiralCost = 8;   // influence
+
+        public bool CanAppointAdmiral(int fleetId)
+        {
+            var f = FleetById(fleetId);
+            return f != null && f.Alive && f.Admiral == null && Factions[f.Owner].Influence >= AdmiralCost;
+        }
+
+        public Admiral AppointAdmiral(int fleetId)
+        {
+            if (!CanAppointAdmiral(fleetId)) return null;
+            var f = FleetById(fleetId);
+            Factions[f.Owner].Influence -= AdmiralCost;
+            f.Admiral = new Admiral
+            {
+                Name = $"{Given[_rng.Range(0, Given.Length)]} {Family[_rng.Range(0, Family.Length)]}",
+                Tactics = 1 + _rng.Range(0, 3) + _rng.Range(0, 3),
+                Nerve = 1 + _rng.Range(0, 3) + _rng.Range(0, 3),
+            };
+            return f.Admiral;
+        }
 
         public bool CanRaiseArmy(int owner, int system)
         {
             var s = Galaxy.Systems[system];
-            return s.Owner == owner && s.Tier >= 2 && s.Unrest <= 0f && Factions[owner].Credits >= ArmyCost;
+            return s.Owner == owner && s.Has(BuildingKind.Garrison) && s.Unrest <= 0f && Factions[owner].Credits >= ArmyCost;
         }
 
         public bool RaiseArmy(int owner, int system)
@@ -116,6 +147,17 @@ namespace GalacticRupture.Sim.Strategic
             Factions[owner].Credits -= ArmyCost;
             Queue(system).Add(new BuildItem { Def = null, HoursLeft = ArmyDays * 24f, Owner = owner });
             return true;
+        }
+
+        // A power that loses its capital moves the court to its most populous remaining world.
+        void Relocate(int faction, StarSystem lost)
+        {
+            lost.Capital = false;
+            StarSystem best = null;
+            foreach (var o in Galaxy.Systems)
+                if (o.Owner == faction && o != lost && (best == null || o.Population > best.Population)) best = o;
+            Factions[faction].Capital = best?.Id ?? -1;
+            if (best != null) best.Capital = true;
         }
 
         public bool Embark(int fleetId, int armyId)
@@ -146,6 +188,7 @@ namespace GalacticRupture.Sim.Strategic
             if (f == null || f.InTransit || CountIn(f) == 0) return false;
             var s = Galaxy.Systems[f.System];
             if (s.Owner == f.Owner) return false;
+            if (s.Owner < 0 && s.Derelict == Derelict.Ruin) return false;   // nobody to fight: send an expedition
             if (s.Owner >= 0 && Stance(f.Owner, s.Owner) != DiplomaticStance.War) return false;
             foreach (var o in Fleets)
                 if (o.Alive && !o.InTransit && o.System == s.Id && o.Owner != f.Owner && o.Owner >= 0
@@ -153,7 +196,15 @@ namespace GalacticRupture.Sim.Strategic
             return true;
         }
 
-        // The landing decision: everything aboard goes down to fight for the system.
+        // Landings are automatic (IDEAS.md §1.1): a fleet carrying armies that stops over a
+        // system it may land on puts them down. The decision was made when the fleet was sent.
+        void AutoLand()
+        {
+            foreach (var f in Fleets)
+                if (f.Alive && !f.InTransit && !f.Held && CountIn(f) > 0 && CanLand(f)) Land(f.Id);
+        }
+
+        // Everything aboard goes down to fight for the system.
         public int Land(int fleetId)
         {
             var f = FleetById(fleetId);
@@ -301,6 +352,11 @@ namespace GalacticRupture.Sim.Strategic
                 {
                     int loser = s.Owner;
                     s.Owner = attacker;
+                    s.Derelict = Derelict.None;
+                    s.Courter = s.Reclaimer = -1;
+                    s.Courting = s.Reclaim = 0f;
+                    s.Governor = null;
+                    s.Stability = System.MathF.Min(s.Stability, 25f);
                     s.Unrest = 72f;
                     s.Militia = 0f;
                     s.Besieger = -1;
@@ -309,6 +365,7 @@ namespace GalacticRupture.Sim.Strategic
                     if (Yards.TryGetValue(s.Id, out var q)) q.Clear();
                     foreach (var a in atkArmies) if (a.Strength > 1f) a.Commander.Victories++;
                     Emit(CampaignEventKind.SystemCaptured, s.Id, attacker, loser);
+                    if (loser >= 0 && Factions[loser].Capital == s.Id && OldCapital >= 0) Relocate(loser, s);
                     if (loser >= 0)
                     {
                         ChangeTrust(loser, attacker, -25f);

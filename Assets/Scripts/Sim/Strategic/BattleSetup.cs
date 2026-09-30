@@ -21,7 +21,19 @@ namespace GalacticRupture.Sim.Strategic
 
         float _aiTimer;
 
+        // Unattended sides are commanded by their admiral: the one who breaks off a losing fight.
+        public readonly Admiral[] Admirals = new Admiral[2];
+        public readonly float[] StartStrength = new float[2];
+
         public CampaignBattle(bool playerCommands) => PlayerCommands = playerCommands;
+
+        public static float SideStrength(World world, int side)
+        {
+            float s = 0f;
+            foreach (var ship in world.Ships)
+                if (ship.Alive && ship.Side == side && ship.Def.Class != HullClass.Transport) s += ship.Def.Cost * (ship.Hull / ship.Def.HullHp);
+            return s;
+        }
 
         public void Withdraw(int side)
         {
@@ -43,6 +55,17 @@ namespace GalacticRupture.Sim.Strategic
             else if (!side0) State = BattleState.Defeat;
             else if (Withdrawing >= 0 || world.Time >= MaxSeconds) State = BattleState.Withdrawn;
             if (State != BattleState.Fighting) return;
+            for (int side = 0; side < 2; side++)
+            {
+                if (side == 0 && PlayerCommands) continue;
+                float breakAt = Admirals[side]?.BreakAt ?? 0.3f;
+                if (StartStrength[side] > 0f && SideStrength(world, side) < StartStrength[side] * breakAt)
+                {
+                    Withdrawing = side;
+                    State = BattleState.Withdrawn;
+                    return;
+                }
+            }
 
             _aiTimer -= World.Dt;
             if (_aiTimer > 0f) return;
@@ -53,6 +76,7 @@ namespace GalacticRupture.Sim.Strategic
     }
 
     public static class BattleSetup
+
     {
         public static World Build(Campaign c, Engagement e, bool playerCommands, out CampaignBattle battle)
         {
@@ -68,6 +92,9 @@ namespace GalacticRupture.Sim.Strategic
                 if (f == null) continue;
                 int side = e.SideOf(f.Owner);
                 if (side < 0) continue;
+                // The side's admiral is the best one present.
+                if (f.Admiral != null && (battle.Admirals[side] == null || f.Admiral.Tactics > battle.Admirals[side].Tactics))
+                    battle.Admirals[side] = f.Admiral;
                 float dir = side == 0 ? -1f : 1f;
                 for (int i = 0; i < f.Ships.Count; i++)
                 {
@@ -79,6 +106,7 @@ namespace GalacticRupture.Sim.Strategic
                     var p = new Vector3(col * 380f, world.Rng.Range(-80f, 80f), dir * (2600f + row * 500f));
                     var ship = world.Spawn(r.Def, side, p, side == 0 ? 0f : SimMath.Pi);
                     ship.Faction = f.Owner;
+                    if (f.Admiral != null && !(side == 0 && playerCommands)) ship.ReloadScale = f.Admiral.ReloadScale;
                     ship.Speed = r.Def.MaxSpeed * 0.3f;
                     ship.Hull = r.Hull;
                     for (int m = 0; m < ship.Mounts.Count && m < r.MountAlive.Length; m++)
@@ -91,6 +119,8 @@ namespace GalacticRupture.Sim.Strategic
                     }
                 }
             }
+            battle.StartStrength[0] = CampaignBattle.SideStrength(world, 0);
+            battle.StartStrength[1] = CampaignBattle.SideStrength(world, 1);
             return world;
         }
 

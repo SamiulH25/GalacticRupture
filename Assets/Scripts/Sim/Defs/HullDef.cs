@@ -7,6 +7,7 @@ namespace GalacticRupture.Sim
     public sealed class HardpointDef
     {
         public MountDef Mount;
+        public MountSize Size;            // the largest mount it takes
         public Vector3 LocalPosition;     // x starboard, y up, z forward, metres
         public float BaseYawDeg;          // the direction the gun rests in, 0 = forward
         public float YawHalfArcDeg = 180f; // 180 = all round
@@ -24,7 +25,8 @@ namespace GalacticRupture.Sim
 
     public sealed class HullDef
     {
-        public string Id = "";
+        public string Id = "";            // the hull: picks the model
+        public string Design = "";        // the loadout's name, empty for the stock hull
         public HullClass Class;
 
         // Collision is a capsule along the keel: from -HalfLength to +HalfLength on z.
@@ -48,5 +50,28 @@ namespace GalacticRupture.Sim
         public int TroopCapacity;         // armies carried
 
         public List<HardpointDef> Hardpoints = new List<HardpointDef>();
+
+        // The same hull with other guns in its hardpoints.
+        public HullDef WithMounts(string design, IReadOnlyList<MountDef> mounts)
+        {
+            var h = (HullDef)MemberwiseClone();
+            h.Design = design;
+            h.Hardpoints = new List<HardpointDef>();
+            int delta = 0;
+            for (int i = 0; i < Hardpoints.Count; i++)
+            {
+                var hp = Hardpoints[i];
+                var m = i < mounts.Count && mounts[i] != null ? mounts[i] : hp.Mount;
+                delta += m.Cost - hp.Mount.Cost;
+                h.Hardpoints.Add(new HardpointDef
+                {
+                    Mount = m, Size = hp.Size, LocalPosition = hp.LocalPosition,
+                    BaseYawDeg = hp.BaseYawDeg, YawHalfArcDeg = hp.YawHalfArcDeg,
+                });
+            }
+            h.Cost = System.Math.Max(1, Cost + delta);
+            h.BuildDays = BuildDays * System.MathF.Sqrt(h.Cost / (float)Cost);
+            return h;
+        }
     }
 }

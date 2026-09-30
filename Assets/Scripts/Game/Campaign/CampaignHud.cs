@@ -10,7 +10,7 @@ namespace GalacticRupture.Game
     // The strategic screen: treasury and time, the fleet and system panels (ships, armies,
     // garrisons, the yard), the diplomacy window, the council, offers from other powers, the
     // battle prompt, and the map's mouse (left-click selects, right-click sends a fleet).
-    public sealed class CampaignHud : MonoBehaviour
+    public sealed partial class CampaignHud : MonoBehaviour
     {
         public CampaignDirector Director;
         public MapView Map;
@@ -19,6 +19,7 @@ namespace GalacticRupture.Game
 
         readonly List<Rect> _panels = new List<Rect>();
         bool _showDiplomacy;
+        Vector2 _dipScroll;
 
         public bool ShowDiplomacy { get => _showDiplomacy; set => _showDiplomacy = value; }
         Vector2 _logScroll;
@@ -46,7 +47,8 @@ namespace GalacticRupture.Game
             {
                 if (kb.dKey.wasPressedThisFrame && !kb.ctrlKey.isPressed) _showDiplomacy = !_showDiplomacy;
                 if (kb.tabKey.wasPressedThisFrame) Map.ShowSupply = !Map.ShowSupply;
-                if (kb.escapeKey.wasPressedThisFrame) _showDiplomacy = false;
+                if (kb.bKey.wasPressedThisFrame) _showDesigner = !_showDesigner;
+                if (kb.escapeKey.wasPressedThisFrame) _showDiplomacy = _showDesigner = false;
             }
             var mouse = Mouse.current;
             if (mouse == null) return;
@@ -197,20 +199,22 @@ namespace GalacticRupture.Game
             if (Event.current.type == EventType.Layout) _panels.Clear();
             Styles();
 
-            bool modal = _showDiplomacy || C.Pending != null || C.Council != null || C.Incoming.Count > 0;
+            bool modal = _showDiplomacy || _showDesigner || C.Pending != null || C.Council != null;
             MapLabels();
             TopBar();
             if (!modal)
             {
                 FleetPanel();
                 SystemPanel();
+                OffersPanel();
+                LandingForecast();
             }
             LogPanel();
             Hints();
             if (_showDiplomacy) DiplomacyWindow();
+            if (_showDesigner) DesignerWindow();
             if (C.Pending != null) BattlePrompt();
             else if (C.Council != null) CouncilWindow();
-            else if (C.Incoming.Count > 0) ProposalWindow(C.Incoming[0]);
             EndBanner();
         }
 
@@ -218,18 +222,25 @@ namespace GalacticRupture.Game
         {
             var nameStyle = new GUIStyle(_text) { font = Art.UiFontBold, fontSize = 15, alignment = TextAnchor.UpperCenter };
             var sub = new GUIStyle(_tiny) { alignment = TextAnchor.UpperCenter };
+            // Fewer words the further out the camera is: at galaxy scale, only what matters.
+            float dist = Director.MapCamera.Distance;
+            bool far = dist > 11000f, mid = dist > 7000f;
             foreach (var s in C.Galaxy.Systems)
             {
                 Vector3 p = Camera.WorldToScreenPoint(Map.SystemPosition(s.Id));
                 if (p.z <= 0f) continue;
                 bool seen = Intel.SystemVisible[s.Id];
                 int owner = Intel.SeenHour[s.Id] >= 0 ? Intel.OwnerSeen[s.Id] : -1;
+                bool key = s.Capital || s.OldCapital || owner == Campaign.PlayerFaction || s.Id == Map.SelectedSystem;
+                if (far && !key) continue;
                 Color fc = FactionStyle.Of(owner);
                 var r = new Rect(p.x - 110, Screen.height - p.y + 30, 220, 22);
                 nameStyle.normal.textColor = seen ? new Color(0.93f, 0.95f, 1f) : new Color(0.6f, 0.62f, 0.7f);
                 GUI.Label(r, s.Name.ToUpperInvariant(), nameStyle);
                 string tier = new string('•', s.Tier);
-                string info = owner < 0 ? "unclaimed" : C.Factions[owner].Name;
+                if (mid && !key && !seen) continue;
+                string info = owner >= 0 ? C.Factions[owner].Name
+                    : s.OldCapital ? "the old capital" : s.Derelict == Derelict.Ruin ? "ruin" : s.Derelict == Derelict.Holdout ? "holdout" : "unclaimed";
                 if (!seen) info = Intel.SeenHour[s.Id] < 0 ? "unexplored" : $"{info} · seen {(C.Hours - Intel.SeenHour[s.Id]) / 24:0}d ago";
                 sub.normal.textColor = seen ? fc : new Color(0.5f, 0.52f, 0.6f);
                 GUI.Label(new Rect(r.x, r.y + 19, r.width, 18), $"{tier}  {info}{(s.Besieger >= 0 && seen ? "  ·  ground war" : "")}", sub);
@@ -262,29 +273,29 @@ namespace GalacticRupture.Game
         {
             var r = Box(0, 0, Screen.width, 52, FactionStyle.Of(Campaign.PlayerFaction));
             var fac = C.Factions[Campaign.PlayerFaction];
-            float income = 0f, influence = 0f;
-            foreach (var s in C.Galaxy.Systems)
-            {
-                if (s.Owner != Campaign.PlayerFaction) continue;
-                if (s.Unrest <= 0f) income += Campaign.IncomePerDay(s);
-                influence += Campaign.InfluencePerDay(s);
-            }
-            if (fac.EmbargoHours > 0f) income *= 0.7f;
-            Fill(new Rect(18, 16, 20, 20), FactionStyle.Primary[0]);
+            var t = C.Totals(Campaign.PlayerFaction);
+            float net = t.Credits - C.Upkeep(Campaign.PlayerFaction);
+            Fill(new Rect(18, 16, 20, 20), FactionStyle.Of(Campaign.PlayerFaction));
             Fill(new Rect(22, 20, 12, 12), FactionStyle.Accent[0]);
-            GUI.Label(new Rect(48, 13, 200, 28), Screen.width >= 1500 ? Caps("Continuance") : "CONTINUANCE", new GUIStyle(_caps) { fontSize = 16, normal = { textColor = Ink } });
+            bool wide = Screen.width >= 1500;
+            GUI.Label(new Rect(48, 13, 200, 28), wide ? Caps(fac.Name) : fac.Name.ToUpperInvariant(), new GUIStyle(_caps) { fontSize = 16, normal = { textColor = Ink } });
             string time = Director.Waiting ? "HELD" : Director.Paused ? "PAUSED" : $"×{Director.Speed:0.#}";
             float next = Campaign.CouncilIntervalDays * 24f - (float)(C.Hours % (Campaign.CouncilIntervalDays * 24f));
-            bool wide = Screen.width >= 1500;
-            GUI.Label(new Rect(wide ? 260 : 210, 13, Screen.width - (wide ? 560 : 500), 28),
-                $"<b>{Director.Date}</b>  <color=#8aa0b8>{time}</color>     " +
-                $"<b>{fac.Credits:0}</b> <color=#8aa0b8>cr (+{income:0})</color>     " +
-                $"<b>{fac.Influence:0}</b> <color=#8aa0b8>inf (+{influence:0.#})</color>" +
-                (wide ? $"     <color=#8aa0b8>council in {next / 24f:0}d</color>" : "") +
+            string act = C.Act switch { 1 => "act I: rupture", 2 => "act II: blocs", _ => "act III: total war" };
+            string throne = C.Act >= 3 && C.ThroneHolder >= 0 ? $"     <color=#{FactionStyle.Hex(C.ThroneHolder)}>{C.Factions[C.ThroneHolder].Name} holds the throne {C.ThroneHeldDays:0}/{Campaign.ThroneDays:0}d</color>" : "";
+            GUI.Label(new Rect(wide ? 260 : 210, 13, Screen.width - (wide ? 700 : 640), 28),
+                $"<b>{Director.Date}</b>  <color=#8aa0b8>{time} · {act}</color>     " +
+                $"<b>{fac.Credits:0}</b> <color=#8aa0b8>cr ({(net >= 0 ? "+" : "")}{net:0})</color>     " +
+                $"<b>{t.Industry:0}</b> <color=#8aa0b8>ind</color>     " +
+                $"<b>{fac.Influence:0}</b> <color=#8aa0b8>inf (+{t.Influence:0.#})</color>" +
+                (wide ? $"     <color=#8aa0b8>council in {next / 24f:0}d</color>" : "") + throne +
                 (fac.EmbargoHours > 0f ? $"     <color=#ff8a70>EMBARGOED {fac.EmbargoHours / 24f:0}d</color>" : ""),
                 _text);
-            if (Button(new Rect(Screen.width - 272, 10, 124, 32), "DIPLOMACY", true, _showDiplomacy)) _showDiplomacy = !_showDiplomacy;
-            if (Button(new Rect(Screen.width - 140, 10, 124, 32), "SUPPLY", true, Map.ShowSupply)) Map.ShowSupply = !Map.ShowSupply;
+            float bx = Screen.width - 16;
+            bx -= 90; if (Button(new Rect(bx, 10, 82, 32), "SAVE", C.CanSave)) Director.Say(Director.TrySave(CampaignDirector.QuickSave) ? $"{Director.Date}: saved." : "Could not save.");
+            bx -= 110; if (Button(new Rect(bx, 10, 102, 32), "SUPPLY", true, Map.ShowSupply)) Map.ShowSupply = !Map.ShowSupply;
+            bx -= 132; if (Button(new Rect(bx, 10, 124, 32), "DIPLOMACY", true, _showDiplomacy)) { _showDiplomacy = !_showDiplomacy; _showDesigner = false; }
+            bx -= 126; if (Button(new Rect(bx, 10, 118, 32), "DESIGNS", true, _showDesigner)) { _showDesigner = !_showDesigner; _showDiplomacy = false; }
         }
 
         // --- Fleet ---------------------------------------------------------------------------
@@ -300,7 +311,7 @@ namespace GalacticRupture.Game
             bool ours = f.Owner == Campaign.PlayerFaction;
             var armies = C.ArmiesIn(f).ToList();
             int shown = Mathf.Min(f.Ships.Count, 9);
-            float h = 150 + shown * 30 + (ours ? 60 + armies.Count * 40 + 150 : 0);
+            float h = 150 + shown * 30 + (ours ? 60 + armies.Count * 40 + 230 : 0);
             var r = Box(16, 66, 380, h, FactionStyle.Of(f.Owner));
             float y = r.y + 12;
             GUI.Label(new Rect(r.x + 16, y, 350, 20), Caps(C.Factions[f.Owner].Name), _caps);
@@ -317,7 +328,19 @@ namespace GalacticRupture.Game
                     $"strength {f.Strength:0} · {f.LyPerDay:0.#} ly/day · {(C.InSupply(f) ? "<color=#7fd9ff>in supply</color>" : "<color=#ff8a70>out of supply: no repairs</color>")}", _small);
             else
                 GUI.Label(new Rect(r.x + 16, y, 350, 20), $"estimated strength {f.Strength:0}", _small);
-            y += 28;
+            y += 22;
+            if (ours)
+            {
+                if (f.Admiral != null)
+                    GUI.Label(new Rect(r.x + 16, y, 350, 20), $"admiral {f.Admiral.Name} · tactics {f.Admiral.Tactics} · nerve {f.Admiral.Nerve}", _small);
+                else if (Button(new Rect(r.x + 16, y - 2, 348, 24), $"APPOINT AN ADMIRAL   <color=#8aa0b8>{Campaign.AdmiralCost} inf</color>", C.CanAppointAdmiral(f.Id)))
+                {
+                    var adm = C.AppointAdmiral(f.Id);
+                    if (adm != null) Director.Say($"{Director.Date}: {adm.Name} takes command of {f.Name}.");
+                }
+                y += 26;
+            }
+            y += 6;
             Divider(r, y - 4);
 
             for (int i = 0; i < shown; i++)
@@ -346,19 +369,12 @@ namespace GalacticRupture.Game
             if (f.InTransit) return;
             var here = C.Galaxy.Systems[f.System];
             y += 6;
-            if (C.CanLand(f))
+            if (armies.Count > 0 && here.Owner == f.Owner)
             {
-                var fc = C.Forecast(armies, here);
-                string odds = fc.AttackerWins ? $"<color=#9fe39a>likely to take it in about {fc.Hours / 24f:0.#} days</color>" : "<color=#ff8a70>likely to be thrown back</color>";
-                GUI.Label(new Rect(r.x + 16, y, 350, 20), odds, _small);
-                y += 22;
-                if (Button(new Rect(r.x + 16, y, 348, 32), $"LAND THE ARMIES ON {here.Name.ToUpperInvariant()}", true, fc.AttackerWins))
-                {
-                    C.Land(f.Id);
-                    Director.Flush();
-                }
-                y += 38;
+                GUI.Label(new Rect(r.x + 16, y, 350, 20), "armies land by themselves where the fleet stops", _tiny);
+                y += 20;
             }
+            y = ExpeditionButtons(r, y, f, here);
             if (here.Owner == f.Owner)
             {
                 foreach (var a in C.ArmiesAt(here.Id).ToList())
@@ -406,80 +422,6 @@ namespace GalacticRupture.Game
             return ly / Mathf.Max(0.1f, f.LyPerDay);
         }
 
-        // --- System --------------------------------------------------------------------------
-
-        void SystemPanel()
-        {
-            if (Map.SelectedSystem < 0) return;
-            var s = C.Galaxy.Systems[Map.SelectedSystem];
-            bool seen = Intel.SystemVisible[s.Id];
-            int owner = Intel.SeenHour[s.Id] >= 0 ? Intel.OwnerSeen[s.Id] : -1;
-            bool ours = s.Owner == Campaign.PlayerFaction;
-            C.Yards.TryGetValue(s.Id, out var queue);
-            var armies = seen ? C.ArmiesAt(s.Id).ToList() : new List<Army>();
-            float h = 200 + armies.Count * 40 + (ours && s.Shipyard ? 40 + Hulls.All.Length * 34 + 40 + (queue?.Count ?? 0) * 20 : 0);
-            var r = Box(Screen.width - 396, 66, 380, h, FactionStyle.Of(owner));
-            float y = r.y + 12;
-            GUI.Label(new Rect(r.x + 16, y, 350, 20), Caps(owner < 0 ? "unclaimed" : C.Factions[owner].Name), new GUIStyle(_caps) { normal = { textColor = FactionStyle.Of(owner) } });
-            y += 18;
-            GUI.Label(new Rect(r.x + 16, y, 350, 30), s.Name + (s.Capital ? "   <size=15><color=#c9b27a>capital</color></size>" : ""), _title);
-            y += 32;
-            GUI.Label(new Rect(r.x + 16, y, 350, 20),
-                $"tier {s.Tier} · {Campaign.IncomePerDay(s):0} credits/day · {Campaign.InfluencePerDay(s):0.#} influence{(s.Shipyard ? " · shipyard" : "")}", _small);
-            y += 20;
-            if (!seen)
-            {
-                GUI.Label(new Rect(r.x + 16, y, 350, 20), Intel.SeenHour[s.Id] < 0 ? "never seen: send a fleet" : $"last seen {(C.Hours - Intel.SeenHour[s.Id]) / 24:0} days ago; garrison then ~{Intel.GarrisonSeen[s.Id]:0}", _small);
-                return;
-            }
-            if (s.Unrest > 0f) GUI.Label(new Rect(r.x + 16, y, 350, 20), $"<color=#ffb070>unrest: {s.Unrest / 24f:0.0} days without income or yards</color>", _small);
-            y += 26;
-            Divider(r, y - 4);
-
-            GUI.Label(new Rect(r.x + 16, y, 350, 20), Caps("Garrison"), _caps);
-            y += 22;
-            GUI.Label(new Rect(r.x + 16, y, 200, 20), "militia", _label);
-            Bar(new Rect(r.x + 250, y + 8, 114, 4), s.Militia / Mathf.Max(1f, Campaign.MaxMilitia(s)), ArmyBar);
-            y += 24;
-            foreach (var a in armies)
-            {
-                bool attacker = a.Owner != s.Owner;
-                GUI.Label(new Rect(r.x + 16, y, 350, 20), $"{(attacker ? $"<color=#{FactionStyle.Hex(a.Owner)}>" : "")}{a.Name}{(attacker ? "</color>" : "")}", _label);
-                GUI.Label(new Rect(r.x + 16, y + 17, 350, 18), $"{a.Commander.Name}, {a.Commander.TraitText}", _tiny);
-                Bar(new Rect(r.x + 250, y + 8, 114, 4), a.Strength / Army.MaxStrength, attacker ? FactionStyle.Of(a.Owner) : ArmyBar);
-                y += 40;
-            }
-            if (s.Besieger >= 0)
-            {
-                GUI.Label(new Rect(r.x + 16, y, 350, 20), $"ground war: the {Director.Tag(s.Besieger)} holds {s.Siege:P0} of the fighting strength", _small);
-                y += 22;
-            }
-
-            if (!ours || !s.Shipyard) return;
-            Divider(r, y + 2);
-            y += 10;
-            GUI.Label(new Rect(r.x + 16, y, 350, 20), Caps("Yard"), _caps);
-            y += 22;
-            if (queue != null)
-                foreach (var item in queue)
-                {
-                    GUI.Label(new Rect(r.x + 16, y, 350, 18), $"{(item.Def == null ? "army" : item.Def.Id)} · {item.HoursLeft / 24f:0.0} days", _tiny);
-                    y += 20;
-                }
-            foreach (var hull in Hulls.All)
-            {
-                bool can = C.CanBuild(Campaign.PlayerFaction, s.Id, hull);
-                if (Button(new Rect(r.x + 16, y, 348, 30), $"{hull.Id.ToUpperInvariant()}   <color=#d9b870>{hull.Cost} cr</color>   <color=#8aa0b8>{hull.BuildDays:0.#} days</color>", can)
-                    && C.QueueBuild(Campaign.PlayerFaction, s.Id, hull))
-                    Director.Say($"{Director.Date}: a {hull.Id} laid down at {s.Name}.");
-                y += 34;
-            }
-            bool canArmy = C.CanRaiseArmy(Campaign.PlayerFaction, s.Id);
-            if (Button(new Rect(r.x + 16, y, 348, 30), $"RAISE AN ARMY   <color=#d9b870>{Campaign.ArmyCost} cr</color>   <color=#8aa0b8>{Campaign.ArmyDays:0} days</color>", canArmy)
-                && C.RaiseArmy(Campaign.PlayerFaction, s.Id))
-                Director.Say($"{Director.Date}: an army is being raised at {s.Name}.");
-        }
-
         // --- Log and hints ---------------------------------------------------------------------
 
         void LogPanel()
@@ -498,7 +440,7 @@ namespace GalacticRupture.Game
         void Hints()
         {
             GUI.Label(new Rect(18, Screen.height - 30, Screen.width - 620, 22),
-                "left-click select · right-click a system: send the fleet · WASD pan · Q/E turn · wheel zoom · middle-drag tilt · Space pause · +/- speed · D diplomacy · Tab supply",
+                "left-click select · right-click a system: send the fleet · WASD pan · Q/E turn · wheel zoom · Space pause · +/- speed · D diplomacy · B designs · Tab supply · F5 save · F9 load",
                 _tiny);
         }
 
@@ -506,9 +448,10 @@ namespace GalacticRupture.Game
 
         void DiplomacyWindow()
         {
-            float w = 860, rowH = 92;
+            float w = 900, rowH = 92;
             int rows = C.Factions.Count - 1;
-            var r = Box(Screen.width * 0.5f - w * 0.5f, 90, w, 120 + rows * rowH + 110, FactionStyle.Of(Campaign.PlayerFaction), solid: true);
+            float h = Mathf.Min(120 + rows * rowH + 110, Screen.height - 150);
+            var r = Box(Screen.width * 0.5f - w * 0.5f, 70, w, h, FactionStyle.Of(Campaign.PlayerFaction), solid: true);
             float y = r.y + 14;
             GUI.Label(new Rect(r.x + 20, y, 400, 30), "Diplomacy", _title);
             var me = C.Factions[Campaign.PlayerFaction];
@@ -518,7 +461,11 @@ namespace GalacticRupture.Game
             if (Button(new Rect(r.xMax - 120, y, 100, 28), "CLOSE")) _showDiplomacy = false;
             y += 70;
 
-            foreach (var fac in C.Factions)
+            // The powers scroll; the council stays at the bottom.
+            var list = new Rect(r.x, y - 8, w, r.yMax - y - 100);
+            float top = y - 8;
+            _dipScroll = GUI.BeginScrollView(list, _dipScroll, new Rect(r.x, top, w - 20, rows * rowH + 8), false, false);
+            foreach (var fac in C.Factions.OrderBy(f => f.Eliminated).ThenBy(f => !f.Major).ThenBy(f => f.Id))
             {
                 if (fac.Id == Campaign.PlayerFaction) continue;
                 Divider(r, y - 6);
@@ -579,17 +526,18 @@ namespace GalacticRupture.Game
                 y += rowH;
             }
 
+            GUI.EndScrollView();
+            y = r.yMax - 96;
             Divider(r, y - 6);
             GUI.Label(new Rect(r.x + 20, y + 4, 500, 22), Caps("The council"), _caps);
             var last = C.LastCouncil;
             GUI.Label(new Rect(r.x + 20, y + 26, w - 40, 20),
                 last == null ? "has not yet sat" : $"last session: {C.Describe(last)} — {(last.Passed ? "passed" : "rejected")} {last.YesSeats} to {last.NoSeats}", _small);
-            float bx2 = r.x + 20;
             GUI.Label(new Rect(r.x + 20, y + 50, 300, 20), $"table an embargo ({Campaign.TableCost} influence):", _small);
-            bx2 = r.x + 280;
+            float bx2 = r.x + 280;
             foreach (var fac in C.Factions)
             {
-                if (fac.Id == Campaign.PlayerFaction || fac.Eliminated) continue;
+                if (fac.Id == Campaign.PlayerFaction || fac.Eliminated || !fac.Major) continue;
                 if (Button(new Rect(bx2, y + 46, 140, 26), $"<color=#{FactionStyle.Hex(fac.Id)}>{fac.Name}</color>", C.CanTable(Campaign.PlayerFaction)))
                 {
                     C.TableEmbargo(Campaign.PlayerFaction, fac.Id);
@@ -648,39 +596,25 @@ namespace GalacticRupture.Game
         void CouncilWindow()
         {
             var s = C.Council;
-            var r = Modal(620, 360, new Color(0.85f, 0.75f, 0.5f));
+            int voters = s.Votes.Count;
+            var r = Modal(820, 200 + (voters + 1) / 2 * 24 + 40, new Color(0.85f, 0.75f, 0.5f));
             float y = r.y + 18;
             GUI.Label(new Rect(r.x, y, r.width, 22), Caps("The council sits"), new GUIStyle(_caps) { alignment = TextAnchor.MiddleCenter });
             GUI.Label(new Rect(r.x + 30, y + 26, r.width - 60, 60), C.Describe(s), new GUIStyle(_title) { fontSize = 22, wordWrap = true, alignment = TextAnchor.UpperCenter });
             y += 98;
+            int k = 0;
             foreach (var kv in s.Votes)
             {
                 string v = kv.Value switch { Vote.Yes => "<color=#9fe39a>for</color>", Vote.No => "<color=#ff8a70>against</color>", _ => "abstains" };
-                GUI.Label(new Rect(r.x + 40, y, 540, 22), $"{Director.Tag(kv.Key)} · {C.Seats(kv.Key)} seats · {v}", _label);
-                y += 24;
+                GUI.Label(new Rect(r.x + 40 + (k % 2) * 380, y + (k / 2) * 24, 370, 22), $"{Director.Tag(kv.Key)} · {C.Seats(kv.Key)} seats · {v}", _label);
+                k++;
             }
+            y += (k + 1) / 2 * 24;
             GUI.Label(new Rect(r.x + 40, y + 4, 540, 22), $"our seats: {C.Seats(Campaign.PlayerFaction)}", _small);
             float bw = 176;
             if (Button(new Rect(r.x + 30, r.yMax - 50, bw, 34), "VOTE FOR", true, true)) { C.CastPlayerVote(Vote.Yes); Director.Flush(); }
             if (Button(new Rect(r.x + 30 + bw + 12, r.yMax - 50, bw, 34), "VOTE AGAINST")) { C.CastPlayerVote(Vote.No); Director.Flush(); }
             if (Button(new Rect(r.x + 30 + (bw + 12) * 2, r.yMax - 50, bw, 34), "ABSTAIN")) { C.CastPlayerVote(Vote.Abstain); Director.Flush(); }
-        }
-
-        void ProposalWindow(Proposal p)
-        {
-            var r = Modal(560, 230, FactionStyle.Of(p.From));
-            string what = p.Treaty switch
-            {
-                DiplomaticStance.Peace => "offers peace",
-                DiplomaticStance.NonAggression => "proposes a non-aggression pact",
-                _ => "proposes an alliance: their wars become ours, and ours theirs",
-            };
-            GUI.Label(new Rect(r.x, r.y + 18, r.width, 22), Caps("An envoy"), new GUIStyle(_caps) { alignment = TextAnchor.MiddleCenter });
-            GUI.Label(new Rect(r.x + 30, r.y + 46, r.width - 60, 70), $"The {Director.Tag(p.From)} {what}.",
-                new GUIStyle(_title) { fontSize = 21, wordWrap = true, alignment = TextAnchor.UpperCenter });
-            GUI.Label(new Rect(r.x + 30, r.y + 118, r.width - 60, 22), $"trust between us: {C.Trust(p.From, Campaign.PlayerFaction):+0;-0;0}", new GUIStyle(_small) { alignment = TextAnchor.UpperCenter });
-            if (Button(new Rect(r.x + 30, r.yMax - 50, 240, 34), "ACCEPT", true, true)) { C.Respond(p, true); Director.Flush(); }
-            if (Button(new Rect(r.x + 290, r.yMax - 50, 240, 34), "DECLINE")) C.Respond(p, false);
         }
 
         void EndBanner()

@@ -7,6 +7,14 @@ namespace GalacticRupture.Sim
         PointDefence,
     }
 
+    // How big a gun a hardpoint takes. A mount fits any hardpoint of its size or larger.
+    public enum MountSize
+    {
+        Small,
+        Medium,
+        Large,
+    }
+
     public enum DamageChannel
     {
         Ballistic,
@@ -18,8 +26,11 @@ namespace GalacticRupture.Sim
     public sealed class MountDef
     {
         public string Id = "";
+        public string Name = "";
         public MountClass Class;
         public DamageChannel Channel;
+        public MountSize Size;
+        public int Cost = 10;               // credits, on top of the hull
 
         public float YawRateDeg = 20f;      // traverse, degrees per second
         public float PitchRateDeg = 15f;

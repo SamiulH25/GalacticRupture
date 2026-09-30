@@ -303,7 +303,7 @@ that changes. 12 systems with real interiors beats 150 dots.
 time. The space *between* systems is where intercepts and escort fights happen. Gives
 Stellaris' transport-raid tension and EAW' cinematic battles without building two games.
 
-### 4.1 The First Campaign Map (as built)
+### 4.1 The First Campaign Map (as built; now the test map)
 
 `PROPOSED` — the rules the campaign runs on today, to confirm or change:
 
@@ -332,6 +332,48 @@ Stellaris' transport-raid tension and EAW' cinematic battles without building tw
   ceasefire, recognition of conquests, or an embargo a member tabled with influence. Seats are
   systems held. It stops the clock for the player's vote.
 - **Win** by taking Veyl; **lose** by losing Aurel.
+
+### 4.2 The Long Campaign (as built)
+
+`PROPOSED` — the rules the long campaign (§1.1, §1.2) runs on as of 2026-09-30. Numbers are first
+tuning from headless runs of the AI playing itself, not from play.
+
+- **Galaxy.** Generated from a seed: ~100 systems in an ellipse ~170 × 120 ly, lanes from the
+  relative-neighbourhood graph plus some longer loops. Five majors on the rim (Continuance,
+  Remnant, Hierarchate, Free Yards, Lantern Synod — placeholder names until the setting pass),
+  each with a capital and three core worlds; ten minors of 1–3 systems in the gaps; the old
+  capital at the centre; everything else (~60 systems) derelict: 70% ruins, 30% holdouts.
+- **Systems.** Population grows slowly toward habitability (+3 per habitat); stability 0–100
+  drifts 2/day toward a target set by admin (+10), garrison (+5), capital (+15), governor loyalty,
+  and distance from the capital (−2.5 per jump, up to −20); unrest, sieges and embargoes lower it.
+  Below 50 stability, output falls.
+- **Buildings,** one per slot (2–8 slots), one under construction at a time: fab (+8 industry),
+  yard (builds hulls; two yards build two at once), refinery (+20 cr), garrison (+40 militia,
+  +5 stability, raises armies), administration (+1 influence, +10 stability), habitat (+3
+  population ceiling), supply depot (+8 ly supply range from that system).
+- **Output a day:** credits 3 × population + refineries; industry 0.5 × population + fabs;
+  influence 0.2 + admin (+2 at the capital). Industry speeds the yard (0.5×–3×) and construction.
+- **Upkeep:** 1.5% of a hull's cost a day, 1 cr per army. This is what caps navies.
+- **Governors:** as §1.2. Research focus is replaced by **Economy** until a tech tree exists.
+  Appointing costs 10 influence. Candidate pool of three per power, one replaced every 30 days.
+- **Reclamation:** a ruin costs 150 + 60 per dormant building and takes 30 + 8 days per dormant
+  building with a fleet on station and no hostile warships; work pauses when the fleet leaves.
+  Restored ruins come back with their old buildings online. A holdout is courted for 30 + 6 ×
+  population influence over 30 days on station, or taken by landing (militia 20 × population + 30).
+  The old capital can only be taken by force.
+- **Admirals:** 8 influence, tactics and nerve 1–5. Unattended, a side withdraws when it falls
+  below ~35% of its starting strength (earlier with low nerve); tactics shortens reloads up to 10%.
+- **Designer:** hardpoints are Small / Medium / Large; a mount fits its size or larger. Mounts:
+  main battery and lance battery (L), energy, flak and ion batteries (M), light gun, autocannon
+  and point defence (S). A design's cost is the hull plus its mounts; build time scales with it.
+  Missiles and spinal mounts wait on tactical support.
+- **Acts:** act 2 begins when 85% of the ruins are taken or at day 540; act 3 when a bloc holds
+  half the galaxy after a year of act 2, or at day 1460. In act 3, holding the old capital for 90
+  days wins (or loses, if a rival does). The last major standing wins at any time.
+- **Time:** ~20 s a day at ×1, speeds ×0.5–×16; autosave every 30 days; F5/F9 quicksave/load.
+- **AI:** develops systems within a cash reserve, appoints governors, keeps one expedition
+  working the ruins, builds within its upkeep, stages fleets toward its wars. War declarations
+  need trust below −45 in act 1, −25 in act 2, −10 in act 3.
 
 ---
 
@@ -462,6 +504,58 @@ of the old order still pretend to function.**
 This makes galactic diplomacy *about a lie*, which is far more interesting than peace
 treaties — every council session is theatre, and the interesting play is deciding when to
 stop pretending.
+
+### 7.1 Proposed Long-Campaign Faction Roster
+
+`PROPOSED` — The long campaign has **five major powers and eight minor powers**. This
+resolves the roster target in §1.1 while preserving the identities already present in the
+prototype. Serac Compact and Ilium Directorate are currently marked minor in the 16-system
+prototype map; this proposal promotes them to major powers in the full campaign. That is a
+lore and campaign-scope decision, not a change to the prototype map.
+
+#### Fifth major: the Hearthward League
+
+The Hearthward League claims that a state earns legitimacy by keeping its people alive,
+not by inheriting a capital, a council seat or an old imperial seal. It grew around the
+emergency habitat, life-support and evacuation networks that kept isolated populations
+breathing after the rupture. Those networks are now its territory, its bargaining power and
+the reason its neighbours cannot ignore it.
+
+Hearthward is a major power because it can sustain and move populations across several
+systems, not because it owns the largest battle fleet. Its navy is built around convoy
+protection, repair under fire and holding an evacuation corridor long enough for transports
+to clear. In war it will abandon a system before sacrificing its residents, then return when
+it can defend them. Its blind spot is paternalism: it calls forced relocation temporary
+protection, and treats local refusal as a danger it is entitled to override.
+
+At the council it demands recognition and protection for displaced populations. This puts
+it at odds with powers that treat a system's industry, strategic position or formal title as
+the first claim to its future. Its visual identity should read as a working relief fleet
+hardened by repeated wars: charcoal hulls, warm ivory panels and hazard amber, with broad,
+protected transport and service sections. That gives its ships a practical, unmistakable
+profile distinct from the existing spearhead-like warships.
+
+#### Minor powers
+
+These are eight new minor powers for the full campaign. Each holds a specific piece of
+leverage that makes its council seat and its fate worth contesting; none needs a unique
+weapon or exclusive hull class.
+
+| Minor power | What it holds | Pressure point |
+|---|---|---|
+| **Morrow Passage Authority** | Pilots, traffic records and service stations at the Morrow routes. | Can delay a fleet without defeating it; claims it is enforcing neutral passage rules. |
+| **Thule Archive Enclave** | Pre-rupture registries, survey records and competing copies of imperial law. | Every major wants its records authenticated; the Enclave survives by releasing only enough truth to stay useful. |
+| **Oriel Salvage Charter** | Wreck fields, salvage rights and the crews who can recover old-empire matériel. | Its claims keep wreckage from becoming free loot, but a blockade can starve its people of replacement parts. |
+| **Hadran Yard Cooperative** | Skilled repair crews and a small, badly damaged orbital yard. | Can keep a battered fleet in service, but must choose whose contracts get priority. |
+| **Silex Prospectors' Union** | Remote ore and isotope claims worked by independent extraction ships. | Can shut down exports to resist absorption; its scattered crews are hard to protect from raiders. |
+| **Edda Habitat Trust** | Life-support expertise and several densely populated habitat stations. | It can keep a system habitable through a siege, but its residents fear becoming a strategic asset owned by a major. |
+| **Vesper Courier Houses** | Couriers and relay caches carrying messages along routes the old network no longer serves reliably. | They sell speed and privacy to every side, until a bloc demands exclusive service. |
+| **Nadir Watch** | A chain of remote observatories and warning posts on an exposed frontier. | Its early warning buys neighbours time; no one agrees who should pay to keep its crews supplied. |
+
+The minor powers should have their own reasons for bargaining, resisting absorption or
+changing sides. Their value is political and strategic leverage, not a set of disposable
+colour-coded planets. Their final system locations, names and council-seat rules remain
+`OPEN` until the long-campaign map is designed.
 
 ---
 
@@ -614,6 +708,15 @@ Combat design is sized for that.
   at war needs (armoured bows, centreline superfiring guns, radiators, redundant engines), not
   art objects. No ventral guns; short, chunky barrels in proportion to the gunhouse.
 
+**`LOCKED` — Main ship reference images (user approved, 2026-09-29):**
+[output/ship-references/main/](output/ship-references/main/README.md). Four battleship plates
+and four smaller-class comparison sheets cover the twenty current faction/class combinations.
+Classes must have distinct role-specific hull structures, not a battleship resized with fewer
+guns. Carry faction identity through construction, materials, components and paint. Keep clear,
+modest command/deck areas and practical wartime engineering. Earlier image folders are iteration
+history; use `main/` for future ship art and modelling. This approves the visual direction, not
+the final faction lineup or changes to simulation hull definitions.
+
 ### 8.10 Toolchain
 
 ```sh
@@ -676,3 +779,6 @@ Items 1, 2 and 4–10 have assumed answers in §1.2. Still open:
 - **2026-09-29 — Assumed defaults.** Filled in the remaining open questions as §1.2 (map ~100,
   lanes, governor stats and pool, admirals, one sim with several setups, hardpoint mounts,
   minors, time scale, council every 60 days, two resolutions confirmed).
+- **2026-09-30 — Long campaign built.** Recorded its rules as §4.2: generated galaxy, system
+  economy and buildings, governors, reclamation and courting, admirals, the designer, acts and
+  the throne, upkeep, saves. Governor focus "research" became "economy" until tech exists.

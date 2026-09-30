@@ -6,9 +6,11 @@ using UnityEngine;
 
 namespace GalacticRupture.Game
 {
-    // `-grCaptureCampaign <dir>`: plays the opening the way a player would: embark an army, send
-    // the home fleet to Morrow's Gate, fight what it meets, land and take the system; accepts
-    // offers and abstains in council; screenshots each stage with UI, and quits.
+    // `-grCaptureCampaign <dir>`: plays the opening of the long campaign the way a player would:
+    // looks over the galaxy and home, appoints a governor, drafts a ship design, sends an
+    // expedition to reclaim the nearest ruin and the home fleet with an army to the nearest
+    // holdout, fights the first battle in command, saves and reloads, then lets the months run.
+    // Screenshots each stage with UI, and quits.
     public sealed class CampaignCapture : MonoBehaviour
     {
         public CampaignDirector Director;
@@ -47,8 +49,26 @@ namespace GalacticRupture.Game
             Debug.Log($"[campaign] {name}: {Director.Date}");
         }
 
-        Fleet Home => Director.Campaign.Fleets.Find(f => f.Name == "Home Fleet");
-        StarSystem Sys(string n) => Director.Campaign.Galaxy.Systems.Find(s => s.Name == n);
+        Fleet Named(string n) => Director.Campaign.Fleets.Find(f => f.Name == n && f.Owner == Campaign.PlayerFaction);
+        Fleet Home => Named("Home Fleet");
+        int _ruin = -1, _holdout = -1;
+        bool _shotEnvoy;
+
+        int Capital => Director.Campaign.Factions[Campaign.PlayerFaction].Capital;
+
+        int Nearest(System.Func<StarSystem, bool> want)
+        {
+            var c = Director.Campaign;
+            int best = -1;
+            float bestD = float.MaxValue;
+            foreach (var s in c.Galaxy.Systems)
+            {
+                if (!want(s)) continue;
+                float d = c.Galaxy.Distance(Capital, s.Id);
+                if (d < bestD) { bestD = d; best = s.Id; }
+            }
+            return best;
+        }
 
         void Update()
         {
@@ -101,118 +121,180 @@ namespace GalacticRupture.Game
             }
             if (c.Incoming.Count > 0)
             {
-                if (!_shotModal) { Shot("envoy"); _shotModal = true; _wait = 0.3f; return; }
-                _shotModal = false;
+                // Envoys no longer stop the clock: photograph the first, then answer.
+                if (!_shotEnvoy) { Shot("envoy"); _shotEnvoy = true; _wait = 0.3f; return; }
                 c.Respond(c.Incoming[0], true);
                 Director.Flush();
-                _wait = 0.5f;
-                return;
             }
 
             switch (_step)
             {
                 case 0:
-                    _wait = 2f;
+                    Director.Paused = true;
+                    Director.MapCamera.Snap(MapView.ToMap(c.Galaxy.Systems[c.OldCapital].Position));
+                    Director.MapCamera.Distance = 26000f;
+                    Director.MapCamera.Pitch = 70f;
+                    _wait = 2.5f;
                     _step++;
                     break;
                 case 1:
-                    Map.SelectedSystem = Sys("Aurel").Id;
-                    Shot("map");
-                    _wait = 0.5f;
-                    _step = 20;
-                    break;
-                case 20:
-                    Map.SelectedSystem = -1;
-                    Director.MapCamera.Snap(MapView.ToMap(Sys("Aurel").Position));
-                    Director.MapCamera.Distance = 1500f;
-                    Director.MapCamera.Pitch = 38f;
-                    _wait = 2.5f;
-                    _step = 21;
-                    break;
-                case 21:
-                    Shot("closeup");
+                    Shot("galaxy");
                     _wait = 0.3f;
-                    _step = 22;
-                    break;
-                case 22:
-                    Director.MapCamera.Distance = 6500f;
-                    Director.MapCamera.Pitch = 58f;
-                    _wait = 1.5f;
-                    _step = 2;
-                    break;
-                case 2:
-                {
-                    var home = Home;
-                    var army = c.ArmiesAt(home.System).First(a => a.Owner == Campaign.PlayerFaction);
-                    c.Embark(home.Id, army.Id);
-                    c.RaiseArmy(Campaign.PlayerFaction, Sys("Aurel").Id);
-                    c.QueueBuild(Campaign.PlayerFaction, Sys("Aurel").Id, Hulls.Transport);
-                    Map.SelectedFleet = home.Id;
-                    Map.SelectedSystem = -1;
-                    c.MoveFleet(home.Id, Sys("Morrow's Gate").Id);
-                    Director.Speed = 4f;
-                    _wait = 3f;
                     _step++;
                     break;
-                }
+                case 2:
+                    Director.MapCamera.Snap(MapView.ToMap(c.Galaxy.Systems[Capital].Position));
+                    Director.MapCamera.Distance = 7000f;
+                    Director.MapCamera.Pitch = 58f;
+                    Map.SelectedSystem = Capital;
+                    _wait = 2f;
+                    _step++;
+                    break;
                 case 3:
-                    Shot("fleet_underway");
+                    Shot("home");
+                    _wait = 0.3f;
                     _step++;
                     break;
                 case 4:
                 {
-                    var home = Home;
-                    if (home == null) { _step = 7; break; }
-                    if (home.InTransit && c.Hours < 24 * 20) return;
-                    if (c.CanLand(home))
-                    {
-                        c.Land(home.Id);
-                        Director.Flush();
-                        Map.SelectedSystem = home.System;
-                        Map.SelectedFleet = -1;
-                        Director.Speed = 1f;
-                        _wait = 4f;
-                        _step++;
-                    }
-                    else _step = 6;
-                    break;
-                }
-                case 5:
-                    Shot("landing");
-                    Director.Speed = 4f;
-                    _wait = 6f;
-                    _step++;
-                    break;
-                case 6:
-                    Hud.ShowDiplomacy = true;
-                    Director.Paused = true;
+                    // A governor for the largest core world that isn't the capital.
+                    var core = c.Galaxy.Systems.Where(s => s.Owner == Campaign.PlayerFaction && !s.Capital).OrderByDescending(s => s.Population).First();
+                    c.Factions[Campaign.PlayerFaction].Influence += 20f;
+                    c.Appoint(Campaign.PlayerFaction, core.Id, 0, GovernorFocus.Industry);
+                    Director.Flush();
+                    Map.SelectedSystem = core.Id;
                     _wait = 0.8f;
                     _step++;
                     break;
+                }
+                case 5:
+                    Shot("governor");
+                    _wait = 0.3f;
+                    _step++;
+                    break;
+                case 6:
+                {
+                    // Draft an ion-armed destroyer.
+                    var designs = c.Factions[Campaign.PlayerFaction].Designs;
+                    var d = designs.First(x => x.Hull.Class == HullClass.Destroyer).Copy("Ion Destroyer");
+                    d.Set(0, Hulls.IonBattery);
+                    d.Set(1, Hulls.IonBattery);
+                    designs.Add(d);
+                    Hud.ShowDesigner = true;
+                    _wait = 0.8f;
+                    _step++;
+                    break;
+                }
                 case 7:
-                    Shot("diplomacy");
+                    Shot("designer");
                     _wait = 0.3f;
                     _step++;
                     break;
                 case 8:
-                    Hud.ShowDiplomacy = false;
-                    Map.ShowSupply = true;
-                    _wait = 0.8f;
+                {
+                    Hud.ShowDesigner = false;
+                    _ruin = Nearest(s => s.Owner < 0 && s.Derelict == Derelict.Ruin);
+                    _holdout = Nearest(s => s.Owner < 0 && s.Derelict == Derelict.Holdout && !s.OldCapital);
+                    var exp = Named("First Expedition");
+                    c.MoveFleet(exp.Id, _ruin);
+                    var home = Home;
+                    var army = c.ArmiesAt(home.System).First(a => a.Owner == Campaign.PlayerFaction);
+                    c.Embark(home.Id, army.Id);
+                    c.MoveFleet(home.Id, _holdout);
+                    c.QueueBuild(Campaign.PlayerFaction, Capital, Hulls.Transport);
+                    Map.SelectedFleet = home.Id;
+                    Map.SelectedSystem = -1;
+                    Director.Paused = false;
+                    Director.Speed = 4f;
+                    _wait = 2f;
                     _step++;
                     break;
+                }
                 case 9:
-                    Shot("supply");
-                    _wait = 0.3f;
+                    Shot("fleets_underway");
+                    Director.Speed = 16f;
                     _step++;
                     break;
                 case 10:
-                    Map.ShowSupply = false;
-                    Director.Paused = false;
-                    Director.Speed = 8f;
-                    _wait = 25f;
+                {
+                    var exp = Named("First Expedition");
+                    if (exp == null) { _step = 12; break; }
+                    if (exp.InTransit && c.Hours < 24 * 60) return;
+                    if (c.StartReclaim(Campaign.PlayerFaction, _ruin)) Director.Flush();
+                    Map.SelectedSystem = _ruin;
+                    Map.SelectedFleet = -1;
+                    Director.MapCamera.Snap(MapView.ToMap(c.Galaxy.Systems[_ruin].Position));
+                    Director.Speed = 1f;
+                    _wait = 2f;
                     _step++;
                     break;
+                }
                 case 11:
+                    Shot("reclaim");
+                    Director.Speed = 16f;
+                    _step++;
+                    break;
+                case 12:
+                {
+                    var s = c.Galaxy.Systems[_holdout];
+                    if (s.Besieger != Campaign.PlayerFaction && s.Owner != Campaign.PlayerFaction && c.Hours < 24 * 90) return;
+                    Map.SelectedSystem = _holdout;
+                    Director.MapCamera.Snap(MapView.ToMap(s.Position));
+                    Director.Speed = 1f;
+                    _wait = 2f;
+                    _step++;
+                    break;
+                }
+                case 13:
+                    Shot("landing");
+                    _wait = 0.3f;
+                    _step = 30;
+                    break;
+                case 30:
+                    Hud.ShowDiplomacy = true;
+                    Director.Paused = true;
+                    _wait = 0.8f;
+                    _step = 14;
+                    break;
+                case 14:
+                    Shot("diplomacy");
+                    _wait = 0.3f;
+                    _step = 31;
+                    break;
+                case 31:
+                    Hud.ShowDiplomacy = false;
+                    Map.ShowSupply = true;
+                    Director.MapCamera.Snap(MapView.ToMap(c.Galaxy.Systems[Capital].Position));
+                    Director.MapCamera.Distance = 14000f;
+                    _wait = 1f;
+                    _step = 15;
+                    break;
+                case 15:
+                    Shot("supply");
+                    _wait = 0.3f;
+                    _step = 32;
+                    break;
+                case 32:
+                    Map.ShowSupply = false;
+                    Debug.Log($"[campaign] save {(Director.TrySave(CampaignDirector.QuickSave) ? "ok" : "failed")} at {Director.Date}");
+                    Debug.Log($"[campaign] load {(Director.TryLoad(CampaignDirector.QuickSave) ? "ok" : "failed")} at {Director.Date}");
+                    Director.Paused = false;
+                    Director.Speed = 16f;
+                    _wait = 40f;
+                    _step = 16;
+                    break;
+                case 16:
+                {
+                    Director.Paused = true;
+                    var me = c.Factions[Campaign.PlayerFaction];
+                    int held = c.Galaxy.Systems.Count(s => s.Owner == Campaign.PlayerFaction);
+                    Debug.Log($"[campaign] {Director.Date}: act {c.Act}, we hold {held}, {me.Credits:0} cr, derelicts left {c.DerelictsLeft}");
+                    Map.SelectedSystem = _ruin;
+                    _wait = 1f;
+                    _step++;
+                    break;
+                }
+                case 17:
                     Shot("later");
                     _quitAt = Time.unscaledTime + 1f;
                     _step++;

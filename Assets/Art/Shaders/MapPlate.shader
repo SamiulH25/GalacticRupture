@@ -29,9 +29,9 @@ Shader "GR/MapPlate"
                 float _Radius, _Border, _Grid, _SupplyRange;
             CBUFFER_END
 
-            float4 _GR_Systems[32];  // xz position, owner (-1 none), visible (0/1)
-            float4 _GR_SysFlags[32]; // x: supply source for the player, y: capital
-            float4 _GR_Colors[8];
+            float4 _GR_Systems[128];  // xz position, owner (-1 none), visible (0/1)
+            float4 _GR_SysFlags[128]; // x: supply source for the player, y: capital
+            float4 _GR_Colors[16];
             float _GR_SystemCount;
             float _GR_ShowSupply;
             float4 _GR_MapCentre;    // xz centre, w radius
@@ -69,10 +69,10 @@ Shader "GR/MapPlate"
                 // Each power's territory is a smooth union of its systems (a soft minimum of the
                 // distances), so borders flow between systems instead of reading as circles.
                 const float k = 1.0 / 240.0;
-                float acc[8];
-                for (int f = 0; f < 8; f++) acc[f] = 0.0;
+                float acc[16];
+                for (int f = 0; f < 16; f++) acc[f] = 0.0;
                 float visW = 0.0, visSum = 0.0, dSupply = 1e9;
-                for (int j = 0; j < 32; j++)
+                for (int j = 0; j < 128; j++)
                 {
                     if (j >= n) break;
                     float4 s = _GR_Systems[j];
@@ -81,12 +81,12 @@ Shader "GR/MapPlate"
                     visW += w;
                     visSum += w * s.w;
                     if (_GR_SysFlags[j].x > 0.5) dSupply = min(dSupply, d);
-                    if (s.z >= 0.0) acc[(int)s.z] += exp(-d * k);
+                    if (s.z >= 0.0 && d < 4000.0) acc[(int)s.z] += exp(-d * k);
                 }
                 float vis = visW > 1e-6 ? visSum / visW : 0.0;
                 float d1 = 1e9, d2 = 1e9;
                 int o1 = -1;
-                for (int f2 = 0; f2 < 8; f2++)
+                for (int f2 = 0; f2 < 16; f2++)
                 {
                     if (acc[f2] <= 0.0) continue;
                     float d = -log(acc[f2]) / k;

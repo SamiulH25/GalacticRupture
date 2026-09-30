@@ -7,6 +7,12 @@ namespace GalacticRupture.Sim
 
         public Rng(ulong seed) => _state = seed;
 
+        public ulong State
+        {
+            get => _state;
+            set => _state = value;
+        }
+
         public ulong NextULong()
         {
             ulong z = _state += 0x9E3779B97F4A7C15UL;

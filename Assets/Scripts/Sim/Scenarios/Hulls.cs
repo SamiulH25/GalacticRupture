@@ -8,7 +8,8 @@ namespace GalacticRupture.Sim
     {
         public static readonly MountDef MainBattery = new MountDef
         {
-            Id = "main_battery", Class = MountClass.Line, Channel = DamageChannel.Ballistic,
+            Id = "main_battery", Name = "Main battery", Class = MountClass.Line, Channel = DamageChannel.Ballistic,
+            Size = MountSize.Large, Cost = 90,
             YawRateDeg = 14f, PitchRateDeg = 10f, PitchMinDeg = -4f, PitchMaxDeg = 40f,
             Range = 4800f, Reload = 5.5f, Barrels = 2, BarrelStagger = 0.18f,
             ProjectileSpeed = 1500f, Damage = 150f, SpreadDeg = 0.2f, AimToleranceDeg = 1.2f,
@@ -17,7 +18,8 @@ namespace GalacticRupture.Sim
 
         public static readonly MountDef Secondary = new MountDef
         {
-            Id = "secondary", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
+            Id = "secondary", Name = "Energy battery", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
+            Size = MountSize.Medium, Cost = 30,
             YawRateDeg = 34f, PitchRateDeg = 28f, PitchMinDeg = -6f, PitchMaxDeg = 70f,
             Range = 3000f, Reload = 1.8f, Barrels = 2, BarrelStagger = 0.1f,
             ProjectileSpeed = 1700f, Damage = 38f, SpreadDeg = 0.35f, AimToleranceDeg = 2f,
@@ -26,7 +28,8 @@ namespace GalacticRupture.Sim
 
         public static readonly MountDef PointDefence = new MountDef
         {
-            Id = "point_defence", Class = MountClass.PointDefence, Channel = DamageChannel.Ballistic,
+            Id = "point_defence", Name = "Point defence", Class = MountClass.PointDefence, Channel = DamageChannel.Ballistic,
+            Size = MountSize.Small, Cost = 10,
             YawRateDeg = 110f, PitchRateDeg = 90f, PitchMinDeg = -8f, PitchMaxDeg = 85f,
             Range = 1500f, Reload = 0.22f, Barrels = 2, BarrelStagger = 0.05f,
             ProjectileSpeed = 2000f, Damage = 7f, SpreadDeg = 0.9f, AimToleranceDeg = 4f,
@@ -35,12 +38,68 @@ namespace GalacticRupture.Sim
 
         public static readonly MountDef CorvetteGun = new MountDef
         {
-            Id = "corvette_gun", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
+            Id = "corvette_gun", Name = "Light gun", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
+            Size = MountSize.Small, Cost = 12,
             YawRateDeg = 60f, PitchRateDeg = 50f, PitchMinDeg = -10f, PitchMaxDeg = 60f,
             Range = 1800f, Reload = 1.4f, Barrels = 2, BarrelStagger = 0.08f,
             ProjectileSpeed = 1600f, Damage = 16f, SpreadDeg = 0.6f, AimToleranceDeg = 3f,
             MuzzleLength = 4.5f, PivotHeight = 1.5f, Hp = 60f,
         };
+
+        // Alternatives for the designer: each trades something for something (IDEAS.md §5.2).
+
+        // Large, energy: a heavier punch per shot than the main battery, slow to traverse and reload.
+        public static readonly MountDef LanceBattery = new MountDef
+        {
+            Id = "lance_battery", Name = "Lance battery", Class = MountClass.Line, Channel = DamageChannel.Energy,
+            Size = MountSize.Large, Cost = 110,
+            YawRateDeg = 9f, PitchRateDeg = 8f, PitchMinDeg = -4f, PitchMaxDeg = 35f,
+            Range = 4200f, Reload = 8f, Barrels = 2, BarrelStagger = 0.25f,
+            ProjectileSpeed = 2200f, Damage = 260f, SpreadDeg = 0.15f, AimToleranceDeg = 1f,
+            MuzzleLength = 18f, PivotHeight = 3.8f, Hp = 560f,
+        };
+
+        // Medium, ballistic: fast and short-ranged, for escorts and small craft.
+        public static readonly MountDef FlakBattery = new MountDef
+        {
+            Id = "flak_battery", Name = "Flak battery", Class = MountClass.PointDefence, Channel = DamageChannel.Ballistic,
+            Size = MountSize.Medium, Cost = 24,
+            YawRateDeg = 70f, PitchRateDeg = 60f, PitchMinDeg = -8f, PitchMaxDeg = 85f,
+            Range = 1900f, Reload = 0.5f, Barrels = 2, BarrelStagger = 0.06f,
+            ProjectileSpeed = 1800f, Damage = 12f, SpreadDeg = 0.8f, AimToleranceDeg = 3.5f,
+            MuzzleLength = 7f, PivotHeight = 2.2f, Hp = 200f,
+        };
+
+        // Medium, disruptive: no hull damage to speak of, but it kills guns (IDEAS.md §5.1).
+        public static readonly MountDef IonBattery = new MountDef
+        {
+            Id = "ion_battery", Name = "Ion battery", Class = MountClass.Secondary, Channel = DamageChannel.Disruptive,
+            Size = MountSize.Medium, Cost = 36,
+            YawRateDeg = 30f, PitchRateDeg = 24f, PitchMinDeg = -6f, PitchMaxDeg = 70f,
+            Range = 2600f, Reload = 2.4f, Barrels = 2, BarrelStagger = 0.1f,
+            ProjectileSpeed = 1500f, Damage = 45f, SpreadDeg = 0.35f, AimToleranceDeg = 2f,
+            MuzzleLength = 9f, PivotHeight = 2.2f, Hp = 220f,
+        };
+
+        // Small, ballistic: a light rapid gun that grinds hull through shields.
+        public static readonly MountDef AutoCannon = new MountDef
+        {
+            Id = "autocannon", Name = "Autocannon", Class = MountClass.Secondary, Channel = DamageChannel.Ballistic,
+            Size = MountSize.Small, Cost = 12,
+            YawRateDeg = 55f, PitchRateDeg = 45f, PitchMinDeg = -10f, PitchMaxDeg = 60f,
+            Range = 1600f, Reload = 0.8f, Barrels = 2, BarrelStagger = 0.06f,
+            ProjectileSpeed = 1500f, Damage = 10f, SpreadDeg = 0.7f, AimToleranceDeg = 3f,
+            MuzzleLength = 4.5f, PivotHeight = 1.5f, Hp = 60f,
+        };
+
+        public static readonly MountDef[] Mounts = { MainBattery, LanceBattery, Secondary, FlakBattery, IonBattery, CorvetteGun, AutoCannon, PointDefence };
+
+        public static MountDef MountById(string id)
+        {
+            foreach (var m in Mounts)
+                if (m.Id == id) return m;
+            return null;
+        }
 
         public const float BattleshipDeck = 12f;
         public const float BattleshipSuperfire = 20f;
@@ -61,7 +120,17 @@ namespace GalacticRupture.Sim
         }
 
         static HardpointDef Hp(MountDef m, float x, float y, float z, float baseYaw, float halfArc) =>
-            new HardpointDef { Mount = m, LocalPosition = new Vector3(x, y, z), BaseYawDeg = baseYaw, YawHalfArcDeg = halfArc };
+            new HardpointDef { Mount = m, Size = m.Size, LocalPosition = new Vector3(x, y, z), BaseYawDeg = baseYaw, YawHalfArcDeg = halfArc };
+
+        // Every faction starts with the stock loadouts; the designer copies and changes them.
+        public static ShipDesign[] StockDesigns() => new[]
+        {
+            new ShipDesign("Line Battleship", Battleship),
+            new ShipDesign("Escort Destroyer", Destroyer),
+            new ShipDesign("Patrol Frigate", Frigate),
+            new ShipDesign("Picket Corvette", Corvette),
+            new ShipDesign("Troop Transport", Transport),
+        };
 
         static HullDef BuildBattleship()
         {

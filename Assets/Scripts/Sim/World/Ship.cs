@@ -79,6 +79,7 @@ namespace GalacticRupture.Sim
         public readonly int Id;
         public readonly int Side;
         public int Faction;              // who built it, for its paint; the sim only uses Side
+        public float ReloadScale = 1f;   // an admiral's hand on the guns (campaign)
         public readonly HullDef Def;
         public readonly List<Mount> Mounts = new List<Mount>();
 

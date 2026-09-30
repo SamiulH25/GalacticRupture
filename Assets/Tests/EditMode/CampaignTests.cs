@@ -108,12 +108,12 @@ namespace GalacticRupture.Tests
             Assert.IsTrue(c.Embark(f.Id, a1.Id));
             Assert.IsTrue(c.Embark(f.Id, a2.Id));
             Assert.IsFalse(c.Embark(f.Id, c.NewArmy(0, 0).Id), "two transports carry two armies");
+            var forecast = c.Forecast(c.ArmiesIn(f), c.Galaxy.Systems[1]);
+            Assert.IsTrue(forecast.AttackerWins, "the forecast is known when the fleet is sent");
             c.MoveFleet(f.Id, 1);
             RunHours(c, 24 * 3);
             Assert.AreEqual(1, f.System);
-            var forecast = c.Forecast(c.ArmiesIn(f), c.Galaxy.Systems[1]);
-            Assert.IsTrue(forecast.AttackerWins);
-            Assert.Greater(c.Land(f.Id), 0);
+            Assert.AreEqual(0, c.CountIn(f), "landings are automatic on arrival");
             RunHours(c, (int)forecast.Hours + 4);
             Assert.AreEqual(0, c.Galaxy.Systems[1].Owner, "the system is ours");
         }
@@ -140,7 +140,7 @@ namespace GalacticRupture.Tests
             c.Tick();
             Assert.IsNotNull(c.Pending);
             var state = BattleSetup.AutoResolve(c);
-            Assert.AreEqual(BattleState.Defeat, state);
+            Assert.AreNotEqual(BattleState.Victory, state, "outgunned: beaten or driven off");
             bool transportAfloat = c.Fleets.Contains(ours) && ours.TroopCapacity > 0;
             Assert.AreEqual(transportAfloat, c.ArmyById(army.Id) != null, "the army lives or dies with its transport");
         }
@@ -211,7 +211,7 @@ namespace GalacticRupture.Tests
             var c = Line(war: false);
             c.Factions[0].Influence = 100f;
             Assert.IsTrue(c.TableEmbargo(0, 1));
-            for (int i = 0; i < 24 * 25 && c.Council == null; i++) c.Tick();
+            for (int i = 0; i < 24 * (int)(Campaign.CouncilIntervalDays + 5) && c.Council == null; i++) c.Tick();
             Assert.IsNotNull(c.Council, "a session opens");
             Assert.AreEqual(ResolutionKind.Embargo, c.Council.Kind);
             c.CastPlayerVote(Vote.Yes);

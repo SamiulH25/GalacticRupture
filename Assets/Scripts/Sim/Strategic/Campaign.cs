@@ -50,6 +50,8 @@ namespace GalacticRupture.Sim.Strategic
         public readonly List<int> Route = new List<int>(); // systems after Next
         public double ArrivedHour;
         public bool Held;               // stopped in a lane by an engagement
+        public Admiral Admiral;         // commands when the battle is left to the fleet
+        public bool Expedition;         // AI role: reclaims and courts, doesn't join the line
 
         public bool InTransit => Next >= 0;
         public bool Alive => Ships.Count > 0;
@@ -99,6 +101,13 @@ namespace GalacticRupture.Sim.Strategic
         public int Capital = -1;
         public bool Eliminated;
         public float EmbargoHours;      // council sanction: income cut while > 0
+        public readonly List<ShipDesign> Designs = new List<ShipDesign>();
+
+        public ShipDesign Design(string name)
+        {
+            foreach (var d in Designs) if (d.Name == name) return d;
+            return null;
+        }
     }
 
     public sealed class BuildItem
@@ -132,6 +141,16 @@ namespace GalacticRupture.Sim.Strategic
         CouncilResult,
         FactionEliminated,
         Interception,
+        BuildingCompleted,
+        GovernorAppointed,
+        GovernorDefected,
+        NotableOffered,
+        ReclamationStarted,
+        SystemReclaimed,
+        CourtingStarted,
+        HoldoutJoined,
+        ProposalReceived,
+        ActBegan,
     }
 
     public struct CampaignEvent
@@ -156,7 +175,7 @@ namespace GalacticRupture.Sim.Strategic
         public readonly Galaxy Galaxy = new Galaxy();
         public readonly List<Faction> Factions = new List<Faction>();
         public readonly List<Fleet> Fleets = new List<Fleet>();
-        public readonly Dictionary<int, List<BuildItem>> Yards = new Dictionary<int, List<BuildItem>>();
+        public readonly SortedDictionary<int, List<BuildItem>> Yards = new SortedDictionary<int, List<BuildItem>>(); // sorted: build order is deterministic
         public readonly List<CampaignEvent> Events = new List<CampaignEvent>();
 
         public double Hours { get; private set; }
@@ -173,12 +192,10 @@ namespace GalacticRupture.Sim.Strategic
 
         public int Day => (int)(Hours / 24.0);
 
-        public static float IncomePerDay(StarSystem s) => s.Tier switch { 3 => 110f, 2 => 50f, _ => 22f };
-        public static float InfluencePerDay(StarSystem s) => s.Capital ? 3f : s.Tier >= 2 ? 1f : 0.5f;
-
         public Faction AddFaction(string name, bool major, string prefix, float credits)
         {
             var f = new Faction { Id = Factions.Count, Name = name, Major = major, ShipPrefix = prefix, Credits = credits, Influence = 20f };
+            foreach (var d in Hulls.StockDesigns()) f.Designs.Add(d);
             Factions.Add(f);
             return f;
         }
@@ -204,6 +221,15 @@ namespace GalacticRupture.Sim.Strategic
             return new ShipRecord(def, $"{fac.ShipPrefix} {100 + fac.ShipsBuilt}");
         }
 
+        public ShipRecord NewShip(int owner, ShipDesign design) => NewShip(owner, design.Built);
+
+        // A faction's current design for a hull class: the first one listed.
+        public ShipDesign DesignFor(int owner, HullClass cls)
+        {
+            foreach (var d in Factions[owner].Designs) if (d.Hull.Class == cls) return d;
+            return null;
+        }
+
         void Emit(CampaignEventKind kind, int system = -1, int faction = -1, int other = -1, int fleet = -1, string text = null) =>
             Events.Add(new CampaignEvent { Kind = kind, System = system, Faction = faction, Other = other, Fleet = fleet, Text = text });
 
@@ -212,7 +238,12 @@ namespace GalacticRupture.Sim.Strategic
         {
             InitDiplomacy();
             InitIntel();
-            foreach (var s in Galaxy.Systems) s.Militia = MaxMilitia(s);
+            foreach (var s in Galaxy.Systems)
+            {
+                s.Militia = MaxMilitia(s);
+                if (s.Owner >= 0) s.Stability = StabilityTarget(s);
+            }
+            GovernorPools();
             UpdateIntel();
         }
 
@@ -226,7 +257,10 @@ namespace GalacticRupture.Sim.Strategic
             Economy();
             BuildQueue();
             Repair();
+            Reclamation();
+            AutoLand();
             GroundWar();
+            Acts();
             UpdateIntel();
             DetectEngagements();
             if (Pending != null) return;
@@ -347,25 +381,6 @@ namespace GalacticRupture.Sim.Strategic
             DetectInterceptions();
         }
 
-        void Economy()
-        {
-            foreach (var fac in Factions) if (fac.EmbargoHours > 0f) fac.EmbargoHours -= 1f;
-            foreach (var s in Galaxy.Systems)
-            {
-                if (s.Owner < 0) continue;
-                var fac = Factions[s.Owner];
-                fac.Influence += InfluencePerDay(s) / 24f;
-                if (s.Unrest > 0f)
-                {
-                    s.Unrest -= 1f;
-                    continue;
-                }
-                float income = IncomePerDay(s) / 24f;
-                if (fac.EmbargoHours > 0f) income *= 0.7f;
-                fac.Credits += income;
-            }
-        }
-
         void BuildQueue()
         {
             foreach (var kv in Yards)
@@ -373,8 +388,9 @@ namespace GalacticRupture.Sim.Strategic
                 var sys = Galaxy.Systems[kv.Key];
                 var q = kv.Value;
                 if (q.Count == 0 || sys.Unrest > 0f) continue;
-                int lanes = sys.Tier >= 3 ? 2 : 1;
-                for (int i = 0; i < System.Math.Min(lanes, q.Count); i++) q[i].HoursLeft -= 1f;
+                int lanes = System.Math.Max(1, sys.Count(BuildingKind.Yard));
+                float rate = YardRate(sys);
+                for (int i = 0; i < System.Math.Min(lanes, q.Count); i++) q[i].HoursLeft -= q[i].Def == null ? 1f : rate;
                 for (int i = q.Count - 1; i >= 0; i--)
                 {
                     if (q[i].HoursLeft > 0f) continue;
@@ -405,10 +421,9 @@ namespace GalacticRupture.Sim.Strategic
         public bool InSupply(Fleet f)
         {
             Vector3 p = FleetPosition(f);
-            float range = Factions[f.Owner].SupplyRange;
             foreach (var s in Galaxy.Systems)
                 if ((s.Owner == f.Owner || (s.Owner >= 0 && Stance(s.Owner, f.Owner) == DiplomaticStance.Alliance))
-                    && Vector3.Distance(s.Position, p) <= range) return true;
+                    && Vector3.Distance(s.Position, p) <= SupplyRangeOf(s)) return true;
             return false;
         }
 
@@ -451,22 +466,6 @@ namespace GalacticRupture.Sim.Strategic
             foreach (var f in Fleets)
                 if (f.Alive && f.Owner == faction && !f.InTransit && f.System == system) s += f.Strength;
             return s;
-        }
-
-        void CheckEnd()
-        {
-            foreach (var fac in Factions)
-            {
-                if (fac.Eliminated) continue;
-                bool any = false;
-                foreach (var s in Galaxy.Systems) if (s.Owner == fac.Id) { any = true; break; }
-                if (any) continue;
-                fac.Eliminated = true;
-                Emit(CampaignEventKind.FactionEliminated, faction: fac.Id);
-            }
-            var player = Factions[PlayerFaction];
-            if (Galaxy.Systems[player.Capital].Owner != PlayerFaction) State = CampaignState.Defeat;
-            else if (Galaxy.Systems[Factions[EnemyFaction].Capital].Owner == PlayerFaction) State = CampaignState.Victory;
         }
     }
 }

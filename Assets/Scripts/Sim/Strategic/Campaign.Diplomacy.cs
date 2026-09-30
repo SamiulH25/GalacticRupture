@@ -47,15 +47,16 @@ namespace GalacticRupture.Sim.Strategic
 
     public sealed partial class Campaign
     {
-        public const float CouncilIntervalDays = 20f;
+        public const float CouncilIntervalDays = 60f;
         public const int PeaceCost = 15, NonAggressionCost = 20, AllianceCost = 40, TableCost = 40;
 
         DiplomaticStance[,] _stance;
         float[,] _trust;
         double[,] _since;                       // hour the current stance began
-        readonly float[] _aggression = new float[8]; // recent conquests and declarations, decays
+        float[] _aggression;                     // recent conquests and declarations, decays
 
-        public readonly List<Proposal> Incoming = new List<Proposal>(); // proposals awaiting the player
+        public const float ProposalDays = 10f;
+        public readonly List<Proposal> Incoming = new List<Proposal>(); // offers to the player; they don't stop the clock
         public CouncilSession Council { get; private set; }             // session awaiting the player's vote
         public CouncilSession LastCouncil { get; private set; }
         public float CeasefireHours { get; private set; }
@@ -69,6 +70,7 @@ namespace GalacticRupture.Sim.Strategic
             _stance = new DiplomaticStance[n, n];
             _trust = new float[n, n];
             _since = new double[n, n];
+            _aggression = new float[n];
             for (int a = 0; a < n; a++)
             for (int b = 0; b < n; b++)
                 _stance[a, b] = a == b ? DiplomaticStance.Alliance : DiplomaticStance.Peace;
@@ -233,7 +235,7 @@ namespace GalacticRupture.Sim.Strategic
             int h = (int)Hours;
             if (h % 24 == 0) DailyTrust();
             if (h % 120 == 60 && AiEnabled) AiDiplomacy();
-            if (h > 24 * 5 && h % (int)(CouncilIntervalDays * 24f) == 0) OpenCouncil();
+            if (h % (int)(CouncilIntervalDays * 24f) == 0) OpenCouncil();
         }
 
         void DailyTrust()
@@ -295,7 +297,7 @@ namespace GalacticRupture.Sim.Strategic
                         offer = DiplomaticStance.NonAggression;
                     else if ((s == DiplomaticStance.NonAggression || s == DiplomaticStance.Peace) && trust > 35f)
                         offer = DiplomaticStance.Alliance;
-                    else if (s == DiplomaticStance.Peace && trust < -25f && mine > theirs * 1.6f && Borders(who, other))
+                    else if (s == DiplomaticStance.Peace && trust < (Act == 1 ? -45f : Act == 2 ? -25f : -10f) && mine > theirs * 1.6f && Borders(who, other))
                     {
                         DeclareWar(who, other);
                         continue;
@@ -305,7 +307,10 @@ namespace GalacticRupture.Sim.Strategic
                     if (other == PlayerFaction)
                     {
                         if (!Incoming.Exists(p => p.From == who))
-                            Incoming.Add(new Proposal { From = who, To = PlayerFaction, Treaty = offer.Value, Expires = Hours + 72 });
+                        {
+                            Incoming.Add(new Proposal { From = who, To = PlayerFaction, Treaty = offer.Value, Expires = Hours + ProposalDays * 24 });
+                            Emit(CampaignEventKind.ProposalReceived, faction: who, text: offer.Value.ToString());
+                        }
                     }
                     else if (WillAccept(other, who, offer.Value))
                     {

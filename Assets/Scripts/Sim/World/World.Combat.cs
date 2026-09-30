@@ -95,7 +95,7 @@ namespace GalacticRupture.Sim
 
             if (m.OnTarget && m.Cooldown <= 0f && m.PendingRounds == 0)
             {
-                m.Cooldown = def.Reload;
+                m.Cooldown = def.Reload * ship.ReloadScale;
                 m.PendingRounds = def.Barrels;
                 m.StaggerTimer = 0f;
                 FireQueued(ship, m);
