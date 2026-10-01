@@ -39,6 +39,7 @@ namespace GalacticRupture.Game
                 "battleship" => Battleship(def),
                 "destroyer" => Destroyer(def),
                 "frigate" => Frigate(def),
+                _ when def.Class == HullClass.Station => Station(def),
                 _ => Corvette(def),
             };
             HullCache[def.Id] = m;
@@ -112,6 +113,88 @@ namespace GalacticRupture.Game
                 if (rng.NextDouble() < 0.7)
                     b.Box(new Vector3(-x, y, z), new Vector3(0.1f, 0.7f, 1.6f), Slot.Windows);
             }
+        }
+
+        // An orbital fortress: a gun deck on a stepped drum, a citadel carrying the heavy guns,
+        // docking arms with lit berths, radiators and a sensor spire. Every gun rides on top or
+        // on the rim ledge (Hulls.BuildStation); the structure below is hull, not guns.
+        static HullModel Station(HullDef def)
+        {
+            var m = new HullModel();
+            var b = new MeshBuilder(Slot.Count);
+            float r = def.Radius, deck = Sim.Hulls.StationDeck;
+            const int seg = 40;
+
+            // Deck, rim ledge, mid deck, citadel.
+            b.Cylinder(new Vector3(0f, deck - 8f, 0f), new Vector3(0f, deck, 0f), r * 0.85f, r * 0.85f, seg, Slot.Paint);
+            b.Cylinder(new Vector3(0f, deck - 10f, 0f), new Vector3(0f, deck - 4f, 0f), r * 1.1f, r * 1.1f, seg, Slot.Dark);
+            b.Cylinder(new Vector3(0f, deck - 0.2f, 0f), new Vector3(0f, deck + 6f, 0f), r * 0.55f, r * 0.55f, seg, Slot.Paint);
+            b.Cylinder(new Vector3(0f, deck + 5.8f, 0f), new Vector3(0f, deck + 12f, 0f), r * 0.4f, r * 0.38f, seg, Slot.Dark);
+            // Deck-edge trim and a band of lit ports under the gun deck.
+            b.Cylinder(new Vector3(0f, deck - 0.4f, 0f), new Vector3(0f, deck + 0.3f, 0f), r * 0.86f, r * 0.86f, seg, Slot.Trim);
+            for (int i = 0; i < 72; i++)
+            {
+                if ((i * 7) % 5 == 0) continue;
+                float a = i * Mathf.PI * 2f / 72f;
+                var dir = new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a));
+                var saved = b.Transform;
+                b.Transform = Matrix4x4.TRS(dir * (r * 0.85f + 0.05f) + Vector3.up * (deck - 5f), Quaternion.LookRotation(dir), Vector3.one);
+                b.Box(Vector3.zero, new Vector3(2.2f, 0.9f, 0.12f), Slot.Windows);
+                b.Transform = saved;
+            }
+
+            // The drum below: tapering hull down to the reactor and a sensor spire.
+            b.Cylinder(new Vector3(0f, deck - 10f, 0f), new Vector3(0f, -r * 0.45f, 0f), r * 0.7f, r * 0.42f, seg, Slot.Paint);
+            b.Cylinder(new Vector3(0f, -r * 0.45f, 0f), new Vector3(0f, -r * 0.8f, 0f), r * 0.42f, r * 0.2f, seg, Slot.Dark);
+            b.Cylinder(new Vector3(0f, -r * 0.8f, 0f), new Vector3(0f, -r * 1.35f, 0f), r * 0.06f, r * 0.02f, 8, Slot.Dark);
+            b.Cylinder(new Vector3(0f, -r * 0.62f, 0f), new Vector3(0f, -r * 0.64f, 0f), r * 0.36f, r * 0.36f, seg, Slot.Heat);
+
+            // Command block on the citadel, between the heavy guns.
+            b.ChamferBox(new Vector3(0f, deck + 16f, 0f), new Vector3(r * 0.16f, 8f, r * 0.16f), 1.2f, Slot.Paint, 0.85f);
+            b.Box(new Vector3(0f, deck + 17f, r * 0.08f + 0.05f), new Vector3(r * 0.12f, 1.2f, 0.12f), Slot.Windows);
+            b.Cylinder(new Vector3(0f, deck + 20f, 0f), new Vector3(0f, deck + 38f, 0f), 0.9f, 0.4f, 8, Slot.Dark);
+            b.Box(new Vector3(0f, deck + 38.4f, 0f), new Vector3(0.7f, 0.7f, 0.7f), Slot.Heat);
+
+            // Docking arms on the diagonals, below the guns' arcs: a spar, a berth, lit windows.
+            for (int k = 0; k < 4; k++)
+            {
+                float yaw = 45f + k * 90f;
+                var saved = b.Transform;
+                b.Transform = Matrix4x4.TRS(Vector3.up * (deck - 22f), Quaternion.Euler(0f, yaw, 0f), Vector3.one);
+                float from = r * 0.6f, to = r * 1.45f;
+                b.ChamferBox(new Vector3(0f, 0f, (from + to) * 0.5f), new Vector3(9f, 7f, to - from), 1.2f, Slot.Paint);
+                b.ChamferBox(new Vector3(0f, -1f, to + 6f), new Vector3(22f, 12f, 14f), 1.5f, Slot.Dark);
+                b.Box(new Vector3(0f, 6f, to + 6f), new Vector3(16f, 0.4f, 10f), Slot.Trim);
+                for (float z = from + 4f; z < to - 2f; z += 6f)
+                {
+                    b.Box(new Vector3(4.56f, 0.5f, z), new Vector3(0.1f, 1.1f, 2.6f), Slot.Windows);
+                    b.Box(new Vector3(-4.56f, 0.5f, z), new Vector3(0.1f, 1.1f, 2.6f), Slot.Windows);
+                }
+                b.Transform = saved;
+            }
+
+            // Radiators between the arms: canted panels with hot stripes.
+            for (int k = 0; k < 4; k++)
+            {
+                var saved = b.Transform;
+                b.Transform = Matrix4x4.TRS(Vector3.up * (-r * 0.2f), Quaternion.Euler(0f, k * 90f, 0f), Vector3.one)
+                    * Matrix4x4.TRS(new Vector3(0f, 0f, r * 0.62f), Quaternion.Euler(-20f, 0f, 0f), Vector3.one);
+                b.Box(new Vector3(0f, 0f, r * 0.25f), new Vector3(r * 0.35f, 0.8f, r * 0.5f), Slot.Dark);
+                for (int j = -2; j <= 2; j++)
+                    b.Box(new Vector3(j * r * 0.06f, 0.45f, r * 0.25f), new Vector3(0.4f, 0.1f, r * 0.46f), Slot.Heat);
+                b.Transform = saved;
+            }
+
+            // Gun tubs under the mounts on the rim ledge and the mid deck.
+            foreach (var hp in def.Hardpoints)
+            {
+                var p = hp.LocalPosition.ToUnity();
+                if (hp.Mount.Class == MountClass.PointDefence || p.y < deck - 1f)
+                    b.Cylinder(new Vector3(p.x, p.y - 1.4f, p.z), new Vector3(p.x, p.y + 0.1f, p.z), 3.4f, 3f, 12, Slot.Dark);
+            }
+
+            m.Mesh = b.ToMesh(def.Id);
+            return m;
         }
 
         static HullModel Battleship(HullDef def)

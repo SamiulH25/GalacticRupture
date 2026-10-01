@@ -1,39 +1,50 @@
-"""Builds every model and exports FBX into the Unity project."""
+"""Builds every model and exports FBX into the Unity project.
+
+`blender -b -P build.py -- [faction ...]` filters by faction; `--classes corvette,frigate`
+filters by class. With no arguments everything is rebuilt.
+
+Hull files are named `hull_<class>_<faction>.fbx`; turret files stay shared by mount id,
+since the sim defines one MountDef per class with no faction dimension.
+"""
+import importlib
 import os
 
 import bpy
 
-import battleship
+import fleet as f
 import grkit as k
 import turrets
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Assets", "Art", "Models")
 
 
-def run(ships=None):
+def builders(faction):
+    """The five hull builders a faction module exposes, keyed by class."""
+    mod = importlib.import_module(faction)
+    return {cls: mod.BUILDERS[cls] for cls in f.CLASSES}
+
+
+def run(factions=None, classes=None, with_turrets=True):
     os.makedirs(OUT, exist_ok=True)
     written = []
-    tcol = k.collection("Turrets")
-    kit = turrets.build_all(tcol)
-    for name, house in kit.items():
-        house.location = (0, 0, 0)
-        path = os.path.join(OUT, f"turret_{name}.fbx")
-        k.export_fbx(path, [house])
-        written.append(path)
-    builders = {"battleship": battleship.build}
-    import escorts
-    import transport
-    builders.update(escorts.BUILDERS)
-    builders["transport"] = transport.build
-    x = 0.0
-    for name, build in builders.items():
-        if ships and name not in ships:
-            continue
-        col = k.collection(f"Hull_{name}")
-        obj = build(col)
-        path = os.path.join(OUT, f"hull_{name}.fbx")
-        k.export_fbx(path, [obj])
-        written.append(path)
-        obj.location.x = x
-        x += 120.0
+    if with_turrets:
+        tcol = k.collection("Turrets")
+        for name, house in turrets.build_all(tcol).items():
+            house.location = (0, 0, 0)
+            path = os.path.join(OUT, f"turret_{name}.fbx")
+            k.export_fbx(path, [house])
+            written.append(path)
+
+    for faction in (factions or f.FACTIONS):
+        built = builders(faction)
+        for cls in classes or f.CLASSES:
+            col = k.collection(f"Hull_{cls}_{faction}")
+            obj = built[cls](col)
+            # The contract is the sim's: fail the build rather than ship a hull whose
+            # turrets would hang in the air or sit outside the beam.
+            verts = f.check(cls, obj)
+            path = os.path.join(OUT, f"hull_{cls}_{faction}.fbx")
+            k.export_fbx(path, [obj])
+            written.append(path)
+            print(f"[build] {os.path.basename(path)} verts={verts} tris={f.tri_budget(obj)}")
     return written

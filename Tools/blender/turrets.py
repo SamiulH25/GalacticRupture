@@ -53,7 +53,12 @@ def build_turret(col, name, width, back, front, height, pivot, spacing, radius, 
         bar.cyl((x, front, pivot), (x, front + L * 0.22, pivot), radius * 1.75, radius * 1.55, seg=16, slot="Dark")
         bar.cyl((x, front + L * 0.22, pivot), (x, L - radius * 1.7, pivot), radius * 1.12, radius * 0.98, seg=16, slot="Dark")
         bar.cyl((x, L - radius * 1.7, pivot), (x, L, pivot), radius * 1.42, radius * 1.36, seg=16, slot="Dark")
-        bar.cyl((x, L - 0.01, pivot), (x, L, pivot), radius * 0.7, seg=16, slot="Heat")
+        # Recessed bore: a dark cone set back up the barrel with a short glowing throat,
+        # rather than a flat Heat disc capping the muzzle.
+        bar.cyl((x, L - radius * 2.6, pivot), (x, L - radius * 0.15, pivot), radius * 0.16,
+                radius * 0.62, seg=14, slot="Dark")
+        bar.cyl((x, L - radius * 0.5, pivot), (x, L - radius * 0.12, pivot), radius * 0.42,
+                radius * 0.5, seg=10, slot="Heat")
         muzzles.append(Vector((x, L, pivot)))
     b = bar.build(bevel=min(0.08, radius * 0.1), smooth_angle=40, origin=(0, 0, pivot))
     b.parent = h

@@ -95,7 +95,7 @@ namespace GalacticRupture.Sim
 
             if (m.OnTarget && m.Cooldown <= 0f && m.PendingRounds == 0)
             {
-                m.Cooldown = def.Reload * ship.ReloadScale;
+                m.Cooldown = def.Reload * Pace.Reload * ship.ReloadScale * ship.ReloadFactor;
                 m.PendingRounds = def.Barrels;
                 m.StaggerTimer = 0f;
                 FireQueued(ship, m);
@@ -157,7 +157,7 @@ namespace GalacticRupture.Sim
                 PrevPosition = muzzle,
                 Velocity = dir * def.ProjectileSpeed + ship.Velocity,
                 Life = def.Range * 1.15f / def.ProjectileSpeed,
-                Damage = def.Damage,
+                Damage = def.Damage * Pace.Damage,
                 Side = ship.Side,
                 Shooter = ship.Id,
                 Channel = def.Channel,
@@ -189,6 +189,11 @@ namespace GalacticRupture.Sim
                 p.Life -= Dt;
 
                 bool spent = p.Life <= 0f;
+                if (!spent && Obstacles.Count > 0 && HitsRock(p.PrevPosition, p.Position, out var rockHit))
+                {
+                    spent = true;
+                    Events.Add(new SimEvent { Kind = SimEventKind.RockHit, Position = rockHit, Value = p.Damage, Ship = -1 });
+                }
                 if (!spent)
                 {
                     Vector3 mid = (p.PrevPosition + p.Position) * 0.5f;

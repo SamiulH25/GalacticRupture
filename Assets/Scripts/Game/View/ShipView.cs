@@ -50,13 +50,13 @@ namespace GalacticRupture.Game
         readonly List<ParticleSystem> _fires = new List<ParticleSystem>();
         MeshRenderer _hull;
         GameArt _art;
-        float _roll, _pitch;
+        float _roll;
         Vector3 _wreckSpin;
         Vector3 _wreckDrift;
         float _wreckAge;
 
-        // Paint by faction; anything outside the four known powers borrows its side's colours.
-        static int FactionOf(Ship ship) => ship.Faction >= 0 && ship.Faction < 4 ? ship.Faction : ship.Side;
+        // Paint and models by faction: powers without their own set borrow one (GameArt.ArtFaction).
+        static int FactionOf(Ship ship) => GameArt.ArtFaction(ship.Faction >= 0 ? ship.Faction : ship.Side);
 
         public static ShipView Create(Ship ship, GameArt art, Transform parent)
         {
@@ -74,7 +74,7 @@ namespace GalacticRupture.Game
             _art = art;
             var engines = new List<ShipModels.EnginePort>();
 
-            var hullPrefab = art.HullModel(ship.Def.Id);
+            var hullPrefab = art.HullModel(ship.Def.Id, FactionOf(ship));
             if (hullPrefab != null)
             {
                 var hull = Instantiate(hullPrefab, transform, false);
@@ -220,7 +220,7 @@ namespace GalacticRupture.Game
             return new MountView { Yaw = yaw, Pitch = pitch, Barrels = barrels, House = house, BarrelRenderer = br, Muzzles = muzzles };
         }
 
-        public void Sync(Ship ship, float alpha, float dt)
+        public void Sync(Ship ship, float alpha, float dt, bool detail = true)
         {
             if (Wrecked)
             {
@@ -239,15 +239,15 @@ namespace GalacticRupture.Game
             Vector3 pos = System.Numerics.Vector3.Lerp(ship.PrevPosition, ship.Position, alpha).ToUnity();
             float yaw = Mathf.LerpAngle(ship.PrevYaw * Mathf.Rad2Deg, ship.Yaw * Mathf.Rad2Deg, alpha);
 
-            float targetRoll = Mathf.Clamp(-ship.TurnRate * Mathf.Rad2Deg, -50f, 50f);
-            float targetPitch = ship.Speed > 1f ? -Mathf.Atan2(ship.Velocity.Y, ship.Speed) * Mathf.Rad2Deg * 0.6f : 0f;
-            float k = 1f - Mathf.Exp(-dt * 2.5f);
-            _roll = Mathf.Lerp(_roll, targetRoll, k);
-            _pitch = Mathf.Lerp(_pitch, targetPitch, k);
+            // Warships stay level: no pitching with height changes, and only a slight lean into
+            // a hard turn, more for the small hulls than the heavy ones.
+            float lean = ship.Def.Class <= HullClass.Frigate ? 10f : 4f;
+            float targetRoll = Mathf.Clamp(-ship.TurnRate * Mathf.Rad2Deg * 0.4f, -lean, lean);
+            _roll = Mathf.Lerp(_roll, targetRoll, 1f - Mathf.Exp(-dt * 1.5f));
 
-            transform.SetPositionAndRotation(pos, Quaternion.Euler(_pitch, yaw, _roll));
+            transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, yaw, _roll));
 
-            for (int i = 0; i < _mounts.Count; i++)
+            for (int i = 0; i < _mounts.Count && detail; i++)
             {
                 var mv = _mounts[i];
                 if (mv.Dead) continue;
@@ -264,7 +264,7 @@ namespace GalacticRupture.Game
             ShowDamage(1f - ship.Hull / ship.Def.HullHp);
             CoolScorches(dt);
 
-            float thrust = ship.Def.MaxSpeed > 0f ? Mathf.Clamp01(ship.Speed / ship.Def.MaxSpeed) : 0f;
+            float thrust = ship.Def.MaxSpeed > 0f ? Mathf.Clamp01(ship.Speed / ship.TopSpeed) : 0f;
             float flicker = 0.92f + 0.08f * Mathf.PerlinNoise(Time.time * 9f, ShipId);
             foreach (var p in _plumes)
             {

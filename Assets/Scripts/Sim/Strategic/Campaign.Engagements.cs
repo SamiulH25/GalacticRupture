@@ -66,6 +66,10 @@ namespace GalacticRupture.Sim.Strategic
                 present.Clear();
                 foreach (var f in Fleets)
                     if (f.Alive && At(f, s.Id) && !present.Contains(f.Owner)) present.Add(f.Owner);
+                if (present.Count == 0) continue;
+                // A station fights for its system: hostile fleets there, even passing through, must
+                // deal with it before they can go on or land.
+                if (s.Station > 0 && s.StationHull > 0f && s.Owner >= 0 && !present.Contains(s.Owner)) present.Add(s.Owner);
                 if (present.Count < 2) continue;
                 var e = BuildSides(present);
                 if (e == null) continue;

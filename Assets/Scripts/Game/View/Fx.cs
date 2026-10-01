@@ -82,7 +82,7 @@ namespace GalacticRupture.Game
             r.renderMode = mode;
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
-            r.maxParticleSize = 4f;
+            r.maxParticleSize = 0.6f;   // caps overdraw from a close explosion
             if (mode == ParticleSystemRenderMode.Stretch)
             {
                 r.velocityScale = 0.04f;
@@ -161,6 +161,28 @@ namespace GalacticRupture.Game
             }
         }
 
+        // A ship arriving from FTL: a blue-white flash stretched along its line of flight.
+        public void WarpIn(Vector3 pos, Vector3 forward, float halfLength)
+        {
+            var c = new Color(0.55f, 0.75f, 1f);
+            Emit(_flash, pos, Vector3.zero, halfLength * 5f, 0.35f, c);
+            Emit(_flash, pos, Vector3.zero, halfLength * 2f, 0.2f, Color.white);
+            for (int i = 0; i < 24; i++)
+            {
+                Vector3 v = -forward * Random.Range(300f, 1400f) + Random.insideUnitSphere * 60f;
+                Emit(_sparks, pos + forward * Random.Range(-halfLength, halfLength), v, Random.Range(0.6f, 1.6f), Random.Range(0.15f, 0.45f), c);
+            }
+        }
+
+        // A round striking rock: grey dust and a few sparks.
+        public void RockImpact(Vector3 pos, float scale)
+        {
+            Emit(_flash, pos, Vector3.zero, scale * 4f, 0.1f, new Color(1f, 0.8f, 0.55f));
+            Emit(_smoke, pos, Random.onUnitSphere * 6f, scale * 7f, 1.2f, new Color(0.35f, 0.32f, 0.3f, 0.4f));
+            for (int i = 0; i < 4; i++)
+                Emit(_embers, pos, Random.onUnitSphere * Random.Range(20f, 90f), Random.Range(0.3f, 0.7f), Random.Range(0.3f, 0.9f), new Color(1f, 0.75f, 0.45f));
+        }
+
         // A burning spot that stays with the ship: flame streams left behind as it moves.
         public static ParticleSystem MakeHullFire(GameObject go, GameArt art, float size)
         {
@@ -192,7 +214,7 @@ namespace GalacticRupture.Game
             var r = go.GetComponent<ParticleSystemRenderer>();
             r.sharedMaterial = art.Fire;
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            r.maxParticleSize = 4f;
+            r.maxParticleSize = 0.6f;   // caps overdraw from a close explosion
             ps.Play();
             return ps;
         }

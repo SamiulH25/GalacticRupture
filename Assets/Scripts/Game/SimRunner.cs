@@ -36,11 +36,20 @@ namespace GalacticRupture.Game
             : CampaignBattle != null ? CampaignBattle.Flagship
             : 0;
 
+        // Ships waiting behind the command cap, if this battle has any.
+        public Reinforcements Reinforcements => Battle != null ? Battle.Reinforcements
+            : CampaignBattle != null ? CampaignBattle.Reinforcements
+            : null;
+
+        public TerrainSpec Terrain => Battle != null ? Battle.Terrain
+            : CampaignBattle != null ? CampaignBattle.Terrain
+            : default;
+
         public BattleState State => Battle != null ? Battle.State
             : CampaignBattle != null ? CampaignBattle.State
             : BattleState.Fighting;
 
-        static readonly float[] Speeds = { 0.25f, 1f, 2f, 4f };
+        public static readonly float[] Speeds = { 0.5f, 1f, 2f, 4f };
 
         void Awake()
         {

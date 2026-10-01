@@ -37,6 +37,33 @@ namespace GalacticRupture.Sim.Strategic
         public const float ReserveForGovernors = 150f;   // governors leave this much in the treasury
         public const float ShipUpkeep = 0.015f;          // of a hull's cost, per day
         public const float ArmyUpkeep = 1f;              // per army, per day
+        public const float StationUpkeep = 0.01f;        // of a station's value, per day
+
+        // --- Stations (built alongside the slot buildings; they take no slot) -------------------
+
+        public static int StationCost(int level) => level switch { 1 => 350, 2 => 600, _ => 950 };
+        public static float StationDays(int level) => level switch { 1 => 8f, 2 => 12f, _ => 16f };
+
+        public bool CanBuildStation(int owner, int system)
+        {
+            var s = Galaxy.Systems[system];
+            if (s.Owner != owner || s.StationHours > 0f || s.Station >= Hulls.MaxStationLevel || s.Unrest > 0f || s.Besieger >= 0) return false;
+            return Factions[owner].Credits >= StationCost(s.Station + 1);
+        }
+
+        // Builds the first station, or the next level up. A damaged station is repaired as it goes.
+        public bool BuildStation(int owner, int system)
+        {
+            if (!CanBuildStation(owner, system)) return false;
+            var s = Galaxy.Systems[system];
+            Factions[owner].Credits -= StationCost(s.Station + 1);
+            s.StationHours = StationDays(s.Station + 1) * 24f;
+            return true;
+        }
+
+        // Rough fighting value of a system's station, on the same scale as a fleet's strength.
+        public static float StationStrength(StarSystem s) =>
+            s.Station > 0 ? Hulls.Station(s.Station).Cost * (0.35f + 0.65f * s.StationHull) : 0f;
 
         public static int BuildingCost(BuildingKind k) => k switch
         {
@@ -122,6 +149,8 @@ namespace GalacticRupture.Sim.Strategic
                 if (f.Alive && f.Owner == faction)
                     foreach (var r in f.Ships) u += r.Def.Cost * ShipUpkeep;
             foreach (var a in Armies) if (a.Owner == faction) u += ArmyUpkeep;
+            foreach (var s in Galaxy.Systems)
+                if (s.Owner == faction && s.Station > 0) u += Hulls.Station(s.Station).Cost * StationUpkeep;
             return u;
         }
 
@@ -192,6 +221,18 @@ namespace GalacticRupture.Sim.Strategic
                     if (b.HoursLeft <= 0f) Emit(CampaignEventKind.BuildingCompleted, s.Id, s.Owner, text: b.Kind.ToString());
                     break;  // one building at a time
                 }
+                // The station goes up alongside, in orbit.
+                if (s.StationHours > 0f)
+                {
+                    s.StationHours -= rate;
+                    if (s.StationHours <= 0f)
+                    {
+                        s.StationHours = 0f;
+                        s.Station = System.Math.Min(Hulls.MaxStationLevel, s.Station + 1);
+                        s.StationHull = 1f;
+                        Emit(CampaignEventKind.BuildingCompleted, s.Id, s.Owner, text: "Station");
+                    }
+                }
             }
             foreach (var fac in Factions)
                 if (!fac.Eliminated) fac.Credits -= Upkeep(fac.Id) / 24f;
@@ -212,6 +253,9 @@ namespace GalacticRupture.Sim.Strategic
                         s.Population = System.MathF.Min(max, s.Population + 0.006f * s.Population * (1f - s.Population / max) + 0.005f);
                 }
                 if (s.Owner < 0) continue;
+                // Station crews patch their hull between fights.
+                if (s.Station > 0 && s.StationHull < 1f && s.Besieger < 0)
+                    s.StationHull = System.MathF.Min(1f, s.StationHull + 0.05f);
 
                 float target = StabilityTarget(s);
                 s.Stability += System.MathF.Max(-2f, System.MathF.Min(2f, target - s.Stability));

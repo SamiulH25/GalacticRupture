@@ -215,7 +215,11 @@ namespace GalacticRupture.Game
             if (_showDiplomacy) DiplomacyWindow();
             if (_showDesigner) DesignerWindow();
             if (_showResearch) ResearchWindow();
-            if (C.Pending != null) BattlePrompt();
+            if (C.Pending != null)
+            {
+                if (_deploying) DeployWindow();
+                else BattlePrompt();
+            }
             else if (C.Council != null) CouncilWindow();
             EndBanner();
         }
@@ -588,7 +592,7 @@ namespace GalacticRupture.Game
             float ours = Director.Forecast(0), theirs = Director.Forecast(1);
             string odds = ours > theirs * 1.5f ? "We have the weight." : theirs > ours * 1.5f ? "We are outmatched." : "It could go either way.";
             GUI.Label(new Rect(r.x + 28, y + 52, 504, 22), odds, _small);
-            if (Button(new Rect(r.x + 28, r.yMax - 88, 504, 34), "TAKE COMMAND", true, true)) Director.Attend();
+            if (Button(new Rect(r.x + 28, r.yMax - 88, 504, 34), "TAKE COMMAND", true, true)) OpenDeployment();
             if (Button(new Rect(r.x + 28, r.yMax - 48, 504, 34), "LEAVE IT TO THE FLEET")) Director.LeaveToFleet();
         }
 

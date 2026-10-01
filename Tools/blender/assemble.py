@@ -1,22 +1,24 @@
-"""Places turret instances on a hull at the sim's hardpoints, for review renders only."""
+"""Places turret instances on a hull at the sim's hardpoints, for review renders only.
+
+The layout comes from fleet.CONTRACT, which is transcribed from the same `Hp(...)` calls
+the sim reads, so a dressed review ship is posed exactly as the game will pose it.
+"""
 import math
 
 import bpy
 
+import fleet as f
 import grkit as k
 
-BATTLESHIP = (
-    # mount, (x, y_up, z_fwd) in Unity axes, base yaw
-    ("main_battery", (0, 12, 104), 0), ("main_battery", (0, 20, 72), 0),
-    ("main_battery", (0, 20, -66), 180), ("main_battery", (0, 12, -98), 180),
-    *[("secondary", (s * 19, 11, z), s * 90) for z in (40, 2, -36) for s in (1, -1)],
-    *[("point_defence", (s * x, y, z), s * yaw) for x, y, z, yaw in ((14, 12, 132, 45), (16, 26, 14, 90), (14, 12, -128, 135)) for s in (1, -1)],
-)
+
+def layout(cls):
+    """[(mount_id, (x, y_up, z_fwd), base_yaw)] for a class."""
+    return [(mount, (x, y_up, z), yaw) for mount, x, y_up, z, yaw in f.CONTRACT[cls]["mounts"]]
 
 
-def dress(col, turrets, layout, yaw_offsets=None, pitch=0.0):
+def dress(col, turrets, cls, yaw_offsets=None, pitch=0.0):
     k.collection(col.name)  # clear
-    for i, (name, pos, base_yaw) in enumerate(layout):
+    for i, (name, pos, base_yaw) in enumerate(layout(cls)):
         src = turrets[name]
         h = bpy.data.objects.new(f"{name}_{i}", src.data)
         col.objects.link(h)

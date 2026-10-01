@@ -107,20 +107,8 @@ namespace GalacticRupture.Game
                 }
             }
 
-            // Contact rings: at a distance every ship gets a faint marker in its side's colour, so
-            // the whole battle reads even when hulls are a few pixels long.
-            foreach (var kv in Runner.Presenter.Views)
-            {
-                var ship = Runner.World.ShipById(kv.Key);
-                if (ship == null || !ship.Alive || Input.Selected.Contains(ship.Id)) continue;
-                Vector3 p = kv.Value.transform.position;
-                float d = Vector3.Distance(cam.transform.position, p);
-                if (d < 1800f) continue;
-                float fade = Mathf.Clamp01((d - 1800f) / 1500f);
-                var c = ship.Side == Input.PlayerSide ? Own : Attack;
-                c.a *= 0.55f * fade;
-                Ring(p, Mathf.Max(ship.Def.HalfLength * 1.2f, d * 0.012f), d * 0.0012f, c);
-            }
+            // Distant contacts are marked by the HUD (screen-space icons), not by line rings: a
+            // ring per ship per frame was the overlay's biggest cost at fleet scale.
 
             if (Input.Hovered >= 0 && !Input.Selected.Contains(Input.Hovered))
             {
@@ -132,6 +120,51 @@ namespace GalacticRupture.Game
                     Ring(view.transform.position, ship.Def.HalfLength * 1.15f + 10f, Mathf.Max(0.5f, scale),
                         ship.Side == Input.PlayerSide ? Hover : Attack);
                 }
+            }
+
+            // Reserves waiting to be placed: the zone around our ships, and where they would arrive.
+            if (Input.Placing.Count > 0)
+            {
+                var zone = new Color(0.45f, 0.85f, 1f, 0.22f);
+                foreach (var ship in Runner.World.Ships)
+                {
+                    if (!ship.Alive || ship.Side != Input.PlayerSide || ship.Def.Class == HullClass.Transport) continue;
+                    Vector3 c = ship.Position.ToUnity();
+                    c.y = 0f;
+                    float w = Mathf.Max(1f, Vector3.Distance(cam.transform.position, c) * 0.0015f);
+                    Ring(c, Reinforcements.ZoneRadius, w, zone);
+                }
+                if (Input.PlaceOnField)
+                {
+                    var tone = Input.PlaceValid ? Move : Attack;
+                    tone.a = 0.9f;
+                    float d = Vector3.Distance(cam.transform.position, Input.PlacePoint);
+                    float w = Mathf.Max(0.8f, d * 0.0015f);
+                    Ring(Input.PlacePoint, 250f, w, tone);
+                    Ring(Input.PlacePoint, 60f, w, tone);
+                }
+            }
+
+            // A right-drag in progress: where each ship will stand, and the way they will face.
+            if (Input.Planning && Input.PlanDragged)
+            {
+                var slots = Input.PlanSlots();
+                float d = Vector3.Distance(cam.transform.position, Input.PlanPoint);
+                float w = Mathf.Max(0.5f, d * 0.0012f);
+                Vector3 fwd = new Vector3(Mathf.Sin(Input.PlanYaw), 0f, Mathf.Cos(Input.PlanYaw));
+                int k = 0;
+                foreach (int id in Input.Selected)
+                {
+                    var ship = Runner.World.ShipById(id);
+                    if (ship == null || !ship.Alive || ship.Side != Input.PlayerSide || ship.Def.MaxSpeed <= 0f) continue;
+                    if (k >= slots.Length) break;
+                    Vector3 p = slots[k++].ToUnity();
+                    float half = ship.Def.HalfLength;
+                    Line(p - fwd * half, p + fwd * half, w * 1.4f, Move);
+                    Ring(p, ship.Def.Radius + 10f, w, Move);
+                }
+                Vector3 c = Input.PlanPoint;
+                Line(c, c + fwd * d * 0.08f, w * 1.6f, Own);
             }
 
             float age = Time.unscaledTime - Input.LastOrderTime;

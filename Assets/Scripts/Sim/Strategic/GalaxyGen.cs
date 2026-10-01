@@ -130,6 +130,8 @@ namespace GalacticRupture.Sim.Strategic
                 int cap = capitals[m];
                 Develop(g.Systems[cap], 3, f.Id, ref rng);
                 g.Systems[cap].Capital = true;
+                g.Systems[cap].Station = 2;
+                g.Systems[cap].StationHull = 1f;
                 f.Capital = cap;
                 taken[cap] = true;
                 // The core worlds: the nearest few by lane.
@@ -159,6 +161,8 @@ namespace GalacticRupture.Sim.Strategic
                 var f = c.AddFaction(name, false, prefix, 350f);
                 Develop(g.Systems[best], 2, f.Id, ref rng);
                 g.Systems[best].Capital = true;
+                g.Systems[best].Station = 1;
+                g.Systems[best].StationHull = 1f;
                 f.Capital = best;
                 taken[best] = true;
                 int extra = rng.Range(0, 3);

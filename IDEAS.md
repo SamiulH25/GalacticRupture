@@ -501,6 +501,44 @@ Ballistic example:
 3. **One signature tech each** — a single high-tier capability unique to them. Not
    stronger, just different.
 
+### 5.5 The Tactical Layer (as built)
+
+`PROPOSED` — the Empire at War verbs, as of 2026-09-30. Numbers are first tuning from headless
+runs, not from play.
+
+- **Terrain.** Every system has a fixed battlefield, derived from its name: open space (35%),
+  scattered rock, an asteroid field, or a belt across the field with two or three gaps (12%);
+  28% also hold a nebula to one flank. Ruins lie in their own wreckage (more rock). Lanes are
+  open space, sometimes with rock or a nebula. Rock keeps to the middle and the flanks, never
+  the deployment lines.
+  - *Asteroids* are walls and cover: ships steer round them, rounds stop on them, and a ship
+    behind one cannot be targeted. Ships with an attack order move on until the line is clear.
+  - *Nebulae* strip shields (35% of capacity a second, no regeneration) and hide ships: a ship
+    inside is seen only within 1.2 km.
+- **Stations.** Levels 1–3 (350 / 600 / 950 cr, 8 / 12 / 16 days, 1% of their value a day in
+  upkeep), built from the system panel alongside the slot buildings. 10 / 16 / 24 guns, all on
+  the deck or rim. Capitals start with one (majors level 2, minors level 1). A station fights
+  in every battle over its system, stops any hostile fleet there (passing through included),
+  keeps its damage between battles (repaired 5% a day), and never withdraws. Destroyed, it is
+  gone. The AI fortifies its capital first, then developed worlds on a hostile border, out of
+  savings; it adds station strength when judging an invasion.
+- **Command cap.** 30 points a side on the field: corvette 1, frigate 2, destroyer 3,
+  battleship 6, transport 1, station 0. The heaviest ships deploy first; the rest wait in
+  reserve and arrive at the side's edge of the field (or under its station) when called in
+  from the reinforcement panel (R). An AI side brings in the heaviest ship that fits. A side
+  with no warships left on the field brings one in automatically.
+- **Abilities.** Boost engines (×1.7 speed, 10 s, 35 s cooldown), power to shields (×3 regen
+  and no delay, 10 s, 40 s), power to weapons (reload ×0.6 and no shield regen, 10 s, 45 s);
+  the first two slow the guns (reload ×1.4). One at a time. Z / X / V or the buttons.
+- **Tactical AI.** Defending a station, the fleet holds under its guns unless it outguns the
+  attacker 1.6:1. Assaulting one, it gathers out of range and goes in together (when 75% are
+  in place, when the defenders come out, or after 45 s); escorts hunt escorts, the line goes
+  for the station once two or fewer defenders cover it. Badly hurt ships (<22% hull) fall back
+  to a fixed point at their side's edge while healthy ships hold the line. Shield-heavy fleets
+  stay out of nebulae; a fleet outgunned 0.6:1 with nothing to take hides in one for up to a
+  minute. Transports wait at the back and run when the escort is gone; unescorted transports
+  are fair game until they get clear.
+
 ---
 
 ## 6. Ground Combat & Armies
@@ -724,6 +762,15 @@ detail; the far-distance LOD in §2.1 (merged mounts, no barrel animation) is th
 **Working size: a few hundred ships per battle** — EAW's scale ×10, well short of Stellaris.
 Combat design is sized for that.
 
+**GPU budget (2026-09-30).** The game used to render uncapped, and two full-screen shaders did
+per-pixel work every frame: the sky (about twenty octaves of 3D noise) and the galaxy map's
+territory plate (a loop over every system). Now: vsync (falling back to a frame cap if the
+driver ignores it) and 30 fps when the window is out of focus; the sky's nebula is baked once
+to a lat-long texture; the plate's territory and fog are baked only when what the player knows
+changes; 32-bit HDR instead of 64-bit; no depth or opaque texture copies; a 2048 shadow map;
+no post AA on top of 4× MSAA; particle size capped to limit overdraw; turrets stop animating
+when the hull is a few pixels long.
+
 ### 8.9 The Visual Bar
 
 `LOCKED` — **Stunning is a requirement, not polish.** The game is judged by feel and look.
@@ -823,3 +870,10 @@ Items 1, 2 and 4–10 have assumed answers in §1.2. Still open:
 - **2026-09-30 — Research and weapon families.** Tech tree (29 technologies, six branches),
   laboratories, research governors, AI doctrines and redesigns, research-improved hulls, debt.
   Twelve weapon families with their own turret, tracer and flash; 20 guns in all (§4.2).
+- **2026-09-30 — Tactical layer and performance.** §5.5: terrain (asteroids, nebulae),
+  orbital stations built on the galaxy map, the command cap and reinforcements, power
+  abilities, a tactical AI that stages assaults and defends stations. The tactical HUD follows
+  Empire at War (radar, reinforcement panel, unit cards, ability buttons, health bars). GPU:
+  frame pacing (vsync, 30 fps unfocused), the sky's nebula and the map's territory baked to
+  textures instead of computed per pixel every frame, lighter pipeline settings (§8.8).
+

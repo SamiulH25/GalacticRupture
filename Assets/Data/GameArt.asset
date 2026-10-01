@@ -14,29 +14,88 @@ MonoBehaviour:
   m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.GameArt
   HullModels:
   - Id: battleship
-    Prefab: {fileID: 919132149155446097, guid: bfe1f4e9fd5448f8786399de6cae0518, type: 3}
+    Faction: 0
+    Prefab: {fileID: 919132149155446097, guid: c1cf9a24a229e05e4945c1d66221fe58, type: 3}
+  - Id: battleship
+    Faction: 3
+    Prefab: {fileID: 919132149155446097, guid: 5670c8d8d29d33a609eea124f8e0052d, type: 3}
+  - Id: battleship
+    Faction: 1
+    Prefab: {fileID: 919132149155446097, guid: f8c8a0f32f0c40bcca9dffe5a40898c0, type: 3}
+  - Id: battleship
+    Faction: 2
+    Prefab: {fileID: 919132149155446097, guid: 0ab1c8763f4426a8aa8d6fa2ea68d3a6, type: 3}
   - Id: corvette
-    Prefab: {fileID: 919132149155446097, guid: 45e1a1e8c5abc239785c29c72a9b7a2f, type: 3}
+    Faction: 0
+    Prefab: {fileID: 919132149155446097, guid: b975ba8866b15a912b25496942c171b6, type: 3}
+  - Id: corvette
+    Faction: 3
+    Prefab: {fileID: 919132149155446097, guid: 251cb6d60d556b5f486ff196ff5019fe, type: 3}
+  - Id: corvette
+    Faction: 1
+    Prefab: {fileID: 919132149155446097, guid: e0823ccd39efc9b92b091ad0402d87a6, type: 3}
+  - Id: corvette
+    Faction: 2
+    Prefab: {fileID: 919132149155446097, guid: d140e3faf0f1a23d8912f02df612b4e7, type: 3}
   - Id: destroyer
-    Prefab: {fileID: 919132149155446097, guid: c11f11ca890491a51ae0b40b36bdeef7, type: 3}
+    Faction: 2
+    Prefab: {fileID: 919132149155446097, guid: a9827ae2cf290b31a838f5553a62750b, type: 3}
+  - Id: destroyer
+    Faction: 1
+    Prefab: {fileID: 919132149155446097, guid: 5880909572da3402aba6cf5a0c24bff3, type: 3}
+  - Id: destroyer
+    Faction: 3
+    Prefab: {fileID: 919132149155446097, guid: 75cda012e1d6b52aca991f90461869e2, type: 3}
+  - Id: destroyer
+    Faction: 0
+    Prefab: {fileID: 919132149155446097, guid: 25982d9b52bcd98868b1aacbb86cf8f6, type: 3}
   - Id: frigate
-    Prefab: {fileID: 919132149155446097, guid: 39c545c510ac9dccdbde9042cdf153d2, type: 3}
+    Faction: 0
+    Prefab: {fileID: 919132149155446097, guid: 13a4a3240b568942e883608cb140ca9d, type: 3}
+  - Id: frigate
+    Faction: 3
+    Prefab: {fileID: 919132149155446097, guid: bcb23a7a1ba63103aacf9f99843b2909, type: 3}
+  - Id: frigate
+    Faction: 1
+    Prefab: {fileID: 919132149155446097, guid: 2ef21de2b6e8c358a8c2473df5dc976d, type: 3}
+  - Id: frigate
+    Faction: 2
+    Prefab: {fileID: 919132149155446097, guid: d4640717ed1de5013afbc326e05973a7, type: 3}
   - Id: transport
-    Prefab: {fileID: 919132149155446097, guid: 006f4ae262bf9d591a1ffba1627f64f5, type: 3}
+    Faction: 0
+    Prefab: {fileID: 919132149155446097, guid: dd6b75942afe50ea4a47a37540e2f0ee, type: 3}
+  - Id: transport
+    Faction: 3
+    Prefab: {fileID: 919132149155446097, guid: b26f68984e610bf669972f8e36e1bae2, type: 3}
+  - Id: transport
+    Faction: 1
+    Prefab: {fileID: 919132149155446097, guid: 332822095e1aacf73895f8407b701a27, type: 3}
+  - Id: transport
+    Faction: 2
+    Prefab: {fileID: 919132149155446097, guid: ac02616f46279fcd9bd62c2a9aa5428d, type: 3}
   TurretModels:
   - Id: corvette_gun
+    Faction: -1
     Prefab: {fileID: 919132149155446097, guid: 1d48e07625f990aca91a40ee6c06408e, type: 3}
   - Id: main_battery
+    Faction: -1
     Prefab: {fileID: 919132149155446097, guid: b195f3bf12aba4d73a8cd86b4ac844d7, type: 3}
   - Id: point_defence
+    Faction: -1
     Prefab: {fileID: 919132149155446097, guid: 695f2bc7393d10450a3c31c8aaf5b65d, type: 3}
   - Id: secondary
+    Faction: -1
     Prefab: {fileID: 919132149155446097, guid: 4de1e9e3fdfc95467ba01467add9859f, type: 3}
   HullPaint:
   - {fileID: 2100000, guid: ba79c1c336ad4a127b8f9ffec7893654, type: 2}
   - {fileID: 2100000, guid: 7b2bbbac448d23c4d9168a4efbe9a4c2, type: 2}
   - {fileID: 2100000, guid: a06cec7f31e34f01dbc9753f8a298022, type: 2}
   - {fileID: 2100000, guid: 8efba423480dca9b4a78597ef302ce4c, type: 2}
+  Structure:
+  - {fileID: 2100000, guid: 21c0feff87b5ff9a0ab01b438b3293e0, type: 2}
+  - {fileID: 2100000, guid: 2aa4fd15d921b1eafb78a272099ece31, type: 2}
+  - {fileID: 2100000, guid: 0d4c2605d1b8f5d6da3302a9ece4342d, type: 2}
+  - {fileID: 2100000, guid: 561a977238509d802895b2ba976c4cef, type: 2}
   Trim:
   - {fileID: 2100000, guid: 190874a7044b31e629017eea5ceb7ab6, type: 2}
   - {fileID: 2100000, guid: 54d5e867d88016c03a60586af9ea00e9, type: 2}
@@ -52,7 +111,6 @@ MonoBehaviour:
   - {fileID: 2100000, guid: e6ce81a4fb367c2e9be67bfc3857b7a2, type: 2}
   - {fileID: 2100000, guid: d35b24e8d90890644b2b4af4a67c294a, type: 2}
   - {fileID: 2100000, guid: 1b269cb15bcac251c8bbf8f8028a583b, type: 2}
-  DarkMetal: {fileID: 2100000, guid: e2648402cb7cbe89f902c7d911f14aa8, type: 2}
   Windows: {fileID: 2100000, guid: 4686a883d9204d0f997a4d6d229f29b8, type: 2}
   Heat: {fileID: 2100000, guid: 9b59f17679653b83e8576fefd1c4a878, type: 2}
   Wreck: {fileID: 2100000, guid: faa94bfdf5a1bb1a4948d91afe3dce77, type: 2}

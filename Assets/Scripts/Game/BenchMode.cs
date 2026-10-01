@@ -42,6 +42,7 @@ namespace GalacticRupture.Game
                 return;
             }
             Directory.CreateDirectory(_dir);
+            FramePacing.Uncapped = true;
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = -1;
             Rig.Cinematic = false;

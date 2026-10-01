@@ -37,6 +37,34 @@ namespace GalacticRupture.Sim.Strategic
         public float Courting;         // 0..1: influence spent bringing a holdout in
         public int Courter = -1;
 
+        // The orbital defence station: fights in every battle over the system (IDEAS.md §4.2).
+        public int Station;            // level 0 (none) to 3
+        public float StationHull;      // 0..1 of the current level's hull
+        public float StationHours;     // > 0 while the next level is being built
+
+        // The battlefield: fixed for the system, derived from its name, so it never needs saving.
+        public TerrainSpec Terrain
+        {
+            get
+            {
+                uint h = 2166136261u;
+                foreach (char ch in Name) h = (h ^ ch) * 16777619u;
+                h ^= (uint)Id * 2654435761u;
+                h ^= h >> 15;
+                h *= 2246822519u;
+                h ^= h >> 13;
+                float a = (h & 0xffff) / 65536f;
+                float n = ((h >> 16) & 0xff) / 256f;
+                // Ruins lie in their own wreckage.
+                if (Derelict != Derelict.None) a = System.MathF.Min(0.999f, a + 0.2f);
+                return new TerrainSpec
+                {
+                    Asteroids = a < 0.35f ? 0 : a < 0.65f ? 1 : a < 0.88f ? 2 : 3,
+                    Nebula = n < 0.28f,
+                };
+            }
+        }
+
         public int Count(BuildingKind k)
         {
             int n = 0;

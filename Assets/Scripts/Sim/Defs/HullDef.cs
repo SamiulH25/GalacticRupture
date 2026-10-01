@@ -21,6 +21,7 @@ namespace GalacticRupture.Sim
         Cruiser,
         Battleship,
         Transport,  // carries armies; the fattest target in the game (IDEAS.md §6)
+        Station,    // an orbital fortress: does not move, many guns, built at the galactic scale
     }
 
     public sealed class HullDef

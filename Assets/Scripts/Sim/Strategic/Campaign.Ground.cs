@@ -190,6 +190,7 @@ namespace GalacticRupture.Sim.Strategic
             if (s.Owner == f.Owner) return false;
             if (s.Owner < 0 && s.Derelict == Derelict.Ruin) return false;   // nobody to fight: send an expedition
             if (s.Owner >= 0 && Stance(f.Owner, s.Owner) != DiplomaticStance.War) return false;
+            if (s.Station > 0 && s.StationHull > 0f) return false;   // the station first
             foreach (var o in Fleets)
                 if (o.Alive && !o.InTransit && o.System == s.Id && o.Owner != f.Owner && o.Owner >= 0
                     && Stance(o.Owner, f.Owner) == DiplomaticStance.War) return false;

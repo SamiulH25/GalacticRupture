@@ -11,6 +11,7 @@ namespace GalacticRupture.Sim.Strategic
         public static void Think(Campaign c, int faction)
         {
             Develop(c, faction);
+            Fortify(c, faction);
             Govern(c, faction);
             Build(c, faction);
             MergeIdle(c, faction);
@@ -35,6 +36,43 @@ namespace GalacticRupture.Sim.Strategic
                 if (fac.Credits < c.CostHere(s, (BuildingKind)k) + reserve) return;
                 c.Construct(faction, s.Id, (BuildingKind)k);
             }
+        }
+
+        // Stations where they earn their upkeep: the capital first, then developed worlds on a
+        // hostile border, and only out of savings, so the yards are never starved for them.
+        static void Fortify(Campaign c, int faction)
+        {
+            var fac = c.Factions[faction];
+            if (fac.Credits < (fac.Major ? 1100f : 700f)) return;
+            if (c.Upkeep(faction) > c.Totals(faction).Credits * 0.8f) return;
+            StarSystem best = null;
+            float bestScore = 0f;
+            foreach (var s in c.Galaxy.Systems)
+            {
+                if (s.Owner != faction || !c.CanBuildStation(faction, s.Id)) continue;
+                bool threatened = ThreatenedBorder(c, s);
+                int want = s.Capital ? (fac.Major ? 3 : 2) : threatened && s.Tier >= 2 ? 2 : threatened || s.Shipyard ? 1 : 0;
+                if (s.Station >= want) continue;
+                float score = (s.Capital ? 10f : 0f) + (threatened ? 6f : 0f) + s.Tier * 2f + (s.Shipyard ? 2f : 0f) - s.Station * 3f;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = s;
+                }
+            }
+            if (best != null && fac.Credits >= Campaign.StationCost(best.Station + 1) + (fac.Major ? 700f : 400f))
+                c.BuildStation(faction, best.Id);
+        }
+
+        // Next to a power we're at war with, or one that doesn't trust us.
+        static bool ThreatenedBorder(Campaign c, StarSystem s)
+        {
+            foreach (var l in c.Galaxy.LanesFrom(s.Id))
+            {
+                int o = c.Galaxy.Systems[l.Other(s.Id)].Owner;
+                if (o >= 0 && o != s.Owner && c.Stance(s.Owner, o) == DiplomaticStance.War) return true;
+            }
+            return false;
         }
 
         // The capital builds industry, the border builds for war, and every third quiet world
@@ -303,7 +341,9 @@ namespace GalacticRupture.Sim.Strategic
                     if (hops == 0 || hops > (fac.Major ? 4 : 2)) continue;
 
                     // Judge by what we know; unknown places are assumed moderately held.
-                    float fleets = intel.HostileStrengthAt(c, faction, s.Id);
+                    // A station is seen from afar and fights with the fleets: bring enough for both.
+                    float fleets = intel.HostileStrengthAt(c, faction, s.Id)
+                                   + (intel.SeenHour[s.Id] >= 0 ? Campaign.StationStrength(s) * 1.2f : 0f);
                     float garrison = intel.SeenHour[s.Id] >= 0 ? intel.GarrisonSeen[s.Id] : Campaign.MaxMilitia(s);
                     if (f.Strength < fleets * (s.Capital ? 1.8f : 1.3f)) continue;
                     if (troops * 100f < garrison * (s.Capital ? 1.8f : 1.35f)) continue;

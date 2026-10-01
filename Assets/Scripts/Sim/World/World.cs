@@ -47,12 +47,28 @@ namespace GalacticRupture.Sim
 
         public void Issue(int ship, ShipOrder order) => _commands.Add((ship, order));
 
+        readonly List<(int Ship, Ability Ability)> _abilityCommands = new List<(int, Ability)>();
+
+        public void Use(int ship, Ability ability) => _abilityCommands.Add((ship, ability));
+
         void ApplyCommands()
         {
+            foreach (var (id, ability) in _abilityCommands)
+            {
+                var ship = ShipById(id);
+                if (ship == null || !ship.CanUse(ability)) continue;
+                ship.ActiveAbility = (int)ability;
+                ship.AbilityTime = Abilities.Duration(ability);
+                ship.AbilityCooldown[(int)ability] = Abilities.Cooldown(ability);
+                if (ability == Ability.Shields) ship.ShieldDelay = 0f;
+                Events.Add(new SimEvent { Kind = SimEventKind.AbilityUsed, Ship = id, Mount = (int)ability, Position = ship.Position });
+            }
+            _abilityCommands.Clear();
+
             foreach (var (id, order) in _commands)
             {
                 var ship = ShipById(id);
-                if (ship == null || !ship.Alive) continue;
+                if (ship == null || !ship.Alive || ship.Def.MaxSpeed <= 0f) continue;
                 ship.Order = order;
                 ship.RunOutbound = false;
                 ship.FocusTarget = order.Kind == OrderKind.Attack ? order.OtherShip : -1;
@@ -69,12 +85,13 @@ namespace GalacticRupture.Sim
 
         public ref Rng Rng => ref _rng;
 
-        public Ship Spawn(HullDef def, int side, Vector3 position, float yaw)
+        // `arriving`: a reinforcement dropping out of FTL, for the view to flash.
+        public Ship Spawn(HullDef def, int side, Vector3 position, float yaw, bool arriving = false)
         {
             var ship = new Ship(Ships.Count, side, def, position, yaw);
-            ship.Speed = def.MaxSpeed * 0.5f;
+            ship.Speed = ship.TopSpeed * 0.5f;
             Ships.Add(ship);
-            Events.Add(new SimEvent { Kind = SimEventKind.ShipSpawned, Ship = ship.Id, Position = position });
+            Events.Add(new SimEvent { Kind = SimEventKind.ShipSpawned, Ship = ship.Id, Position = position, Value = arriving ? 1f : 0f });
             return ship;
         }
 
@@ -96,8 +113,15 @@ namespace GalacticRupture.Sim
                 }
             }
 
+            GroupPace();
             foreach (var ship in Ships)
-                if (ship.Alive) Pilot(ship);
+            {
+                if (!ship.Alive) continue;
+                TickAbilities(ship);
+                Pilot(ship);
+                KeepOutOfRocks(ship);
+                NebulaEffects(ship);
+            }
 
             Grid.Rebuild(Ships);
             foreach (var ship in Ships)
@@ -151,20 +175,35 @@ namespace GalacticRupture.Sim
             {
                 var other = Ships[id];
                 if (other.Side == ship.Side || !other.Alive) continue;
-                if (Vector3.DistanceSquared(other.Position, ship.Position) > reach * reach) continue;
+                float d2 = Vector3.DistanceSquared(other.Position, ship.Position);
+                if (d2 > reach * reach) continue;
+                // Hidden in a nebula, a ship is only seen up close; behind rock, not at all.
+                if (other.InNebula && d2 > NebulaSightRange * NebulaSightRange) continue;
+                if (Obstacles.Count > 0 && Occluded(ship.Position, other.Position)) continue;
                 ship.Enemies.Add(id);
             }
         }
 
         void UpdateShields(Ship ship)
         {
-            if (ship.ShieldDelay > 0f)
+            if (ship.Using(Ability.Weapons) || ship.InNebula) return;
+            bool boosted = ship.Using(Ability.Shields);
+            if (ship.ShieldDelay > 0f && !boosted)
             {
                 ship.ShieldDelay -= Dt;
                 return;
             }
             if (ship.Shield < ship.Def.ShieldHp)
-                ship.Shield = System.MathF.Min(ship.Def.ShieldHp, ship.Shield + ship.Def.ShieldRegen * Dt);
+                ship.Shield = System.MathF.Min(ship.Def.ShieldHp, ship.Shield + ship.Def.ShieldRegen * Pace.ShieldRegen * (boosted ? 3f : 1f) * Dt);
+        }
+
+        void TickAbilities(Ship ship)
+        {
+            for (int i = 0; i < Abilities.Count; i++)
+                if (ship.AbilityCooldown[i] > 0f) ship.AbilityCooldown[i] -= Dt;
+            if (ship.ActiveAbility < 0) return;
+            ship.AbilityTime -= Dt;
+            if (ship.AbilityTime <= 0f) ship.ActiveAbility = -1;
         }
     }
 }

@@ -305,6 +305,7 @@ namespace GalacticRupture.Game
             "Admin" => "an administration",
             "Habitat" => "a habitat",
             "Depot" => "a supply depot",
+            "Station" => "an orbital station level",
             _ => kind,
         };
 
@@ -322,11 +323,12 @@ namespace GalacticRupture.Game
 
         // --- Battle hand-off -------------------------------------------------------------------
 
-        public void Attend()
+        // `vanguard`: the ships that open the battle (null: the line, heaviest first).
+        public void Attend(ICollection<(int Fleet, int Index)> vanguard = null)
         {
             _engagement = Campaign.Pending;
             if (_engagement == null) return;
-            var world = BattleSetup.Build(Campaign, _engagement, true, out _battle);
+            var world = BattleSetup.Build(Campaign, _engagement, true, out _battle, vanguard);
             InBattle = true;
             Map.gameObject.SetActive(false);
             MapCamera.enabled = false;
@@ -380,6 +382,11 @@ namespace GalacticRupture.Game
             {
                 var f = Campaign.FleetById(id);
                 if (f != null && e.SideOf(f.Owner) == side) s += f.Strength;
+            }
+            if (e.System >= 0)
+            {
+                var sys = Campaign.Galaxy.Systems[e.System];
+                if (sys.Owner >= 0 && e.SideOf(sys.Owner) == side) s += Campaign.StationStrength(sys);
             }
             return s;
         }

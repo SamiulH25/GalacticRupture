@@ -53,6 +53,11 @@ namespace GalacticRupture.Game
                 Closeup(w);
                 return;
             }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-grLineup") >= 0)
+            {
+                Lineup();
+                return;
+            }
             switch (_step)
             {
                 case 0 when t > 0.5f:
@@ -62,46 +67,136 @@ namespace GalacticRupture.Game
                     break;
                 case 1 when t > 1.5f:
                     Input.OrderMove(new Vector3(0f, 0f, -600f));
+                    // Call in two ships from reserve.
+                    Runner.Reinforcements?.Request(0, 0);
+                    Runner.Reinforcements?.Request(0, 0);
                     _step++;
                     break;
-                case 2 when t > 5f:
+                case 2 when t > 9f:
+                    Rig.Frame(w.ShipById(Runner.Flagship).Position.ToUnity(), 200f, 55f, 4200f);
                     Shot("rts_01_move");
                     _step++;
                     break;
-                case 3 when t > 18f:
+                case 3 when t > 12f:
+                    // The whole field from above: rock, cloud, station, both lines.
+                    Rig.Frame(new Vector3(0f, 0f, 0f), 0f, 62f, 15000f);
+                    _step++;
+                    break;
+                case 4 when t > 14f:
+                    Shot("rts_01b_field");
+                    _step++;
+                    break;
+                case 5 when t > 14.5f:
+                    var station = Runner.Battle != null ? w.ShipById(Runner.Battle.Station) : null;
+                    if (station != null) Rig.SnapTo(station.Id, 200f, 22f, 700f, new Vector3(0f, 20f, 0f));
+                    _step++;
+                    break;
+                case 6 when t > 16f:
+                    Shot("rts_01c_station");
+                    _step++;
+                    break;
+                case 7 when t > 18f:
                     int target = NearestEnemy(w, Destroyer: true);
                     if (target >= 0) Input.OrderAttack(target);
+                    Input.UseAbility(Ability.Engines);
                     Rig.SnapTo(Runner.Flagship, 240f, 26f, 1600f, Vector3.zero);
                     _step++;
                     break;
-                case 4 when t > 21f:
+                case 8 when t > 30f:
                     Shot("rts_02_attack");
+                    // The rest at ×4, the speed buttons' top setting.
+                    Runner.TimeScale = 4f;
                     _step++;
                     break;
-                case 5 when t > 40f:
+                case 9 when t > 110f:
                     Rig.SnapTo(Runner.Flagship, 120f, 18f, 900f, Vector3.zero);
                     _step++;
                     break;
-                case 6 when t > 42f:
+                case 10 when t > 114f:
+                    Input.UseAbility(Ability.Weapons);
                     Shot("rts_03_engaged");
                     _step++;
                     break;
-                case 7 when t > 70f:
+                case 11 when t > 170f:
                     if (NearestEnemy(w, Destroyer: false) is int e && e >= 0) Input.OrderAttack(e);
                     Rig.SnapTo(Runner.Flagship, 60f, 30f, 2600f, Vector3.zero);
                     _step++;
                     break;
-                case 8 when t > 74f:
+                case 12 when t > 178f:
                     Shot("rts_04_battle");
                     _step++;
                     break;
-                case 9 when t > 110f || (Runner.Battle != null && Runner.Battle.State != BattleState.Fighting && t > 80f):
+                case 13 when t > 300f || (Runner.Battle != null && Runner.Battle.State != BattleState.Fighting && t > 180f):
                     Shot("rts_05_end");
                     Debug.Log($"[rts] state {Runner.Battle?.State}");
                     _quitAt = Time.unscaledTime + 1.5f;
                     _step++;
                     break;
             }
+        }
+
+        // -grLineup: every faction's five hulls in rows, held still, shot from a few angles, to
+        // check the Blender models in the engine.
+        int _lineup = -1;
+        float _lineupAt;
+        static readonly int[] LineupFactions = { 0, 1, 5, 6 };   // Continuance, Remnant, Serac, Ilium
+        static readonly (float Yaw, float Pitch, float Distance, Vector3 At)[] LineupViews =
+        {
+            (210f, 24f, 2600f, new Vector3(0f, 0f, 0f)),
+            (150f, 12f, 1300f, new Vector3(-700f, 0f, 0f)),
+            (150f, 12f, 1300f, new Vector3(700f, 0f, 0f)),
+            (300f, 35f, 900f, new Vector3(-1050f, 0f, 0f)),
+            (300f, 35f, 900f, new Vector3(-350f, 0f, 0f)),
+            (300f, 35f, 900f, new Vector3(350f, 0f, 0f)),
+            (300f, 35f, 900f, new Vector3(1050f, 0f, 0f)),
+        };
+
+        void Lineup()
+        {
+            if (Time.unscaledTime < _lineupAt) return;
+            if (_lineup < 0)
+            {
+                var w = new World(1);
+                var classes = new[] { Hulls.Battleship, Hulls.Destroyer, Hulls.Transport, Hulls.Frigate, Hulls.Corvette };
+                for (int f = 0; f < LineupFactions.Length; f++)
+                {
+                    float x = (f - 1.5f) * 700f;
+                    float z = 900f;
+                    foreach (var h in classes)
+                    {
+                        var ship = w.Spawn(h, f % 2, new System.Numerics.Vector3(x, 0f, z), 0f);
+                        ship.Faction = LineupFactions[f];
+                        ship.Speed = 0f;
+                        z -= h.HalfLength * 2f + 110f;
+                    }
+                }
+                var st = w.Spawn(Hulls.Station(3), 0, new System.Numerics.Vector3(0f, 0f, -1400f), 0f);
+                st.Speed = 0f;
+                Runner.Load(w);
+                Runner.Paused = true;
+                _lineup = 0;
+                _phase = 0;
+                _lineupAt = Time.unscaledTime + 1f;
+                return;
+            }
+            if (_lineup >= LineupViews.Length)
+            {
+                Application.Quit();
+                return;
+            }
+            var v = LineupViews[_lineup];
+            if (_phase == 0)
+            {
+                Rig.Frame(v.At, v.Yaw, v.Pitch, v.Distance);
+                _phase = 1;
+                _lineupAt = Time.unscaledTime + 1.2f;
+                return;
+            }
+            ScreenCapture.CaptureScreenshot(Path.Combine(_dir, $"lineup_{_lineup}.png"));
+            Debug.Log($"[rts] lineup {_lineup}");
+            _lineup++;
+            _phase = 0;
+            _lineupAt = Time.unscaledTime + 0.3f;
         }
 
         int _closeup;
@@ -125,7 +220,7 @@ namespace GalacticRupture.Game
             var c = Closeups[_closeup];
             int id = -1, n = 0;
             foreach (var s in w.Ships)
-                if (s.Side == 0 && n++ == c.Ship) id = s.Id;
+                if (s.Side == 0 && s.Def.Class != HullClass.Station && n++ == c.Ship) id = s.Id;
             if (_phase == 0)
             {
                 Rig.SnapTo(id, c.Yaw, c.Pitch, c.Distance, c.Offset);

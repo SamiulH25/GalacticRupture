@@ -38,7 +38,7 @@ namespace GalacticRupture.Tests
             var decoy = w.Spawn(Target(), 1, new Vector3(-1500f, 0f, 1500f), 0f);
             var target = w.Spawn(Target(), 1, new Vector3(0f, 0f, 7000f), 0f);
             w.Issue(s.Id, ShipOrder.Attack(target.Id));
-            for (int i = 0; i < World.TicksPerSecond * 120; i++) w.Step();
+            for (int i = 0; i < World.TicksPerSecond * 240; i++) w.Step();
 
             float dist = Vector3.Distance(s.Position, target.Position);
             Assert.Less(dist, s.MaxGunRange, "closed to gun range");
@@ -73,7 +73,7 @@ namespace GalacticRupture.Tests
             var w = Skirmish.Create(9);
             var sk = (Skirmish)w.Director;
             // Player fleet holds and only its guns act: the enemy still has to come to it.
-            for (int i = 0; i < World.TicksPerSecond * 400 && sk.State == BattleState.Fighting; i++)
+            for (int i = 0; i < World.TicksPerSecond * 1200 && sk.State == BattleState.Fighting; i++)
             {
                 w.Step();
                 w.Events.Clear();

@@ -22,6 +22,8 @@ namespace GalacticRupture.Sim
         public bool Clockwise;
         public int OtherShip = -1;
         public Vector3 Offset;       // Escort: leader-local offset
+        public int Group = -1;       // ships given one order together move as one (World.GroupPace)
+        public float FacingYaw = float.NaN; // MoveTo: the heading to turn to on arrival
         public float PassDistance = 300f;
         public float RunOutDistance = 2200f;
 
@@ -42,6 +44,44 @@ namespace GalacticRupture.Sim
 
         public static ShipOrder Face(Vector3 point) =>
             new ShipOrder { Kind = OrderKind.Face, Point = point };
+    }
+
+    // Power diverted for a few seconds (the Empire at War verbs): one at a time, each on its
+    // own cooldown.
+    public enum Ability
+    {
+        Engines,   // flank speed; the guns reload slower
+        Shields,   // shields regenerate fast and at once; the guns reload slower
+        Weapons,   // guns reload fast; shields stop regenerating
+    }
+
+    public static class Abilities
+    {
+        public const int Count = 3;
+
+        public static float Duration(Ability a) => a switch
+        {
+            Ability.Engines => 10f,
+            Ability.Shields => 10f,
+            _ => 10f,
+        };
+
+        public static float Cooldown(Ability a) => a switch
+        {
+            Ability.Engines => 35f,
+            Ability.Shields => 40f,
+            _ => 45f,
+        };
+
+        public static string Name(Ability a) => a switch
+        {
+            Ability.Engines => "Boost engines",
+            Ability.Shields => "Power to shields",
+            _ => "Power to weapons",
+        };
+
+        // Stations have no engines to boost.
+        public static bool Has(Ship s, Ability a) => !(a == Ability.Engines && s.Def.MaxSpeed <= 0f) && s.Def.Class != HullClass.Transport;
     }
 
     public sealed class Mount
@@ -102,6 +142,17 @@ namespace GalacticRupture.Sim
         public int FocusTarget = -1;     // guns prefer this ship when it bears
         public float CruiseSpeedFraction = 1f;
 
+        public bool InNebula;
+        public int ActiveAbility = -1;   // an Ability, or -1
+        public float AbilityTime;        // seconds left on the active one
+        public readonly float[] AbilityCooldown = new float[Abilities.Count];
+
+        public bool Using(Ability a) => ActiveAbility == (int)a;
+
+        public float ReloadFactor => Using(Ability.Weapons) ? 0.6f : Using(Ability.Engines) || Using(Ability.Shields) ? 1.4f : 1f;
+
+        public bool CanUse(Ability a) => Alive && ActiveAbility < 0 && AbilityCooldown[(int)a] <= 0f && Abilities.Has(this, a);
+
         internal bool RunOutbound;
         internal Vector3 RunExitPoint;
 
@@ -133,6 +184,9 @@ namespace GalacticRupture.Sim
         }
 
         public Vector3 Forward => SimMath.HeadingToDir(Yaw);
+
+        // Top speed in battle, at the tactical pace.
+        public float TopSpeed => Def.MaxSpeed * Pace.Movement * CruiseSpeedFraction;
 
         public Vector3 LocalToWorld(Vector3 local) => Position + SimMath.RotateYaw(local, Yaw);
 

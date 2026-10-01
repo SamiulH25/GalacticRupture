@@ -15,6 +15,9 @@ namespace GalacticRupture.Game
     {
         public CampaignDirector Director;
         public CampaignHud Hud;
+        int _zone;
+        double _raidAt;
+        bool _deployShot;
         public MapView Map;
         public CommandInput Input;
         public SimRunner Runner;
@@ -92,6 +95,35 @@ namespace GalacticRupture.Game
                         if (s.Alive && s.Side != 0) { Input.OrderAttack(s.Id); break; }
                     Runner.TimeScale = 4f;
                     _wait = 1f;
+                    // The vanguard alone, then its reserves picked: the zone they can come in to.
+                    var res = Runner.Reinforcements;
+                    if (_zone == 0 && Runner.World.Time > 4f && res.Pool[0].Count > 0)
+                    {
+                        Input.Placing.AddRange(res.Pool[0]);
+                        var lead = Runner.World.ShipById(Runner.Flagship);
+                        if (lead != null) Director.TacticalCamera.Frame(lead.Position.ToUnity(), 0f, 70f, 9000f);
+                        Runner.Paused = true;
+                        _zone = 1;
+                        _wait = 0.5f;
+                        return;
+                    }
+                    if (_zone == 1)
+                    {
+                        Shot("zone");
+                        _zone = 2;
+                        _wait = 0.3f;
+                        return;
+                    }
+                    if (_zone == 2)
+                    {
+                        var lead = Runner.World.ShipById(Runner.Flagship);
+                        if (lead != null) res.RequestAt(0, Input.Placing, lead.Position + new System.Numerics.Vector3(0f, 0f, -900f));
+                        Input.Placing.Clear();
+                        Runner.Paused = false;
+                        _zone = 3;
+                        _wait = 0.3f;
+                        return;
+                    }
                     if (Runner.World.Time > 12f && !_foughtOne) { Shot("battle"); _foughtOne = true; }
                     return;
                 }
@@ -106,7 +138,14 @@ namespace GalacticRupture.Game
             {
                 if (!_shotModal) { Shot("contact"); _shotModal = true; _wait = 0.3f; return; }
                 _shotModal = false;
-                if (!_foughtOne) Director.Attend(); else Director.LeaveToFleet();
+                if (!_foughtOne)
+                {
+                    // The vanguard screen first, photographed, then into the battle with it.
+                    if (!Hud.Deploying) { Hud.OpenDeployment(); _wait = 0.3f; _shotModal = true; _deployShot = true; return; }
+                    if (_deployShot) { Shot("deploy"); _deployShot = false; _shotModal = true; _wait = 0.3f; return; }
+                    Hud.BeginBattle();
+                }
+                else Director.LeaveToFleet();
                 _wait = 1f;
                 return;
             }
@@ -310,7 +349,28 @@ namespace GalacticRupture.Game
                     break;
                 }
                 case 17:
+                {
                     Shot("later");
+                    // A raid on the capital, so the run reaches the vanguard screen and a battle.
+                    int at = Capital;
+                    var guard = c.NewFleet(Campaign.PlayerFaction, at, "Home Guard");
+                    foreach (var h in new[] { Hulls.Battleship, Hulls.Destroyer, Hulls.Destroyer, Hulls.Frigate, Hulls.Corvette, Hulls.Corvette })
+                        guard.Ships.Add(c.NewShip(Campaign.PlayerFaction, h));
+                    int foe = Campaign.PlayerFaction == 1 ? 2 : 1;
+                    var raid = c.NewFleet(foe, at, "Raiders");
+                    foreach (var h in new[] { Hulls.Destroyer, Hulls.Destroyer, Hulls.Frigate, Hulls.Frigate, Hulls.Corvette })
+                        raid.Ships.Add(c.NewShip(foe, h));
+                    c.SetStance(Campaign.PlayerFaction, foe, DiplomaticStance.War);
+                    _raidAt = c.Hours;
+                    Director.Paused = false;
+                    Director.Speed = 1f;
+                    _wait = 1f;
+                    _step++;
+                    break;
+                }
+                case 18:
+                    if (!_foughtOne && c.Hours < _raidAt + 240) return;
+                    Debug.Log($"[campaign] raid {(_foughtOne ? "fought" : "never met")}");
                     _quitAt = Time.unscaledTime + 1f;
                     _step++;
                     break;

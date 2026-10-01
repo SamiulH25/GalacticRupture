@@ -25,6 +25,8 @@ namespace GalacticRupture.Game
             public MeshRenderer StarR, CoronaR;
             public readonly List<(Transform T, float Radius, float Speed, float Phase)> Planets = new List<(Transform, float, float, float)>();
             public Transform Station;
+            public float StarRadius;
+            public int StationShown = -1;
             public LineRenderer Ring, Siege, Battle;
             public Color StarColour;
         }
@@ -73,6 +75,7 @@ namespace GalacticRupture.Game
         public void Build(Campaign c)
         {
             _c = c;
+            _plateHash = 0;
             _block = new MaterialPropertyBlock();
             _stationMesh = StationMesh();
             foreach (Transform t in transform) Destroy(t.gameObject);
@@ -135,16 +138,8 @@ namespace GalacticRupture.Game
                     SetColour(pr, BaseColorId, PlanetColour(rng));
                     v.Planets.Add((pr.transform, orbit, 6f + (float)rng.NextDouble() * 10f, (float)rng.NextDouble() * 360f));
                 }
-                if (s.Shipyard)
-                {
-                    var st = new GameObject("Station");
-                    st.transform.SetParent(transform, false);
-                    st.transform.position = p + new Vector3(starR * 2.2f + 20f, 18f, 0f);
-                    st.transform.localScale = Vector3.one * (s.Tier >= 3 ? 1.4f : 1f);
-                    st.AddComponent<MeshFilter>().sharedMesh = _stationMesh;
-                    st.AddComponent<MeshRenderer>().sharedMaterials = new[] { Art.DarkMetal, Art.Windows };
-                    v.Station = st.transform;
-                }
+                v.StarRadius = starR;
+                EnsureStation(v, s, p);
                 v.Ring = Circle(p, 210f, 7f, FactionStyle.Neutral);
                 v.Siege = Line("Ground war", 2, 18f, Color.red, LineMaterial);
                 v.Battle = Circle(p, 250f, 10f, new Color(1f, 0.35f, 0.25f));
@@ -177,6 +172,32 @@ namespace GalacticRupture.Game
         }
 
         // A station: a ring on spokes around a hub, with lit windows.
+        // Stations at shipyards and defence stations; bigger for each station level. Built and
+        // rescaled as the campaign changes.
+        void EnsureStation(SystemVis v, StarSystem s, Vector3 p)
+        {
+            bool want = s.Shipyard || s.Station > 0;
+            int key = want ? s.Station * 2 + (s.Tier >= 3 ? 1 : 0) : -1;
+            if (key == v.StationShown) return;
+            v.StationShown = key;
+            if (!want)
+            {
+                if (v.Station != null) Destroy(v.Station.gameObject);
+                v.Station = null;
+                return;
+            }
+            if (v.Station == null)
+            {
+                var st = new GameObject("Station");
+                st.transform.SetParent(transform, false);
+                st.transform.position = p + new Vector3(v.StarRadius * 2.2f + 20f, 18f, 0f);
+                st.AddComponent<MeshFilter>().sharedMesh = _stationMesh;
+                st.AddComponent<MeshRenderer>().sharedMaterials = new[] { Art.DarkMetal, Art.Windows };
+                v.Station = st.transform;
+            }
+            v.Station.localScale = Vector3.one * (s.Tier >= 3 ? 1.4f : 1f) * (1f + 0.35f * s.Station);
+        }
+
         static Mesh StationMesh()
         {
             var b = new MeshBuilder(2);
@@ -239,6 +260,43 @@ namespace GalacticRupture.Game
             return lr;
         }
 
+        // The plate's territory and fog are baked into textures only when what they show changes:
+        // looping over every system for every pixel of a full-screen plate each frame is what
+        // used to keep the GPU busy on the galaxy map.
+        RenderTexture _plateTex, _plateFog;
+        int _plateHash;
+        static readonly int PlateTexId = Shader.PropertyToID("_GR_PlateTex");
+        static readonly int PlateFogId = Shader.PropertyToID("_GR_PlateFog");
+
+        void BakePlate(int n)
+        {
+            unchecked
+            {
+                int h = n * 31 + (ShowSupply ? 7 : 3);
+                for (int i = 0; i < n; i++)
+                    h = h * 16777619 ^ _sysData[i].GetHashCode() ^ (_sysFlags[i].GetHashCode() * 3);
+                if (h == _plateHash && _plateTex != null && _plateTex.IsCreated()) return;
+                _plateHash = h;
+            }
+            if (_plateTex == null)
+            {
+                _plateTex = new RenderTexture(2048, 2048, 0, RenderTextureFormat.ARGBHalf) { name = "Plate", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+                _plateFog = new RenderTexture(512, 512, 0, RenderTextureFormat.R8) { name = "Plate Fog", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+                _plateTex.Create();
+                _plateFog.Create();
+            }
+            Graphics.Blit(null, _plateTex, Art.MapPlate, 1);
+            Graphics.Blit(null, _plateFog, Art.MapPlate, 2);
+            Shader.SetGlobalTexture(PlateTexId, _plateTex);
+            Shader.SetGlobalTexture(PlateFogId, _plateFog);
+        }
+
+        void OnDestroy()
+        {
+            if (_plateTex != null) { _plateTex.Release(); Destroy(_plateTex); }
+            if (_plateFog != null) { _plateFog.Release(); Destroy(_plateFog); }
+        }
+
         static void SetCircle(LineRenderer lr, Vector3 centre, float radius)
         {
             int n = lr.positionCount;
@@ -273,6 +331,7 @@ namespace GalacticRupture.Game
             Shader.SetGlobalVectorArray("_GR_Colors", _colours);
             Shader.SetGlobalFloat("_GR_SystemCount", n);
             Shader.SetGlobalFloat("_GR_ShowSupply", ShowSupply ? 1f : 0f);
+            BakePlate(n);
 
             for (int i = 0; i < _systems.Count; i++)
             {
@@ -291,6 +350,7 @@ namespace GalacticRupture.Game
                     float a = (phase + t * speed) * Mathf.Deg2Rad;
                     pt.position = p + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radius;
                 }
+                if (Time.frameCount % 30 == i % 30) EnsureStation(v, s, p);
                 if (v.Station != null) v.Station.Rotate(0f, dt * 20f, 0f, Space.World);
 
                 Color oc = FactionStyle.Of(owner);
@@ -460,12 +520,12 @@ namespace GalacticRupture.Game
         {
             if (fv.Model != null) Destroy(fv.Model.gameObject);
             fv.HullId = hullId;
-            var prefab = Art.HullModel(hullId);
+            var prefab = Art.HullModel(hullId, GameArt.ArtFaction(f.Owner));
             if (prefab == null) return;
             var go = Instantiate(prefab, fv.Root, false);
             foreach (Transform c in go.transform) Destroy(c.gameObject); // engine markers
             var r = go.GetComponent<MeshRenderer>();
-            Art.ApplyFaction(r, Mathf.Clamp(f.Owner, 0, 3));
+            Art.ApplyFaction(r, GameArt.ArtFaction(f.Owner));
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             float length = r.localBounds.size.z;
             float scale = Mathf.Clamp(150f / Mathf.Max(1f, length), 0.3f, 3f);

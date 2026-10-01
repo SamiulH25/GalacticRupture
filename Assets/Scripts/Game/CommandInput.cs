@@ -16,6 +16,8 @@ namespace GalacticRupture.Game
     //   H                       hold position
     //   F                       follow the selection
     //   Ctrl+1..9 / 1..9        set / recall a control group
+    //   With reserves picked in the reinforcements panel: left click inside the zone around
+    //   your ships brings them in there; right click or Esc puts them back.
     public sealed class CommandInput : MonoBehaviour
     {
         public SimRunner Runner;
@@ -35,6 +37,12 @@ namespace GalacticRupture.Game
         public Vector3 LastOrderPoint { get; private set; }
         public float LastOrderTime { get; private set; } = -10f;
         public bool LastOrderWasAttack { get; private set; }
+
+        // Reserves picked in the HUD, waiting for the player to say where they arrive.
+        public readonly List<ReserveShip> Placing = new List<ReserveShip>();
+        public Vector3 PlacePoint { get; private set; }
+        public bool PlaceValid { get; private set; }
+        public bool PlaceOnField { get; private set; }
 
         // A right-button order in progress: where it went down, and the drag that sets facing.
         public bool Planning { get; private set; }
@@ -68,6 +76,7 @@ namespace GalacticRupture.Game
 
             // Clicks on the HUD are the HUD's.
             bool overUi = Hud.Over(mp);
+            if (Placing.Count > 0 && Place(mp, mouse, kb, overUi)) return;
             if (mouse.leftButton.wasPressedThisFrame)
             {
                 _dragStart = mp;
@@ -114,6 +123,46 @@ namespace GalacticRupture.Game
                     Prune();
                 }
             }
+        }
+
+        // Returns true while placement owns the mouse.
+        bool Place(Vector2 mp, Mouse mouse, Keyboard kb, bool overUi)
+        {
+            var res = Runner.Reinforcements;
+            if (res != null) Placing.RemoveAll(r => !res.Pool[PlayerSide].Contains(r));
+            if (res == null || Placing.Count == 0)
+            {
+                Placing.Clear();
+                return false;
+            }
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = Rig.Camera.ScreenPointToRay(mp);
+            PlaceOnField = false;
+            if (!overUi && plane.Raycast(ray, out float t) && t < 60000f)
+            {
+                PlaceOnField = true;
+                PlacePoint = ray.GetPoint(t);
+            }
+            PlaceValid = PlaceOnField && Reinforcements.InZone(Runner.World, PlayerSide, PlacePoint.ToSim());
+
+            if (kb.escapeKey.wasPressedThisFrame || (mouse.rightButton.wasPressedThisFrame && !overUi))
+            {
+                Placing.Clear();
+                return true;
+            }
+            if (mouse.leftButton.wasPressedThisFrame && !overUi)
+            {
+                // The release that follows is the placement's, not a selection click.
+                _pressOnUi = true;
+                if (!PlaceValid) return true;
+                res.RequestAt(PlayerSide, Placing, PlacePoint.ToSim());
+                LastOrderPoint = PlacePoint;
+                LastOrderWasAttack = false;
+                LastOrderTime = Time.unscaledTime;
+                Placing.Clear();
+                return true;
+            }
+            return !overUi;
         }
 
         void Prune()

@@ -250,7 +250,61 @@ namespace GalacticRupture.Sim
         {
             foreach (var h in All)
                 if (h.Id == id) return h;
+            foreach (var h in Stations)
+                if (h.Id == id) return h;
             return null;
+        }
+
+        // Orbital defence stations, levels 1-3, built and upgraded at the galactic scale.
+        public const int MaxStationLevel = 3;
+        public static readonly HullDef[] Stations = { BuildStation(1), BuildStation(2), BuildStation(3) };
+
+        public static HullDef Station(int level) => Stations[System.Math.Clamp(level, 1, MaxStationLevel) - 1];
+
+        public const float StationDeck = 26f;
+
+        // A deck ring of guns: every mount on top or on the rim, none underneath.
+        static HullDef BuildStation(int level)
+        {
+            var h = new HullDef
+            {
+                Id = $"station_{level}", Class = HullClass.Station,
+                Cost = level switch { 1 => 700, 2 => 1400, _ => 2400 },
+                BuildDays = 0f, LyPerDay = 0f,
+                HalfLength = 70f + 25f * level, Radius = 60f + 15f * level,
+                MaxSpeed = 0f, Acceleration = 0f, TurnRateDeg = 0f, ClimbRate = 0f,
+                HullHp = level switch { 1 => 16000f, 2 => 30000f, _ => 48000f },
+                ShieldHp = level switch { 1 => 6000f, 2 => 10000f, _ => 16000f },
+                ShieldRegen = level switch { 1 => 90f, 2 => 140f, _ => 200f },
+                ShieldRegenDelay = 6f,
+            };
+            // Deck plan (ShipModels.Station): inner deck to 0.85 R at the deck line, a rim ledge
+            // 4 m lower out to 1.1 R, a mid deck (0.55 R) 6 m up, the citadel (0.4 R) 12 m up.
+            float r = h.Radius, deck = StationDeck;
+            void Ring(MountDef m, int n, float radius, float y, float phaseDeg)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    float a = (phaseDeg + i * 360f / n) * SimMath.Deg2Rad;
+                    h.Hardpoints.Add(Hp(m, SimMath.Sin(a) * radius, y, SimMath.Cos(a) * radius, a * SimMath.Rad2Deg, 180f));
+                }
+            }
+            Ring(Secondary, 4, r * 0.7f, deck, 45f);
+            Ring(MassDriver, 2, r * 0.48f, deck + 6f, 90f);
+            Ring(PointDefence, 4, r * 0.97f, deck - 4f, 0f);
+            if (level >= 2)
+            {
+                Ring(MainBattery, 2, r * 0.25f, deck + 12f, 0f);
+                Ring(Secondary, 2, r * 0.7f, deck, 0f);
+                Ring(FlakBattery, 2, r * 0.6f, deck, 90f);
+            }
+            if (level >= 3)
+            {
+                Ring(MainBattery, 2, r * 0.25f, deck + 12f, 90f);
+                Ring(Secondary, 4, r * 0.97f, deck - 4f, 45f);
+                Ring(PointDefence, 2, r * 0.5f, deck + 6f, 0f);
+            }
+            return h;
         }
 
         static HardpointDef Hp(MountDef m, float x, float y, float z, float baseYaw, float halfArc) =>

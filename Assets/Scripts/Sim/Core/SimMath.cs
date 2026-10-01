@@ -10,6 +10,7 @@ namespace GalacticRupture.Sim
         public const float Pi = MathF.PI;
         public const float TwoPi = MathF.PI * 2f;
         public const float Deg2Rad = MathF.PI / 180f;
+        public const float Rad2Deg = 180f / MathF.PI;
 
         public static float Sin(float x) => MathF.Sin(x);
         public static float Cos(float x) => MathF.Cos(x);

@@ -35,7 +35,10 @@ def material(slot):
         bsdf.inputs["Roughness"].default_value = 0.5
         if slot in ("Windows", "Engine", "Heat"):
             bsdf.inputs["Emission Color"].default_value = c
-            bsdf.inputs["Emission Strength"].default_value = 3.0
+            # Per slot: a nozzle bell should read as hot machinery, not as a light fitting.
+            # The game's EngineGlow material supplies the actual glow.
+            bsdf.inputs["Emission Strength"].default_value = {
+                "Windows": 2.2, "Engine": 1.2, "Heat": 2.6}[slot]
     return m
 
 

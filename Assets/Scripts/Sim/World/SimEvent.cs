@@ -11,6 +11,8 @@ namespace GalacticRupture.Sim
         ShipDestroyed,  // Ship, Position
         ShipSpawned,    // Ship
         ShieldsDown,    // Ship, Position = where the last hit broke through
+        AbilityUsed,    // Ship, Mount = the Ability
+        RockHit,        // Position = where a round struck an asteroid, Value = damage
     }
 
     // What happened this tick, for the presentation layer. Nothing in the sim reads these back.

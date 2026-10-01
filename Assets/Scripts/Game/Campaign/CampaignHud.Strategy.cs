@@ -86,6 +86,7 @@ namespace GalacticRupture.Game
             Divider(new Rect(0, 0, w, 0), y - 4);
 
             y = DerelictSection(s, x, y, cw);
+            y = DefenceSection(s, ours, x, y, cw);
             y = BuildingSection(s, ours, x, y, cw);
             if (ours) y = GovernorSection(s, x, y, cw);
             y = GarrisonSection(s, x, y, cw);
@@ -147,6 +148,46 @@ namespace GalacticRupture.Game
             }
             Divider(new Rect(0, 0, cw + 50, 0), y + 2);
             return y + 10;
+        }
+
+        // The orbital station and the battlefield: what a fleet that comes here has to fight
+        // through, and where.
+        float DefenceSection(StarSystem s, bool ours, float x, float y, float cw)
+        {
+            const int me = Campaign.PlayerFaction;
+            GUI.Label(new Rect(x, y, cw, 20), Caps("Orbital defence"), _caps);
+            y += 22;
+            string station = s.Station > 0
+                ? $"Station, level {s.Station}  <color=#8aa0b8>hull {s.StationHull:P0} · {Hulls.Station(s.Station).Hardpoints.Count} guns</color>"
+                : "no station";
+            GUI.Label(new Rect(x, y, cw, 20), station, _label);
+            y += 20;
+            if (s.Station > 0) Bar(new Rect(x, y, cw, 3), s.StationHull, s.StationHull > 0.5f ? ArmyBar : new Color(1f, 0.55f, 0.35f));
+            y += 6;
+            GUI.Label(new Rect(x, y, cw, 20), $"battlefield: {s.Terrain.Describe()}", _small);
+            y += 20;
+            if (ours)
+            {
+                if (s.StationHours > 0f)
+                {
+                    float days = s.StationHours / 24f / Mathf.Max(0.1f, C.BuilderRate(s));
+                    GUI.Label(new Rect(x, y, cw, 20), $"<color=#d9b870>level {s.Station + 1} going up: {days:0.#} days</color>", _label);
+                    y += 22;
+                }
+                else if (s.Station < Hulls.MaxStationLevel)
+                {
+                    int next = s.Station + 1;
+                    bool can = C.CanBuildStation(me, s.Id);
+                    if (Button(new Rect(x, y, cw, 28), $"{(s.Station == 0 ? "BUILD STATION" : $"UPGRADE TO LEVEL {next}")}   <color=#d9b870>{Campaign.StationCost(next)} cr</color>   <color=#8aa0b8>{Campaign.StationDays(next):0} days · {Hulls.Station(next).Cost * Campaign.StationUpkeep:0.#} cr a day</color>", can, can))
+                        C.BuildStation(me, s.Id);
+                    y += 32;
+                    GUI.Label(new Rect(x, y, cw, 30), "A station fights in every battle here, stops hostile fleets passing through, and must be destroyed before an enemy can land.", new GUIStyle(_tiny) { wordWrap = true });
+                    y += 30;
+                }
+            }
+            y += 4;
+            Divider(new Rect(0, 0, cw + 50, 0), y - 2);
+            return y + 8;
         }
 
         float BuildingSection(StarSystem s, bool ours, float x, float y, float cw)
@@ -457,7 +498,7 @@ namespace GalacticRupture.Game
                 $"{d.Hull.Class} hull · <b>{built.Cost}</b> cr · {built.BuildDays:0.#} days · upkeep {built.Cost * Campaign.ShipUpkeep:0.#} cr/day", _label);
             dy += 22;
             GUI.Label(new Rect(dx, dy, dw, 20),
-                $"hull {built.HullHp:0} · shields {built.ShieldHp:0} (+{built.ShieldRegen:0}/s) · {built.MaxSpeed:0} m/s · {built.LyPerDay:0.#} ly/day" + (built.TroopCapacity > 0 ? $" · carries {built.TroopCapacity} army" : ""), _small);
+                $"hull {built.HullHp:0} · shields {built.ShieldHp:0} (+{built.ShieldRegen * Pace.ShieldRegen:0}/s) · {built.MaxSpeed * Pace.Movement:0} m/s · {built.LyPerDay:0.#} ly/day" + (built.TroopCapacity > 0 ? $" · carries {built.TroopCapacity} army" : ""), _small);
             dy += 22;
             GUI.Label(new Rect(dx, dy, dw, 20), Summary(built), _small);
             dy += 30;

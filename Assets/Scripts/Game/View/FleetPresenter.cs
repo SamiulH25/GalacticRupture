@@ -23,7 +23,12 @@ namespace GalacticRupture.Game
             _art = art;
             _fx = fx;
             _world = world;
+            int seed = 7;
+            foreach (var o in world.Obstacles) seed = seed * 31 + (int)o.Position.X;
+            Terrain = TerrainView.Create(transform, art, world, seed);
         }
+
+        public TerrainView Terrain { get; private set; }
 
         public ShipView ViewOf(int ship) => _views.TryGetValue(ship, out var v) ? v : null;
 
@@ -35,6 +40,12 @@ namespace GalacticRupture.Game
                 case SimEventKind.ShipSpawned:
                     _views[e.Ship] = ShipView.Create(ship, _art, transform);
                     _views[e.Ship].Sync(ship, 1f, 0f);
+                    // A reinforcement drops out of FTL.
+                    if (e.Value > 0f) _fx.WarpIn(ship.Position.ToUnity(), ship.Forward.ToUnity(), ship.Def.HalfLength);
+                    break;
+
+                case SimEventKind.RockHit:
+                    _fx.RockImpact(e.Position.ToUnity(), Mathf.Clamp(e.Value / 60f, 0.3f, 2.5f));
                     break;
 
                 case SimEventKind.Fired:
@@ -124,10 +135,15 @@ namespace GalacticRupture.Game
         public void Sync(float alpha, float dt)
         {
             _expired.Clear();
+            var cam = Camera.main;
+            Vector3 cp = cam != null ? cam.transform.position : Vector3.zero;
             foreach (var kv in _views)
             {
                 var ship = _world.ShipById(kv.Key);
-                kv.Value.Sync(ship, alpha, dt);
+                // Barrels aren't worth animating when the hull is a few pixels long (IDEAS.md §2.1).
+                float far = ship.Def.HalfLength * 90f;
+                bool detail = cam == null || (kv.Value.transform.position - cp).sqrMagnitude < far * far;
+                kv.Value.Sync(ship, alpha, dt, detail);
                 if (kv.Value.Wrecked && kv.Value.WreckAge > 40f) _expired.Add(kv.Key);
             }
             foreach (int id in _expired)

@@ -259,5 +259,55 @@ namespace GalacticRupture.Tests
             Assert.Less(a.Hull + a.Shield, Hulls.Corvette.HullHp + Hulls.Corvette.ShieldHp);
             Assert.Less(b.Hull + b.Shield, Hulls.Corvette.HullHp + Hulls.Corvette.ShieldHp, "the one behind is hit too");
         }
+
+        static World VanguardBattle(out CampaignBattle battle, out Fleet ours)
+        {
+            var c = Line();
+            ours = Squadron(c, 0, 2, Hulls.Battleship, Hulls.Destroyer, Hulls.Destroyer, Hulls.Corvette, Hulls.Corvette);
+            var theirs = Squadron(c, 1, 2, Hulls.Destroyer, Hulls.Frigate);
+            var e = new Engagement { System = 2, Attacker = 1 };
+            e.Fleets.Add(ours.Id);
+            e.Fleets.Add(theirs.Id);
+            e.Sides[0] = 0;
+            e.Sides[1] = 1;
+            var vanguard = new System.Collections.Generic.HashSet<(int, int)> { (ours.Id, 1) };
+            return BattleSetup.Build(c, e, true, out battle, vanguard);
+        }
+
+        [Test]
+        public void OnlyTheVanguardStartsOnTheField()
+        {
+            var w = VanguardBattle(out var battle, out _);
+            int onField = 0;
+            foreach (var s in w.Ships)
+                if (s.Side == 0 && s.Def.Class != HullClass.Station)
+                {
+                    onField++;
+                    Assert.AreEqual(HullClass.Destroyer, s.Def.Class);
+                }
+            Assert.AreEqual(1, onField);
+            Assert.AreEqual(4, battle.Reinforcements.Pool[0].Count);
+            Assert.AreEqual(2, battle.Reinforcements.Pool[1].Count + w.Ships.FindAll(s => s.Side == 1).Count);
+        }
+
+        [Test]
+        public void ReservesArriveOnlyInsideTheZone()
+        {
+            var w = VanguardBattle(out var battle, out _);
+            var res = battle.Reinforcements;
+            var lead = w.Ships.Find(s => s.Side == 0);
+            var far = lead.Position + new System.Numerics.Vector3(Reinforcements.ZoneRadius + 1500f, 0f, 0f);
+            res.RequestAt(0, new[] { res.Pool[0][0] }, far);
+            w.Step();
+            Assert.AreEqual(4, res.Pool[0].Count, "too far from our ships: nothing comes");
+
+            var near = lead.Position + new System.Numerics.Vector3(800f, 0f, -600f);
+            res.RequestAt(0, res.Pool[0].ToArray(), near);
+            w.Step();
+            Assert.AreEqual(0, res.Pool[0].Count);
+            foreach (var s in w.Ships)
+                if (s.Side == 0 && s != lead)
+                    Assert.Less(System.Numerics.Vector3.Distance(s.Position, near), 900f, "formed up on the point");
+        }
     }
 }

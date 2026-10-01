@@ -10,7 +10,7 @@ namespace GalacticRupture.Sim.Strategic
     public sealed partial class Campaign
     {
         const int SaveMagic = 0x56535247;   // "GRSV"
-        const int SaveVersion = 2;
+        const int SaveVersion = 3;   // 3: stations
 
         public bool CanSave => Pending == null && Council == null;
 
@@ -64,6 +64,9 @@ namespace GalacticRupture.Sim.Strategic
                 }
                 w.Write(s.Governor != null);
                 if (s.Governor != null) WriteGovernor(w, s.Governor);
+                w.Write(s.Station);
+                w.Write(s.StationHull);
+                w.Write(s.StationHours);
             }
             w.Write(Galaxy.Lanes.Count);
             foreach (var l in Galaxy.Lanes)
@@ -244,7 +247,7 @@ namespace GalacticRupture.Sim.Strategic
             using var r = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
             if (r.ReadInt32() != SaveMagic) throw new InvalidDataException("not a Galactic Rupture save");
             int version = r.ReadInt32();
-            if (version != SaveVersion) throw new InvalidDataException($"save version {version} is not supported");
+            if (version != SaveVersion && version != 2) throw new InvalidDataException($"save version {version} is not supported");
 
             var c = new Campaign(r.ReadUInt64());
             c.Hours = r.ReadDouble();
@@ -285,6 +288,12 @@ namespace GalacticRupture.Sim.Strategic
                 for (int b = 0; b < buildings; b++)
                     s.Buildings.Add(new Building((BuildingKind)r.ReadInt32()) { HoursLeft = r.ReadSingle(), Dormant = r.ReadBoolean() });
                 if (r.ReadBoolean()) s.Governor = ReadGovernor(r);
+                if (version >= 3)
+                {
+                    s.Station = r.ReadInt32();
+                    s.StationHull = r.ReadSingle();
+                    s.StationHours = r.ReadSingle();
+                }
             }
             int lanes = r.ReadInt32();
             for (int i = 0; i < lanes; i++) c.Galaxy.Connect(r.ReadInt32(), r.ReadInt32());

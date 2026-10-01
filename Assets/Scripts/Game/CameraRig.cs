@@ -112,6 +112,14 @@ namespace GalacticRupture.Game
             if (kb.cKey.wasPressedThisFrame) Cinematic = !Cinematic;
         }
 
+        // Swing the view to a point (the radar).
+        public void LookAt(Vector3 point)
+        {
+            FocusShip = -1;
+            FocusPoint = point;
+            _pointChosen = true;
+        }
+
         public void Follow(int ship)
         {
             var s = Runner.World.ShipById(ship);
