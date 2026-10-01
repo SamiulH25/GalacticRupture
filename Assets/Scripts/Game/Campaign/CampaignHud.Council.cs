@@ -84,6 +84,7 @@ namespace GalacticRupture.Game
             if (enabled && e.type == EventType.MouseDown && e.button == 0 && r.Contains(e.mousePosition))
             {
                 e.Use();
+                GameAudio.Ui(primary ? "confirmation" : "switch");
                 return true;
             }
             return false;

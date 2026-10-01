@@ -188,6 +188,7 @@ namespace GalacticRupture.Game
             GUI.enabled = enabled;
             bool clicked = GUI.Button(r, text, hot ? _buttonHot : _button);
             GUI.enabled = true;
+            if (clicked) GameAudio.Ui("click");
             return clicked;
         }
 
@@ -232,6 +233,16 @@ namespace GalacticRupture.Game
             // Fewer words the further out the camera is: at galaxy scale, only what matters.
             float dist = Director.MapCamera.Distance;
             bool far = dist > 11000f, mid = dist > 7000f;
+            // The chart's title block: a registry of the old empire, annotated by hand since.
+            if (Event.current.type == EventType.Repaint)
+            {
+                var cb = new Rect(16, Screen.height - 96, 292, 62);
+                UiKit.Fill(cb, new Color(UiKit.Panel.r, UiKit.Panel.g, UiKit.Panel.b, 0.85f));
+                UiKit.Outline(cb, UiKit.Line);
+                UiKit.Text(new Rect(cb.x + 10, cb.y + 5, cb.width - 20, 20), "SURVEY OF THE SUCCESSION", UiKit.Face.Stencil, 15, UiKit.Amber);
+                UiKit.Text(new Rect(cb.x + 10, cb.y + 26, cb.width - 20, 14), "pre-rupture registry, annotated since", UiKit.Face.Mono, 10, UiKit.Mute);
+                UiKit.Text(new Rect(cb.x + 10, cb.y + 42, cb.width - 20, 14), "black bar: never surveyed   ·   stamp: records lost", UiKit.Face.Mono, 9, UiKit.Mute);
+            }
             foreach (var s in C.Galaxy.Systems)
             {
                 Vector3 p = Camera.WorldToScreenPoint(Map.SystemPosition(s.Id));
@@ -243,7 +254,23 @@ namespace GalacticRupture.Game
                 Color fc = FactionStyle.Of(owner);
                 var r = new Rect(p.x - 110, Screen.height - p.y + 30, 220, 22);
                 nameStyle.normal.textColor = seen ? new Color(0.93f, 0.95f, 1f) : new Color(0.6f, 0.62f, 0.7f);
+                bool unsurveyed = Intel.SeenHour[s.Id] < 0;
+                if (unsurveyed)
+                {
+                    // Never visited: the registry entry is blacked out, as the old empire left it.
+                    float bw = 14f + s.Name.Length * 7f;
+                    var bar = new Rect(p.x - bw * 0.5f, Screen.height - p.y + 34, bw, 11);
+                    UiKit.Fill(bar, new Color(0.02f, 0.022f, 0.027f, 0.9f));
+                    UiKit.Outline(bar, UiKit.Line2);
+                    for (float hx = bar.x + 3; hx < bar.xMax - 4; hx += 5) UiKit.Fill(new Rect(hx, bar.y + 2, 1, 7), UiKit.Line);
+                    UiKit.Text(new Rect(p.x - 70, Screen.height - p.y + 46, 140, 12), "UNSURVEYED", UiKit.Face.Mono, 8, UiKit.Mute, TextAnchor.MiddleCenter);
+                    continue;
+                }
                 GUI.Label(r, s.Name.ToUpperInvariant(), nameStyle);
+                if (s.OldCapital && !far)
+                    UiKit.Stamp(new Rect(p.x - 78, Screen.height - p.y + 66, 156, 16), "Seat of the old empire", UiKit.Amber, -2f, 8);
+                else if (!far && !mid && owner < 0 && s.Derelict == Derelict.Ruin)
+                    UiKit.Stamp(new Rect(p.x - 40, Screen.height - p.y + 66, 80, 14), "Records lost", UiKit.Red, 2f, 8);
                 string tier = new string('•', s.Tier);
                 if (mid && !key && !seen) continue;
                 string info = owner >= 0 ? C.Factions[owner].Name

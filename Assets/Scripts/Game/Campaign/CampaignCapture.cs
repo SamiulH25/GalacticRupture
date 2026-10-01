@@ -46,6 +46,8 @@ namespace GalacticRupture.Game
             Directory.CreateDirectory(_dir);
         }
 
+        bool _shotLedger;
+
         void Shot(string name)
         {
             ScreenCapture.CaptureScreenshot(Path.Combine(_dir, $"camp_{++_shots:00}_{name}.png"));
@@ -127,7 +129,19 @@ namespace GalacticRupture.Game
                     if (Runner.World.Time > 12f && !_foughtOne) { Shot("battle"); _foughtOne = true; }
                     return;
                 }
-                if (Runner.State == BattleState.Fighting) Director.Withdraw();
+                if (Runner.State == BattleState.Fighting)
+                {
+                    Director.Withdraw();
+                    _wait = 1.5f;
+                    return;
+                }
+                if (!_shotLedger)
+                {
+                    Shot("ledger");
+                    _shotLedger = true;
+                    _wait = 0.4f;
+                    return;
+                }
                 _wait = 1f;
                 Director.ReturnToMap();
                 return;

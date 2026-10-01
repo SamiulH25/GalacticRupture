@@ -70,6 +70,7 @@ namespace GalacticRupture.Game
             DirectiveBody = body;
             DirectiveReadback = dead > 0 ? $"{who}: acknowledged. {dead} gun{(dead > 1 ? "s" : "")} cannot bear." : $"{who}: acknowledged. All batteries answering.";
             DirectiveTime = Time.unscaledTime;
+            GameAudio.Ui("confirmation", 0.35f);
         }
 
         // Reserves picked in the HUD, waiting for the player to say where they arrive.
@@ -244,6 +245,7 @@ namespace GalacticRupture.Game
             int id = PickShip(mp, PlayerSide);
             if (!add) Selected.Clear();
             if (id < 0) return;
+            GameAudio.Ui("select", 0.4f);
 
             bool doubleClick = id == _lastClickShip && Time.unscaledTime - _lastClickTime < 0.35f;
             _lastClickShip = id;

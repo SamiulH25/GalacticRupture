@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 824945754}
+  m_Sun: {fileID: 779695113}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &43163885
+--- !u!1 &19305744
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,269 +127,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 43163887}
-  - component: {fileID: 43163886}
-  m_Layer: 0
-  m_Name: Post Processing
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &43163886
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 43163885}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: ec7be3f8899dbd1a585d69df35421f1f, type: 2}
---- !u!4 &43163887
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 43163885}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &654958034
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 654958036}
-  - component: {fileID: 654958035}
-  m_Layer: 0
-  m_Name: Galaxy Map
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &654958035
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 654958034}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68cb347528a4a65b09e254c0350df8ba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.MapView
-  Art: {fileID: 11400000, guid: f9d9e40b66558c782b2577d51985ad74, type: 2}
-  LineMaterial: {fileID: 2100000, guid: 0a425eec79be4aee9ac7e985a0be124a, type: 2}
-  SelectedFleet: -1
-  SelectedSystem: -1
-  ShowSupply: 0
---- !u!4 &654958036
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 654958034}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &804168253
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 804168255}
-  - component: {fileID: 804168254}
-  m_Layer: 0
-  m_Name: Sky Reflection
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!215 &804168254
-ReflectionProbe:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 804168253}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Type: 0
-  m_Mode: 1
-  m_RefreshMode: 0
-  m_TimeSlicingMode: 2
-  m_Resolution: 256
-  m_UpdateFrequency: 0
-  m_BoxSize: {x: 200000, y: 200000, z: 200000}
-  m_BoxOffset: {x: 0, y: 0, z: 0}
-  m_NearClip: 0.3
-  m_FarClip: 1000
-  m_ShadowDistance: 100
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 0
-  m_IntensityMultiplier: 1
-  m_BlendDistance: 1
-  m_HDR: 1
-  m_BoxProjection: 0
-  m_RenderDynamicObjects: 0
-  m_UseOcclusionCulling: 1
-  m_Importance: 1
-  m_CustomBakedTexture: {fileID: 0}
---- !u!4 &804168255
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 804168253}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &824945753
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 824945755}
-  - component: {fileID: 824945754}
-  m_Layer: 0
-  m_Name: Sun
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!108 &824945754
-Light:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824945753}
-  m_Enabled: 1
-  serializedVersion: 13
-  m_Type: 1
-  m_Color: {r: 1, g: 0.9, b: 0.78, a: 1}
-  m_Intensity: 2.4
-  m_Range: 10
-  m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
-  m_CookieSize2D: {x: 0.5, y: 0.5}
-  m_Shadows:
-    m_Type: 2
-    m_Resolution: -1
-    m_CustomResolution: -1
-    m_Strength: 0.92
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
-    m_CullingMatrixOverride:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-    m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
-  m_Flare: {fileID: 0}
-  m_RenderMode: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingLayerMask: 1
-  m_Lightmapping: 4
-  m_LightShadowCasterMode: 0
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_UseBoundingSphereOverride: 0
-  m_UseViewFrustumForShadowCasterCull: 1
-  m_ForceVisible: 0
-  m_ShapeRadius: 0.025
-  m_ShadowAngle: 0
-  m_LightUnit: 1
-  m_LuxAtDistance: 1
-  m_EnableSpotReflector: 1
---- !u!4 &824945755
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824945753}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.06276736, y: -0.8507781, z: 0.10446242, w: 0.51119906}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1804473439
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1804473442}
-  - component: {fileID: 1804473441}
-  - component: {fileID: 1804473440}
+  - component: {fileID: 19305747}
+  - component: {fileID: 19305746}
+  - component: {fileID: 19305745}
   m_Layer: 0
   m_Name: Fill
   m_TagString: Untagged
@@ -397,27 +137,27 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1804473440
+--- !u!114 &19305745
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1804473439}
+  m_GameObject: {fileID: 19305744}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 251f6e57c2ea05381b53ec782c2c0efb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.ViewFill
-  Camera: {fileID: 1805388325}
+  Camera: {fileID: 365717098}
   Offset: {x: 18, y: -25, z: 0}
---- !u!108 &1804473441
+--- !u!108 &19305746
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1804473439}
+  m_GameObject: {fileID: 19305744}
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 1
@@ -476,13 +216,13 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!4 &1804473442
+--- !u!4 &19305747
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1804473439}
+  m_GameObject: {fileID: 19305744}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -491,7 +231,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1805388320
+--- !u!1 &281053139
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -499,11 +239,253 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1805388325}
-  - component: {fileID: 1805388322}
-  - component: {fileID: 1805388324}
-  - component: {fileID: 1805388321}
-  - component: {fileID: 1805388323}
+  - component: {fileID: 281053153}
+  - component: {fileID: 281053152}
+  - component: {fileID: 281053151}
+  - component: {fileID: 281053150}
+  - component: {fileID: 281053149}
+  - component: {fileID: 281053148}
+  - component: {fileID: 281053147}
+  - component: {fileID: 281053146}
+  - component: {fileID: 281053145}
+  - component: {fileID: 281053144}
+  - component: {fileID: 281053143}
+  - component: {fileID: 281053142}
+  - component: {fileID: 281053141}
+  - component: {fileID: 281053140}
+  m_Layer: 0
+  m_Name: Game
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &281053140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 405124553c200d9ed8d1d6632c23f486, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CaptureMode
+  Runner: {fileID: 281053152}
+  Rig: {fileID: 365717094}
+--- !u!114 &281053141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4481bdba139b3b21fbd69fa3ab500242, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.RtsCapture
+  Runner: {fileID: 281053152}
+  Rig: {fileID: 365717094}
+  Input: {fileID: 281053150}
+--- !u!114 &281053142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66c71a3d7a6fa607eb2a603490349f5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.BenchMode
+  Runner: {fileID: 281053152}
+  Rig: {fileID: 365717094}
+--- !u!114 &281053143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45199a272dfdc2c19aebcc5c6fafc510, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CampaignCapture
+  Director: {fileID: 281053145}
+  Hud: {fileID: 281053144}
+  Map: {fileID: 1663319134}
+  Input: {fileID: 281053150}
+  Runner: {fileID: 281053152}
+--- !u!114 &281053144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae847361fc64d4868be87e96347d013e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CampaignHud
+  Director: {fileID: 281053145}
+  Map: {fileID: 1663319134}
+  Camera: {fileID: 365717095}
+  Art: {fileID: 11400000, guid: f9d9e40b66558c782b2577d51985ad74, type: 2}
+--- !u!114 &281053145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b71763d8be05384609eeddeee2954b82, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CampaignDirector
+  Runner: {fileID: 281053152}
+  TacticalCamera: {fileID: 365717094}
+  MapCamera: {fileID: 365717096}
+  Map: {fileID: 1663319134}
+  Seed: 20260929
+  HoursPerSecond: 1.2
+  Paused: 0
+  Speed: 1
+--- !u!114 &281053146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af0e0ed2f993f444ea3c69a1c9b3e5b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.Hud
+  Runner: {fileID: 281053152}
+  Rig: {fileID: 365717094}
+  Input: {fileID: 281053150}
+  Director: {fileID: 281053145}
+  ShowReserves: 1
+--- !u!114 &281053147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abcbea1eb6d3a386ca4d5c60278340f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CommandOverlay
+  Runner: {fileID: 281053152}
+  Input: {fileID: 281053150}
+  LineMaterial: {fileID: 2100000, guid: 0a425eec79be4aee9ac7e985a0be124a, type: 2}
+--- !u!114 &281053148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c211b9e33d6e290cbba0b20e9bb3fb6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CursorProbe
+--- !u!114 &281053149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59767594e3675fdad8e20e530961fdc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CursorSkin
+--- !u!114 &281053150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d201d8460ae1c75bdde7892548adde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CommandInput
+  Runner: {fileID: 281053152}
+  Rig: {fileID: 365717094}
+  PlayerSide: 0
+  Skin: {fileID: 281053149}
+--- !u!114 &281053151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97d2234fd8764358eb70c5149320e0db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.SkyController
+  Sun: {fileID: 779695113}
+  BakeShader: {fileID: 4800000, guid: 599061864063931698ef0ceef3565461, type: 3}
+--- !u!114 &281053152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3de391215bad2c19849e00bf0bd67a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.SimRunner
+  Art: {fileID: 11400000, guid: f9d9e40b66558c782b2577d51985ad74, type: 2}
+  Seed: 20260929
+  TimeScale: 1
+  Paused: 0
+--- !u!4 &281053153
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 281053139}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &365717093
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 365717098}
+  - component: {fileID: 365717095}
+  - component: {fileID: 365717097}
+  - component: {fileID: 365717094}
+  - component: {fileID: 365717096}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -511,19 +493,19 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1805388321
+--- !u!114 &365717094
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805388320}
+  m_GameObject: {fileID: 365717093}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c2d73173c53d4ba1490c469f71de419f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CameraRig
-  Runner: {fileID: 1935571370}
+  Runner: {fileID: 281053152}
   Yaw: 150
   Pitch: 32
   Distance: 1800
@@ -535,13 +517,13 @@ MonoBehaviour:
   FocusOffset: {x: 0, y: 0, z: 0}
   FocusShip: -1
   FocusPoint: {x: 0, y: 0, z: 0}
---- !u!20 &1805388322
+--- !u!20 &365717095
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805388320}
+  m_GameObject: {fileID: 365717093}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
@@ -586,13 +568,13 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!114 &1805388323
+--- !u!114 &365717096
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805388320}
+  m_GameObject: {fileID: 365717093}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d3accf4bdfe5bd4b9c347819da5bbd7, type: 3}
@@ -604,13 +586,13 @@ MonoBehaviour:
   Distance: 6500
   MinDistance: 800
   MaxDistance: 30000
---- !u!114 &1805388324
+--- !u!114 &365717097
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805388320}
+  m_GameObject: {fileID: 365717093}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
@@ -648,13 +630,13 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!4 &1805388325
+--- !u!4 &365717098
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805388320}
+  m_GameObject: {fileID: 365717093}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -663,7 +645,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1935571357
+--- !u!1 &779695112
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -671,232 +653,250 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1935571371}
-  - component: {fileID: 1935571370}
-  - component: {fileID: 1935571369}
-  - component: {fileID: 1935571368}
-  - component: {fileID: 1935571367}
-  - component: {fileID: 1935571366}
-  - component: {fileID: 1935571365}
-  - component: {fileID: 1935571364}
-  - component: {fileID: 1935571363}
-  - component: {fileID: 1935571362}
-  - component: {fileID: 1935571361}
-  - component: {fileID: 1935571360}
-  - component: {fileID: 1935571359}
-  - component: {fileID: 1935571358}
+  - component: {fileID: 779695114}
+  - component: {fileID: 779695113}
   m_Layer: 0
-  m_Name: Game
+  m_Name: Sun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1935571358
-MonoBehaviour:
+--- !u!108 &779695113
+Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
+  m_GameObject: {fileID: 779695112}
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 405124553c200d9ed8d1d6632c23f486, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CaptureMode
-  Runner: {fileID: 1935571370}
-  Rig: {fileID: 1805388321}
---- !u!114 &1935571359
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4481bdba139b3b21fbd69fa3ab500242, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.RtsCapture
-  Runner: {fileID: 1935571370}
-  Rig: {fileID: 1805388321}
-  Input: {fileID: 1935571368}
---- !u!114 &1935571360
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66c71a3d7a6fa607eb2a603490349f5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.BenchMode
-  Runner: {fileID: 1935571370}
-  Rig: {fileID: 1805388321}
---- !u!114 &1935571361
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45199a272dfdc2c19aebcc5c6fafc510, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CampaignCapture
-  Director: {fileID: 1935571363}
-  Hud: {fileID: 1935571362}
-  Map: {fileID: 654958035}
-  Input: {fileID: 1935571368}
-  Runner: {fileID: 1935571370}
---- !u!114 &1935571362
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae847361fc64d4868be87e96347d013e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CampaignHud
-  Director: {fileID: 1935571363}
-  Map: {fileID: 654958035}
-  Camera: {fileID: 1805388322}
-  Art: {fileID: 11400000, guid: f9d9e40b66558c782b2577d51985ad74, type: 2}
---- !u!114 &1935571363
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b71763d8be05384609eeddeee2954b82, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CampaignDirector
-  Runner: {fileID: 1935571370}
-  TacticalCamera: {fileID: 1805388321}
-  MapCamera: {fileID: 1805388323}
-  Map: {fileID: 654958035}
-  Seed: 20260929
-  HoursPerSecond: 1.2
-  Paused: 0
-  Speed: 1
---- !u!114 &1935571364
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af0e0ed2f993f444ea3c69a1c9b3e5b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.Hud
-  Runner: {fileID: 1935571370}
-  Rig: {fileID: 1805388321}
-  Input: {fileID: 1935571368}
-  Director: {fileID: 1935571363}
-  ShowReserves: 1
---- !u!114 &1935571365
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abcbea1eb6d3a386ca4d5c60278340f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CommandOverlay
-  Runner: {fileID: 1935571370}
-  Input: {fileID: 1935571368}
-  LineMaterial: {fileID: 2100000, guid: 0a425eec79be4aee9ac7e985a0be124a, type: 2}
---- !u!114 &1935571366
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c211b9e33d6e290cbba0b20e9bb3fb6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CursorProbe
---- !u!114 &1935571367
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59767594e3675fdad8e20e530961fdc8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CursorSkin
---- !u!114 &1935571368
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0d201d8460ae1c75bdde7892548adde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.CommandInput
-  Runner: {fileID: 1935571370}
-  Rig: {fileID: 1805388321}
-  PlayerSide: 0
-  Skin: {fileID: 1935571367}
---- !u!114 &1935571369
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97d2234fd8764358eb70c5149320e0db, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.SkyController
-  Sun: {fileID: 824945754}
-  BakeShader: {fileID: 4800000, guid: 599061864063931698ef0ceef3565461, type: 3}
---- !u!114 &1935571370
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3de391215bad2c19849e00bf0bd67a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.SimRunner
-  Art: {fileID: 11400000, guid: f9d9e40b66558c782b2577d51985ad74, type: 2}
-  Seed: 20260929
-  TimeScale: 1
-  Paused: 0
---- !u!4 &1935571371
+  serializedVersion: 13
+  m_Type: 1
+  m_Color: {r: 1, g: 0.9, b: 0.78, a: 1}
+  m_Intensity: 2.4
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize2D: {x: 0.5, y: 0.5}
+  m_Shadows:
+    m_Type: 2
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 0.92
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ForceVisible: 0
+  m_ShapeRadius: 0.025
+  m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
+--- !u!4 &779695114
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935571357}
+  m_GameObject: {fileID: 779695112}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.06276736, y: -0.8507781, z: 0.10446242, w: 0.51119906}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1472757269
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1472757271}
+  - component: {fileID: 1472757270}
+  m_Layer: 0
+  m_Name: Post Processing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1472757270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1472757269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: ec7be3f8899dbd1a585d69df35421f1f, type: 2}
+--- !u!4 &1472757271
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1472757269}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1663319133
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1663319135}
+  - component: {fileID: 1663319134}
+  m_Layer: 0
+  m_Name: Galaxy Map
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1663319134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1663319133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68cb347528a4a65b09e254c0350df8ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GalacticRupture.Game::GalacticRupture.Game.MapView
+  Art: {fileID: 11400000, guid: f9d9e40b66558c782b2577d51985ad74, type: 2}
+  LineMaterial: {fileID: 2100000, guid: 0a425eec79be4aee9ac7e985a0be124a, type: 2}
+  SelectedFleet: -1
+  SelectedSystem: -1
+  ShowSupply: 0
+--- !u!4 &1663319135
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1663319133}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1924901245
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1924901247}
+  - component: {fileID: 1924901246}
+  m_Layer: 0
+  m_Name: Sky Reflection
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!215 &1924901246
+ReflectionProbe:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1924901245}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Type: 0
+  m_Mode: 1
+  m_RefreshMode: 0
+  m_TimeSlicingMode: 2
+  m_Resolution: 256
+  m_UpdateFrequency: 0
+  m_BoxSize: {x: 200000, y: 200000, z: 200000}
+  m_BoxOffset: {x: 0, y: 0, z: 0}
+  m_NearClip: 0.3
+  m_FarClip: 1000
+  m_ShadowDistance: 100
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 0
+  m_IntensityMultiplier: 1
+  m_BlendDistance: 1
+  m_HDR: 1
+  m_BoxProjection: 0
+  m_RenderDynamicObjects: 0
+  m_UseOcclusionCulling: 1
+  m_Importance: 1
+  m_CustomBakedTexture: {fileID: 0}
+--- !u!4 &1924901247
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1924901245}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -909,10 +909,10 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 824945755}
-  - {fileID: 1804473442}
-  - {fileID: 1805388325}
-  - {fileID: 43163887}
-  - {fileID: 804168255}
-  - {fileID: 1935571371}
-  - {fileID: 654958036}
+  - {fileID: 779695114}
+  - {fileID: 19305747}
+  - {fileID: 365717098}
+  - {fileID: 1472757271}
+  - {fileID: 1924901247}
+  - {fileID: 281053153}
+  - {fileID: 1663319135}

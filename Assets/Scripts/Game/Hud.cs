@@ -150,6 +150,7 @@ namespace GalacticRupture.Game
             if (e.type == EventType.MouseDown && e.button == button && r.Contains(e.mousePosition))
             {
                 e.Use();
+                GameAudio.Ui("click");
                 return true;
             }
             return false;
@@ -330,20 +331,117 @@ namespace GalacticRupture.Game
             }
         }
 
+        // The after-action ledger: what the engagement cost, in the figures the campaign keeps.
         void Banner()
         {
             if (Runner.State == BattleState.Fighting) return;
             bool won = Runner.State == BattleState.Victory;
             bool broke = Runner.State == BattleState.Withdrawn;
-            _banner.normal.textColor = won ? new Color(0.6f, 0.95f, 1f) : broke ? new Color(0.9f, 0.85f, 0.6f) : new Color(1f, 0.45f, 0.4f);
-            GUI.Label(new Rect(0, Screen.height * 0.3f, Screen.width, 60), won ? "VICTORY" : broke ? "DISENGAGED" : "FLEET LOST", _banner);
-            if (Runner.CampaignBattle != null && Director != null)
+            int me = Input.PlayerSide;
+
+            int ours = 0, lost = 0, oursCost = 0, lostCost = 0, gunsLost = 0, gunsTotal = 0;
+            int theirs = 0, killed = 0, killedCost = 0, fled = 0;
+            float hullSum = 0f;
+            var survivors = new List<Ship>();
+            var losses = new List<Ship>();
+            string station = null;
+            foreach (var sh in W.Ships)
             {
-                var r = new Rect(Screen.width * 0.5f - 140, Screen.height * 0.3f + 70, 280, 34);
-                _building.Add(r);
-                if (GUI.Button(r, "Return to the galaxy")) Director.ReturnToMap();
+                if (sh.Def.Class == HullClass.Station)
+                {
+                    if (sh.Side == me) station = sh.Alive ? $"Orbital station standing, hull {sh.Hull / sh.Def.HullHp * 100f:0}%" : "Orbital station destroyed";
+                    continue;
+                }
+                bool own = sh.Side == me;
+                if (own)
+                {
+                    ours++;
+                    oursCost += sh.Def.Cost;
+                    foreach (var m in sh.Mounts) { gunsTotal++; if (!m.Alive) gunsLost++; }
+                    if (sh.Alive) { survivors.Add(sh); hullSum += sh.Hull / sh.Def.HullHp; }
+                    else { lost++; lostCost += sh.Def.Cost; losses.Add(sh); }
+                }
+                else
+                {
+                    theirs++;
+                    if (sh.Alive) fled++;
+                    else { killed++; killedCost += sh.Def.Cost; }
+                }
             }
-            else GUI.Label(new Rect(0, Screen.height * 0.3f + 56, Screen.width, 24), "Ctrl+R for a new engagement", new GUIStyle(_small) { alignment = TextAnchor.MiddleCenter });
+
+            UiKit.Fill(new Rect(0, 0, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.55f));
+            _building.Add(new Rect(0, 0, Screen.width, Screen.height));
+            float w = Mathf.Min(880f, Screen.width - 40f), h = Mathf.Min(520f, Screen.height - 40f);
+            var r = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            UiKit.Fill(r, UiKit.Bg);
+            UiKit.Outline(r, UiKit.AmberDim, 2f);
+
+            string verdict = won ? "VICTORY" : broke ? "DISENGAGED" : "FLEET LOST";
+            var vc = won ? UiKit.Ok : broke ? UiKit.Warn : UiKit.Red;
+            UiKit.Text(new Rect(r.x + 24, r.y + 14, r.width - 260, 36), "AFTER-ACTION LEDGER", UiKit.Face.Stencil, 30, UiKit.Amber);
+            UiKit.Text(new Rect(r.x + 26, r.y + 52, r.width - 260, 18), $"ENGAGEMENT CLOSED  ·  {(int)(W.Time / 60f):00}:{(int)(W.Time % 60f):00}", UiKit.Face.Mono, 12, UiKit.Mute);
+            UiKit.Stamp(new Rect(r.xMax - 220, r.y + 20, 190, 36), verdict, vc, -2f, 20);
+            UiKit.Fill(new Rect(r.x + 24, r.y + 78, r.width - 48, 2), UiKit.AmberDim);
+
+            float colW = (r.width - 48 - 20) / 2f, y0 = r.y + 94;
+            var left = new Rect(r.x + 24, y0, colW, 190);
+            var right = new Rect(left.xMax + 20, y0, colW, 190);
+            UiKit.Plate(left, "Our line");
+            UiKit.Plate(right, "The enemy");
+            float y = left.y + 38;
+            LedgerRow(left, ref y, "Hulls committed", ours.ToString());
+            LedgerRow(left, ref y, "Hulls lost", lost.ToString(), lost > 0 ? UiKit.Red : UiKit.Ok);
+            LedgerRow(left, ref y, "Value lost", $"{lostCost} cr", lostCost > 0 ? UiKit.Warn : UiKit.Mute);
+            LedgerRow(left, ref y, "Guns shot away", $"{gunsLost} of {gunsTotal}", gunsLost > 0 ? UiKit.Warn : UiKit.Mute);
+            LedgerRow(left, ref y, "Survivor hull", survivors.Count > 0 ? $"{hullSum / survivors.Count * 100f:0}% mean" : "none");
+            y = right.y + 38;
+            LedgerRow(right, ref y, "Hulls fielded", theirs.ToString());
+            LedgerRow(right, ref y, "Hulls destroyed", killed.ToString(), killed > 0 ? UiKit.Ok : UiKit.Mute);
+            LedgerRow(right, ref y, "Value destroyed", $"{killedCost} cr", killedCost > 0 ? UiKit.Ok : UiKit.Mute);
+            LedgerRow(right, ref y, "Left on the field", fled.ToString(), fled > 0 ? UiKit.Warn : UiKit.Mute);
+            if (station != null) LedgerRow(right, ref y, "Our station", station.Replace("Orbital station ", ""));
+
+            // Survivors, as they are: damage stays until a yard repairs it.
+            var strip = new Rect(r.x + 24, left.yMax + 14, r.width - 48, r.height - 94 - 190 - 14 - 76);
+            UiKit.Plate(strip, survivors.Count > 0 ? "Survivors — damage stays until a yard repairs it" : "No survivors");
+            float cw = Mathf.Min(150f, (strip.width - 24f) / Mathf.Max(1, Mathf.Min(survivors.Count, 6)) - 6f);
+            int shown = Mathf.Min(survivors.Count, 6);
+            for (int i = 0; i < shown; i++)
+            {
+                var sh = survivors[i];
+                var cell = new Rect(strip.x + 12 + i * (cw + 6), strip.y + 34, cw, strip.height - 44);
+                UiKit.Outline(cell, UiKit.Line);
+                float picH = cw * HullSchematic.H / HullSchematic.W;
+                UiKit.Tex(new Rect(cell.x, cell.y + 2, cw, picH), _schematic.Get(sh), Color.white);
+                var (state, tone) = Condition(sh, 1, sh.Hull / sh.Def.HullHp);
+                UiKit.Text(new Rect(cell.x + 4, cell.y + picH + 4, cw - 8, 14), ClassName(sh.Def).Split('·')[0].Trim().ToUpperInvariant(), UiKit.Face.Bold, 12, UiKit.Ink);
+                UiKit.Text(new Rect(cell.x + 4, cell.y + picH + 18, cw - 8, 14), state, UiKit.Face.Mono, 9, tone);
+            }
+            if (survivors.Count > shown) UiKit.Text(new Rect(strip.xMax - 90, strip.y + 6, 80, 16), $"+{survivors.Count - shown} more", UiKit.Face.Mono, 10, UiKit.Mute, TextAnchor.MiddleRight);
+            if (losses.Count > 0)
+            {
+                var names = new List<string>();
+                foreach (var sh in losses) names.Add(ClassName(sh.Def).Split('·')[0].Trim());
+                UiKit.Text(new Rect(strip.x + 14, strip.yMax - 22, strip.width - 28, 16), "<color=#d9533d>LOST ✕</color>  " + string.Join(", ", names), UiKit.Face.Mono, 10, UiKit.Mute);
+            }
+
+            // The way out.
+            var btn = new Rect(r.xMax - 24 - 260, r.yMax - 52, 260, 36);
+            string label = Runner.CampaignBattle != null && Director != null ? "Return to the galaxy" : "New engagement (Ctrl+R)";
+            bool hover = btn.Contains(Event.current.mousePosition);
+            UiKit.Fill(btn, hover ? UiKit.Amber : new Color(0.082f, 0.071f, 0.039f));
+            UiKit.Outline(btn, UiKit.AmberDim);
+            UiKit.Text(btn, UiKit.Spaced(label), UiKit.Face.Mono, 12, hover ? new Color(0.05f, 0.04f, 0.02f) : UiKit.Amber, TextAnchor.MiddleCenter);
+            _building.Add(btn);
+            if (Runner.CampaignBattle != null && Director != null && Clicked(btn)) Director.ReturnToMap();
+        }
+
+        void LedgerRow(Rect plate, ref float y, string label, string value, Color? tone = null)
+        {
+            UiKit.Text(new Rect(plate.x + 20, y, plate.width - 40, 22), label, UiKit.Face.Body, 16, UiKit.Ink, TextAnchor.MiddleLeft);
+            UiKit.Text(new Rect(plate.x + 20, y, plate.width - 40, 22), value, UiKit.Face.Mono, 14, tone ?? UiKit.Ink, TextAnchor.MiddleRight);
+            for (float x = plate.x + 170; x < plate.xMax - 120; x += 6) UiKit.Fill(new Rect(x, y + 17, 2, 1), UiKit.Line2);
+            y += 28;
         }
 
         // --- Radar ----------------------------------------------------------------------------

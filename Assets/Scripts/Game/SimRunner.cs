@@ -131,7 +131,11 @@ namespace GalacticRupture.Game
         void Dispatch()
         {
             var events = World.Events;
-            for (int i = 0; i < events.Count; i++) Presenter.Handle(events[i]);
+            for (int i = 0; i < events.Count; i++)
+            {
+                Presenter.Handle(events[i]);
+                GameAudio.OnEvent(events[i], World);
+            }
             events.Clear();
         }
 
