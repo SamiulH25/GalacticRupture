@@ -213,11 +213,11 @@ namespace GalacticRupture.Game
                     break;
                 case 6:
                 {
-                    // Draft an ion-armed destroyer.
+                    // Draft an arc-armed destroyer.
                     var designs = c.Factions[Campaign.PlayerFaction].Designs;
-                    var d = designs.First(x => x.Hull.Class == HullClass.Destroyer).Copy("Ion Destroyer");
-                    d.Set(0, Hulls.IonBattery);
-                    d.Set(1, Hulls.IonBattery);
+                    var d = designs.First(x => x.Hull.Class == HullClass.Destroyer).Copy("Arc Destroyer");
+                    d.Set(0, Hulls.ArcBattery);
+                    d.Set(1, Hulls.ArcBattery);
                     designs.Add(d);
                     Hud.ShowDesigner = true;
                     _wait = 0.8f;
@@ -231,7 +231,7 @@ namespace GalacticRupture.Game
                     break;
                 case 40:
                     Hud.ShowDesigner = false;
-                    c.Learn(Campaign.PlayerFaction, Techs.ById("heavy_turbolasers"));
+                    c.Learn(Campaign.PlayerFaction, Techs.ById("heavy_plasma"));
                     c.Enqueue(Campaign.PlayerFaction, "lances");
                     c.Enqueue(Campaign.PlayerFaction, "armour");
                     c.Factions[Campaign.PlayerFaction].ResearchBank = 700f;
@@ -317,6 +317,7 @@ namespace GalacticRupture.Game
                     break;
                 case 31:
                     Hud.ShowDiplomacy = false;
+                    if (c.Council == null) c.OpenCouncilNow();
                     Map.ShowSupply = true;
                     Director.MapCamera.Snap(MapView.ToMap(c.Galaxy.Systems[Capital].Position));
                     Director.MapCamera.Distance = 14000f;

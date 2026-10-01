@@ -38,6 +38,40 @@ namespace GalacticRupture.Game
         public float LastOrderTime { get; private set; } = -10f;
         public bool LastOrderWasAttack { get; private set; }
 
+        // The order as a slip of paper: what was ordered, and what the ships say back (HUD only).
+        public string DirectiveTitle { get; private set; } = "";
+        public string DirectiveBody { get; private set; } = "";
+        public string DirectiveReadback { get; private set; } = "";
+        public int DirectiveNumber { get; private set; }
+        public float DirectiveTime { get; private set; } = -100f;
+
+        static string Called(Ship s)
+        {
+            string id = string.IsNullOrEmpty(s.Def.Design) ? s.Def.Id : s.Def.Design;
+            return string.IsNullOrEmpty(id) ? "ship" : char.ToUpperInvariant(id[0]) + id.Substring(1) + " " + s.Id;
+        }
+
+        void Note(string title, string body)
+        {
+            int dead = 0, ships = 0;
+            Ship lead = null;
+            foreach (int id in Selected)
+            {
+                var s = Runner.World.ShipById(id);
+                if (!Own(s)) continue;
+                lead ??= s;
+                ships++;
+                foreach (var m in s.Mounts) if (!m.Alive) dead++;
+            }
+            if (ships == 0) return;
+            string who = ships == 1 ? Called(lead) : $"{ships} ships";
+            DirectiveNumber++;
+            DirectiveTitle = title;
+            DirectiveBody = body;
+            DirectiveReadback = dead > 0 ? $"{who}: acknowledged. {dead} gun{(dead > 1 ? "s" : "")} cannot bear." : $"{who}: acknowledged. All batteries answering.";
+            DirectiveTime = Time.unscaledTime;
+        }
+
         // Reserves picked in the HUD, waiting for the player to say where they arrive.
         public readonly List<ReserveShip> Placing = new List<ReserveShip>();
         public Vector3 PlacePoint { get; private set; }
@@ -108,7 +142,11 @@ namespace GalacticRupture.Game
             if (kb.xKey.wasPressedThisFrame) UseAbility(Ability.Shields);
             if (kb.vKey.wasPressedThisFrame) UseAbility(Ability.Weapons);
 
-            if (kb.hKey.wasPressedThisFrame) IssueAll(_ => ShipOrder.Hold());
+            if (kb.hKey.wasPressedThisFrame)
+            {
+                IssueAll(_ => ShipOrder.Hold());
+                Note("HOLD POSITION", "Cease manoeuvre. Guns free.");
+            }
             if (kb.fKey.wasPressedThisFrame && Selected.Count > 0) Rig.Follow(Selected[0]);
             if (kb.ctrlKey.isPressed && kb.aKey.wasPressedThisFrame) SelectAll();
 
@@ -268,6 +306,9 @@ namespace GalacticRupture.Game
                 o.Group = group;
                 return o;
             });
+            var target = Runner.World.ShipById(enemy);
+            string tn = target == null ? "the hostile" : Called(target);
+            Note("CONCENTRATE FIRE", $"All batteries, hostile {tn}. Hold converging arcs.");
         }
 
         public void OrderMove(Vector3 point) => OrderMove(point, DefaultYaw(point));
@@ -277,6 +318,7 @@ namespace GalacticRupture.Game
             var ships = OwnSelected();
             if (ships.Count == 0) return;
             Formation.Move(Runner.World, ships, point.ToSim(), yaw);
+            Note("PROCEED", ships.Count == 1 ? "Proceed to the marked position." : "Proceed to the marked position, keeping station on each other.");
             LastOrderPoint = point;
             LastOrderWasAttack = false;
             LastOrderTime = Time.unscaledTime;
@@ -385,6 +427,7 @@ namespace GalacticRupture.Game
             if (face)
             {
                 IssueAll(_ => ShipOrder.Face(point.ToSim()));
+                Note("PRESENT BROADSIDE", "Turn to the marked bearing. Hold.");
                 return;
             }
             if (!keepShape)

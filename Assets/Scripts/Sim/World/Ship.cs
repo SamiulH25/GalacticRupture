@@ -138,6 +138,13 @@ namespace GalacticRupture.Sim
         public float ShieldDelay;
         public bool Alive = true;
 
+        // Hull damage taken along the keel, stern to bow, for the damage schematic (HUD only).
+        public const int Sections = 6;
+        public readonly float[] SectionDamage = new float[Sections];
+
+        // How hurt a section is, 0 sound .. 1 broken open.
+        public float SectionHeat(int i) => System.MathF.Min(1f, SectionDamage[i] / (Def.HullHp * 0.2f));
+
         public ShipOrder Order = ShipOrder.Hold();
         public int FocusTarget = -1;     // guns prefer this ship when it bears
         public float CruiseSpeedFraction = 1f;

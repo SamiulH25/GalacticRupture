@@ -252,6 +252,8 @@ namespace GalacticRupture.Sim
             if (hullDamage <= 0f) return;
 
             ship.Hull -= hullDamage;
+            float along = Vector3.Dot(point - ship.Position, ship.Forward) / System.MathF.Max(1f, ship.Def.HalfLength * 2f) + 0.5f;
+            ship.SectionDamage[System.Math.Clamp((int)(along * Ship.Sections), 0, Ship.Sections - 1)] += hullDamage;
             Events.Add(new SimEvent { Kind = SimEventKind.HullHit, Ship = ship.Id, Position = point, Value = hullDamage });
 
             Mount nearest = null;

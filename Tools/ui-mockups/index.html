@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galactic Rupture — UI mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Stardos+Stencil:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090b; --panel:#101216; --panel2:#15181d; --line:#2a2f37; --line2:#3b424d;
+  --amber:#e7aa45; --amber-dim:#8a6a2e; --phos:#8fd3a8; --ink:#d9d4c7; --mute:#7d8089;
+  --red:#d9533d; --warn:#f0c04a; --ok:#6fb98a;
+  --f-cont:#5aa3dc; --f-rem:#c9683d; --f-hier:#a77bd0; --f-free:#d2b24a; --f-lant:#58c9bd; --f-hearth:#e0963a;
+  --disp:'Rajdhani',sans-serif; --mono:'Share Tech Mono',monospace; --stencil:'Stardos Stencil',serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--disp);font-weight:500;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.tabs{display:flex;gap:2px;padding:10px 16px 0;background:#050607;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.tab{padding:8px 18px;font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--mute);border:1px solid transparent;border-bottom:0;text-transform:uppercase}
+.tab.on{color:var(--amber);background:var(--bg);border-color:var(--line)}
+.screen{display:none;padding:16px}
+.screen.on{display:block}
+.stamp{font-family:var(--stencil);letter-spacing:.14em;text-transform:uppercase;border:2px solid currentColor;padding:2px 10px;display:inline-block;transform:rotate(-2deg);opacity:.9}
+.mono{font-family:var(--mono)}
+.plate{background:var(--panel);border:1px solid var(--line);position:relative}
+.plate::before,.plate::after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:#22262c;border:1px solid var(--line2);top:5px}
+.plate::before{left:5px}.plate::after{right:5px}
+.plate h3{font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase;padding:9px 22px;border-bottom:1px solid var(--line)}
+.scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);mix-blend-mode:screen}
+.note{color:var(--mute);font-size:13px;margin:10px 2px;font-family:var(--mono)}
+
+/* ---------- COUNCIL ---------- */
+.council{display:grid;grid-template-columns:330px 1fr 340px;gap:12px;max-width:1500px;margin:0 auto}
+@media(max-width:1100px){.council{grid-template-columns:1fr}}
+.cheader{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--amber-dim);padding:6px 4px 10px}
+.cheader h1{font-family:var(--stencil);font-size:30px;letter-spacing:.12em;color:var(--amber);line-height:1}
+.cheader .sub{font-family:var(--mono);color:var(--mute);font-size:12px;letter-spacing:.14em;margin-top:6px}
+.docket{display:flex;flex-direction:column}
+.res{padding:12px 16px;border-bottom:1px solid var(--line);text-align:left;position:relative;transition:background .15s}
+.res:hover{background:var(--panel2)}
+.res.on{background:#1a1810;box-shadow:inset 3px 0 var(--amber)}
+.res .no{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.14em}
+.res .t{font-size:19px;font-weight:700;line-height:1.1;margin:3px 0 5px;color:var(--ink)}
+.res .st{font-family:var(--mono);font-size:11px;letter-spacing:.1em}
+.chamber{padding:0 0 12px}
+.chamber svg{width:100%;display:block}
+.seat{cursor:pointer;transition:transform .15s}
+.seat:hover .seatbody{stroke:var(--amber)}
+.legit{padding:10px 16px 14px}
+.lrow{display:grid;grid-template-columns:118px 1fr 44px;gap:10px;align-items:center;margin:9px 0;font-size:15px;font-weight:600;letter-spacing:.04em}
+.lbar{position:relative;height:22px;background:#0a0b0d;border:1px solid var(--line)}
+.lbar .off{position:absolute;left:0;top:3px;height:6px;background:var(--amber-dim)}
+.lbar .eff{position:absolute;left:0;top:12px;height:6px}
+.lbar .gap{position:absolute;top:0;bottom:0;border-left:1px dashed var(--red);border-right:1px dashed var(--red);background:repeating-linear-gradient(135deg,rgba(217,83,61,.25) 0 3px,transparent 3px 6px)}
+.lrow .d{font-family:var(--mono);font-size:12px;text-align:right}
+.legend{display:flex;gap:16px;font-family:var(--mono);font-size:11px;color:var(--mute);padding:0 16px 12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:5px;vertical-align:middle;margin-right:5px}
+.dossier{padding:0}
+.paper{background:#d8cfb7;color:#1b1710;padding:16px 18px 18px;margin:12px;position:relative;font-family:var(--mono);font-size:13px;line-height:1.45;box-shadow:0 6px 18px rgba(0,0,0,.5);transform:rotate(.3deg)}
+.paper::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 10%,rgba(120,90,40,.18),transparent 55%),repeating-linear-gradient(0deg,rgba(0,0,0,.035) 0 1px,transparent 1px 4px);pointer-events:none}
+.paper h4{font-family:var(--stencil);letter-spacing:.1em;font-size:15px;margin-bottom:6px}
+.paper .official{border-bottom:1px solid #1b1710;padding-bottom:10px;margin-bottom:10px}
+.cross{text-decoration:line-through;text-decoration-color:#a42f1e;text-decoration-thickness:2px}
+.hand{font-family:'Rajdhani';font-weight:700;color:#a42f1e;font-size:17px;transform:rotate(-1.5deg);display:inline-block}
+.reality{background:#0e1410;color:var(--phos);margin:0 12px 12px;border:1px solid #1f3a2a;padding:12px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.5;position:relative}
+.reality b{color:#c8f2d6}
+.reality .tag{position:absolute;top:-9px;left:12px;background:#0e1410;padding:0 8px;color:var(--phos);font-size:11px;letter-spacing:.2em}
+.votes{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 14px}
+.vote{font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid var(--line2)}
+.vote.y{color:var(--ok);border-color:#2c5a40}.vote.n{color:var(--red);border-color:#6a2a20}.vote.a{color:var(--mute)}
+.actions{display:flex;gap:8px;padding:0 12px 14px;flex-wrap:wrap}
+.btn{border:1px solid var(--amber-dim);color:var(--amber);padding:8px 14px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;background:#15120a;transition:all .15s}
+.btn:hover{background:var(--amber);color:#0c0a05}
+.btn.dim{border-color:var(--line2);color:var(--mute);background:none}.btn.dim:hover{background:var(--panel2);color:var(--ink)}
+
+/* ---------- BATTLE ---------- */
+.battle{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:1fr 300px;grid-template-rows:auto auto;gap:12px}
+.viewport{position:relative;height:560px;overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(900px 500px at 70% 15%,rgba(80,110,170,.22),transparent 60%),radial-gradient(500px 300px at 15% 90%,rgba(190,90,40,.14),transparent 70%),#05060a}
+.viewport svg.world{position:absolute;inset:0;width:100%;height:100%}
+.topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:linear-gradient(#000c,transparent);font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--amber)}
+.topbar .speed button{padding:2px 8px;border:1px solid var(--line2);color:var(--mute);margin-left:3px}
+.topbar .speed button.on{color:var(--amber);border-color:var(--amber-dim)}
+.cap{display:flex;gap:4px;align-items:center}
+.cap i{width:9px;height:14px;background:var(--amber);display:block}.cap i.u{background:#2a2418}
+.slip{position:absolute;left:16px;bottom:16px;max-width:330px;background:#d8cfb7;color:#1b1710;padding:10px 14px;font-family:var(--mono);font-size:12px;transform:rotate(-1deg);box-shadow:0 6px 18px #000a}
+.slip b{font-family:var(--stencil);letter-spacing:.1em;font-size:14px;display:block;margin-bottom:3px}
+.slip .rb{color:#3a3426;margin-top:4px}
+.sidecol{display:flex;flex-direction:column;gap:12px}
+.plot{padding:0}
+.plot svg{display:block;width:100%}
+.sig{padding:8px 16px 12px}
+.sigrow{display:grid;grid-template-columns:1fr auto;font-family:var(--mono);font-size:12px;padding:7px 0;border-bottom:1px dashed var(--line);color:var(--ink)}
+.sigrow span:last-child{color:var(--amber)}
+.sigrow small{display:block;color:var(--mute);font-size:11px}
+.cards{grid-column:1/-1;display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.card{flex:0 0 232px;background:var(--panel);border:1px solid var(--line);position:relative;cursor:pointer;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--line2)}
+.card.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber-dim),0 0 22px rgba(231,170,69,.12)}
+.card .hd{display:flex;justify-content:space-between;align-items:baseline;padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.12em}
+.card .nm{font-family:var(--disp);font-weight:700;font-size:16px;letter-spacing:.04em}
+.card svg{display:block;width:100%;height:96px;background:radial-gradient(#13171d,#0b0d10)}
+.card .ft{display:flex;justify-content:space-between;padding:5px 10px 7px;font-family:var(--mono);font-size:11px;color:var(--mute)}
+.card .ft b{font-weight:400}
+.warn{color:var(--warn)}.crit{color:var(--red)}.okc{color:var(--ok)}
+.key{display:flex;gap:16px;font-family:var(--mono);font-size:11px;color:var(--mute);flex-wrap:wrap;margin:2px 2px 0}
+.key i{display:inline-block;width:10px;height:10px;vertical-align:-1px;margin-right:5px}
+.blink{animation:bl 1s steps(2) infinite}@keyframes bl{50%{opacity:.25}}
+.venting{animation:vent 1.6s ease-in-out infinite}@keyframes vent{50%{opacity:.35}}
+.sweep{animation:sw 4s linear infinite;transform-origin:130px 130px}@keyframes sw{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="tab on" data-s="council">1 · Council chamber</button>
+  <button class="tab" data-s="battle">2 · Battle — damage cards &amp; gun arcs</button>
+</div>
+
+<!-- =============== COUNCIL =============== -->
+<section class="screen on" id="council">
+  <div class="council">
+    <div class="cheader">
+      <div>
+        <h1>COUNCIL OF THE SUCCESSION</h1>
+        <div class="sub">SESSION 41 · DAY 612 · QUORUM <span style="color:var(--red)">NOT MET</span> — PROCEEDING REGARDLESS</div>
+      </div>
+      <span class="stamp" style="color:var(--red)">Provisional</span>
+    </div>
+
+    <div class="plate docket">
+      <h3>Order of business</h3>
+      <div id="docket"></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="plate chamber">
+        <h3>The chamber — 13 seats, 7 occupied</h3>
+        <svg id="chamber" viewBox="0 0 700 330"></svg>
+        <div class="legend" id="chlegend"></div>
+      </div>
+      <div class="plate">
+        <h3>Mandate — recognition vs. control</h3>
+        <div class="legit" id="legit"></div>
+        <div class="legend"><span><i style="background:var(--amber-dim)"></i>official recognition</span><span><i style="background:var(--phos)"></i>effective control</span><span><i style="background:var(--red);opacity:.6"></i>the gap — the lie</span></div>
+      </div>
+    </div>
+
+    <div class="plate dossier">
+      <h3>Resolution file</h3>
+      <div class="paper" id="paper"></div>
+      <div class="reality" id="reality"></div>
+      <div class="votes" id="votes"></div>
+      <div class="actions">
+        <button class="btn">Table support</button>
+        <button class="btn dim">Abstain</button>
+        <button class="btn dim">Walk out</button>
+      </div>
+    </div>
+    <div class="note" style="grid-column:1/-1">Click a resolution or a seat. The paper is what the Council records; the green panel is what actually happens. The play is deciding when to stop pretending.</div>
+  </div>
+</section>
+
+<!-- =============== BATTLE =============== -->
+<section class="screen" id="battle">
+  <div class="battle">
+    <div class="plate viewport" id="vp">
+      <svg class="world" id="world" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid slice"></svg>
+      <div class="topbar">
+        <span>SECTOR HADRAN · ENGAGEMENT 03:41</span>
+        <span class="cap">COMMAND <i></i><i></i><i></i><i></i><i></i><i class="u"></i><i class="u"></i></span>
+        <span class="speed">PACE <button>×½</button><button class="on">×1</button><button>×2</button><button>×4</button></span>
+      </div>
+      <div class="slip"><b>DIRECTIVE 7 — CONCENTRATE FIRE</b>All batteries, hostile cruiser VESPERINE. Hold converging arcs.
+        <div class="rb">readback: "Batteries converging. Starboard bank cannot bear."</div></div>
+      <div class="scan"></div>
+    </div>
+
+    <div class="sidecol">
+      <div class="plate plot">
+        <h3>Plot</h3>
+        <svg id="plotsvg" viewBox="0 0 260 260"></svg>
+      </div>
+      <div class="plate">
+        <h3>Signals</h3>
+        <div class="sig">
+          <div class="sigrow"><span>Free Yards tender ×2<small>reserve · repairs on arrival</small></span><span>T–0:42</span></div>
+          <div class="sigrow"><span>Continuance line group<small>reinforcement · 3 hulls</small></span><span>T–1:55</span></div>
+          <div class="sigrow"><span>Oriel salvage charter<small class="warn">demands claim on wrecks</small></span><span>OPEN</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="grid-column:1/-1">
+      <div class="cards" id="cards"></div>
+      <div class="key">
+        <span><i style="background:var(--ok)"></i>turret operational</span>
+        <span><i style="background:var(--warn)"></i>damaged / reduced traverse</span>
+        <span><i style="background:var(--red)"></i>destroyed</span>
+        <span><i style="background:#6b7480"></i>hull section · tinted by heat &amp; breach</span>
+        <span><i style="background:#58a6ff"></i>shield quadrant</span>
+      </div>
+      <div class="note">The ship is the health bar: no percentages as the main read. A hull that has lost its starboard bank looks like it has.</div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===t.dataset.s));
+});
+const NS='http://www.w3.org/2000/svg';
+const el=(n,a={},p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+
+/* ================= COUNCIL ================= */
+const F={
+  cont:{n:'Continuance',c:'#5aa3dc',off:92,eff:71},
+  rem:{n:'Remnant',c:'#c9683d',off:34,eff:58},
+  hier:{n:'Hierarchate',c:'#a77bd0',off:66,eff:49},
+  free:{n:'Free Yards',c:'#d2b24a',off:40,eff:63},
+  lant:{n:'Lantern Synod',c:'#58c9bd',off:55,eff:44},
+  hearth:{n:'Hearthward League',c:'#e0963a',off:28,eff:52},
+};
+const seats=[ // 13 seats
+  'cont','rem','hier','free','lant','hearth',
+  'minor:Morrow Passage','minor:Thule Archive','minor:Edda Habitat','minor:Vesper Couriers','vacant','vacant','vacant'];
+const RES=[
+  {no:'RES. 41-A',t:'Reaffirm the Neutrality of the Morrow Routes',st:'ON THE FLOOR',stc:'var(--amber)',
+   off:'The Council reaffirms that the Morrow routes remain open to all signatories, under the neutral administration of the Morrow Passage Authority, and that no signatory shall impede lawful transit.',
+   cross:'open to all signatories',hand:'open to whoever Morrow says',
+   real:'<b>Morrow Passage Authority</b> can delay any fleet by days using traffic records only it holds. <b>Remnant</b> and <b>Free Yards</b> both rely on the routes. A "yes" costs nothing and changes nothing; a "no" is read as intent to blockade. Expect Hierarchate to vote yes and route around it.',
+   votes:{cont:'y',rem:'y',hier:'y',free:'y',lant:'a',hearth:'y','minor:Morrow Passage':'y','minor:Thule Archive':'a','minor:Edda Habitat':'y','minor:Vesper Couriers':'n'}},
+  {no:'RES. 41-B',t:'Authenticate the Thule Registry as Law',st:'AMENDED',stc:'var(--warn)',
+   off:'The Council recognises the Thule Registry of Imperial Statute as the authentic body of pre-rupture law, binding on all successor administrations in matters of succession and title.',
+   cross:'authentic body of pre-rupture law',hand:'one of several copies of the law',
+   real:'<b>Thule Archive Enclave</b> holds competing copies and releases only enough truth to stay useful. Whoever sets the authentic text gets title over every disputed system. Continuance and Hierarchate each hold a different volume. Passing this makes the Enclave a target.',
+   votes:{cont:'y',rem:'n',hier:'n',free:'a',lant:'y',hearth:'a','minor:Morrow Passage':'a','minor:Thule Archive':'y','minor:Edda Habitat':'a','minor:Vesper Couriers':'a'}},
+  {no:'RES. 41-C',t:'Protection of Displaced Populations',st:'TABLED',stc:'var(--mute)',
+   off:'Displaced populations shall be sheltered and shall not be relocated against their stated will by any signatory, pending a lawful determination of title.',
+   cross:'shall not be relocated against their stated will',hand:'will be relocated "for protection"',
+   real:'<b>Hearthward League</b> proposes it and also practises forced relocation as "temporary protection". <b>Edda Habitat Trust</b> supports it, fearing it becomes a strategic asset. Passing it hands Hearthward a legal shield; blocking it makes enemies of every habitat.',
+   votes:{cont:'a',rem:'y',hier:'n',free:'y',lant:'a',hearth:'y','minor:Morrow Passage':'a','minor:Thule Archive':'a','minor:Edda Habitat':'y','minor:Vesper Couriers':'a'}},
+  {no:'RES. 41-D',t:'Censure of the Oriel Salvage Charter',st:'MOTION',stc:'var(--red)',
+   off:'The Council deplores the unauthorised removal of imperial property from wreck fields under signatory jurisdiction, and calls upon the Oriel Salvage Charter to cease and desist.',
+   cross:'imperial property',hand:'free loot for anyone with a tug',
+   real:'Every major is salvaging. The motion is cover to <b>blockade Oriel</b> and take its wreck fields; the Charter\'s people starve without replacement parts. Passing it is a declaration of intent dressed as a rebuke.',
+   votes:{cont:'y',rem:'a',hier:'y',free:'n',lant:'a',hearth:'a','minor:Morrow Passage':'a','minor:Thule Archive':'y','minor:Edda Habitat':'a','minor:Vesper Couriers':'n'}},
+];
+let curRes=0, curSeat=null;
+
+const docket=document.getElementById('docket');
+RES.forEach((r,i)=>{
+  const b=document.createElement('button');b.className='res';
+  b.innerHTML=`<div class="no">${r.no}</div><div class="t">${r.t}</div><div class="st" style="color:${r.stc}">● ${r.st}</div>`;
+  b.onclick=()=>{curRes=i;draw()};docket.appendChild(b);r.btn=b;
+});
+
+function seatPos(i,n){ // semicircle
+  const a=Math.PI*(0.08+0.84*i/(n-1)); // left->right
+  const rx=285,ry=215,cx=350,cy=300;
+  return {x:cx-Math.cos(a)*rx, y:cy-Math.sin(a)*ry, a};
+}
+function drawChamber(){
+  const s=document.getElementById('chamber');s.innerHTML='';
+  // floor
+  el('path',{d:'M 40 300 A 310 235 0 0 1 660 300 Z',fill:'#0c0e11',stroke:'#2a2f37'},s);
+  el('path',{d:'M 150 300 A 200 140 0 0 1 550 300 Z',fill:'#08090b',stroke:'#2a2f37','stroke-dasharray':'3 5'},s);
+  const grid=el('g',{stroke:'#1a1d22'},s);
+  for(let i=1;i<6;i++)el('path',{d:`M ${40+i*0} 300`,'stroke-width':0},grid);
+  // dais
+  el('rect',{x:300,y:262,width:100,height:34,fill:'#15181d',stroke:'#3b424d'},s);
+  const t=el('text',{x:350,y:284,'text-anchor':'middle',fill:'#e7aa45','font-family':'Stardos Stencil','font-size':11,'letter-spacing':'2'},s);t.textContent='THE CHAIR';
+  const t2=el('text',{x:350,y:316,'text-anchor':'middle',fill:'#7d8089','font-family':'Share Tech Mono','font-size':10,'letter-spacing':'2'},s);t2.textContent='SPEAKER ABSENT SINCE DAY 0';
+  const votes=RES[curRes].votes;
+  seats.forEach((k,i)=>{
+    const p=seatPos(i,seats.length);
+    const g=el('g',{class:'seat',transform:`translate(${p.x},${p.y}) rotate(${(p.a-Math.PI/2)*180/Math.PI})`},s);
+    const major=F[k];const minor=k.startsWith('minor');const vacant=k==='vacant';
+    const col=major?major.c:minor?'#8d949e':'#2a2f37';
+    const body=el('path',{class:'seatbody',d:'M -24 12 L -24 -14 Q 0 -26 24 -14 L 24 12 Z',fill:vacant?'#0a0b0d':'#14171c',stroke:curSeat===k?'#e7aa45':col,'stroke-width':major?2:1.2,'stroke-dasharray':vacant?'3 3':'0'},g);
+    if(!vacant){
+      el('circle',{cx:0,cy:-3,r:7,fill:'none',stroke:col,'stroke-width':1.4},g);
+      el('circle',{cx:0,cy:-3,r:2.4,fill:col},g);
+      const v=votes[k];
+      if(v){const vc=v==='y'?'#6fb98a':v==='n'?'#d9533d':'#7d8089';
+        el('rect',{x:-6,y:5,width:12,height:4,fill:vc},g);}
+    }
+    g.addEventListener('click',()=>{curSeat=curSeat===k?null:k;draw()});
+    const lab=el('text',{x:0,y:30,'text-anchor':'middle','font-family':'Share Tech Mono','font-size':9,fill:vacant?'#3b424d':'#9aa0a8','letter-spacing':'1',transform:`rotate(${-(p.a-Math.PI/2)*180/Math.PI})`},g);
+    lab.setAttribute('y',44);
+    lab.textContent=major?major.n.split(' ')[0].toUpperCase():minor?k.split(':')[1].split(' ')[0].toUpperCase():'VACANT';
+  });
+  document.getElementById('chlegend').innerHTML='<span><i style="background:#6fb98a"></i>aye</span><span><i style="background:#d9533d"></i>nay</span><span><i style="background:#7d8089"></i>abstain</span><span>Ring: major (coloured) · minor (grey) · vacant (dashed)</span>';
+}
+function drawLegit(){
+  const box=document.getElementById('legit');box.innerHTML='';
+  Object.entries(F).forEach(([k,f])=>{
+    const gap=Math.abs(f.off-f.eff);const lo=Math.min(f.off,f.eff);
+    const row=document.createElement('div');row.className='lrow';
+    row.innerHTML=`<span style="color:${f.c}">${f.n}</span>
+      <div class="lbar"><div class="off" style="width:${f.off}%"></div><div class="eff" style="width:${f.eff}%;background:${f.c}"></div>
+      ${gap>8?`<div class="gap" style="left:${lo}%;width:${gap}%"></div>`:''}</div>
+      <span class="d" style="color:${gap>20?'var(--red)':gap>8?'var(--warn)':'var(--mute)'}">${f.eff>f.off?'+':'−'}${gap}</span>`;
+    box.appendChild(row);
+  });
+}
+function drawFile(){
+  const r=RES[curRes];
+  let official=r.off.replace(r.cross,`<span class="cross">${r.cross}</span> <span class="hand">${r.hand}</span>`);
+  document.getElementById('paper').innerHTML=`<h4>${r.no} — ${r.t.toUpperCase()}</h4><div class="official">${official}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><span>Entered by the Secretariat of the Succession</span><span class="stamp" style="color:#a42f1e;font-size:13px">${r.st}</span></div>`;
+  document.getElementById('reality').innerHTML=`<span class="tag">WHAT ACTUALLY HAPPENS</span>${r.real}`;
+  const names={...Object.fromEntries(Object.entries(F).map(([k,f])=>[k,f.n])),'minor:Morrow Passage':'Morrow','minor:Thule Archive':'Thule','minor:Edda Habitat':'Edda','minor:Vesper Couriers':'Vesper'};
+  document.getElementById('votes').innerHTML=Object.entries(r.votes).map(([k,v])=>
+    `<span class="vote ${v}" ${curSeat===k?'style="outline:1px solid var(--amber)"':''}>${names[k]} · ${v==='y'?'AYE':v==='n'?'NAY':'ABST'}</span>`).join('');
+}
+function draw(){RES.forEach((r,i)=>r.btn.classList.toggle('on',i===curRes));drawChamber();drawFile()}
+drawLegit();draw();
+
+/* ================= BATTLE ================= */
+// plan-view hull: points along length (x 0..100 bow at right), half-width
+const HULL=[[0,5],[8,9],[24,12],[55,13],[78,11],[92,7],[100,0]];
+function hullPath(w,h,sx=1){
+  const top=HULL.map(([x,y])=>[x*w/100,h/2-y*sx]);
+  const bot=HULL.slice().reverse().map(([x,y])=>[x*w/100,h/2+y*sx]);
+  return 'M'+top.concat(bot).map(p=>p.join(',')).join(' L')+' Z';
+}
+// each ship: sections heat 0..1 (breach if >.7), turrets [x%, side(-1 port/+1 stbd), state ok|dmg|dead], shields quadrants F,S,A,P 0..1
+const SHIPS=[
+ {id:'CONSTANT RESOLVE',cls:'BATTLESHIP',f:'cont',hp:'SOUND',tag:'okc',shield:[.9,.7,.8,.9],
+  sect:[.0,.05,.1,.0,.15,.0],tur:[[78,0,'ok'],[66,0,'ok'],[24,0,'ok'],[45,-1,'ok'],[45,1,'ok'],[58,-1,'ok'],[58,1,'ok']],eng:3,sel:true},
+ {id:'ASHFALL',cls:'CRUISER',f:'cont',hp:'STARBOARD BANK LOST',tag:'warn',shield:[.55,.05,.7,.8],
+  sect:[.1,.2,.85,.9,.2,.1],tur:[[76,0,'ok'],[30,0,'dmg'],[48,-1,'ok'],[48,1,'dead'],[60,1,'dead'],[60,-1,'ok']],eng:2,vent:[3]},
+ {id:'LONG MEMORY',cls:'DESTROYER',f:'cont',hp:'LISTING · ENGINE 2 DARK',tag:'crit',shield:[0,0,.1,.3],
+  sect:[.7,.9,.6,.3,.95,.8],tur:[[72,0,'dead'],[40,-1,'dmg'],[40,1,'ok']],eng:1,vent:[0,1,4]},
+ {id:'THRESHOLD',cls:'FRIGATE',f:'cont',hp:'SOUND',tag:'okc',shield:[.8,.9,.9,.7],
+  sect:[0,0,.05,0,0,0],tur:[[70,0,'ok'],[35,0,'ok']],eng:2},
+ {id:'MERIDIAN TENDER',cls:'TRANSPORT',f:'free',hp:'HULL BREACHED',tag:'crit',shield:[.3,.0,.2,.4],
+  sect:[.2,.5,.9,.95,.6,.3],tur:[[60,0,'dmg']],eng:2,vent:[2,3]},
+];
+const SIZES={BATTLESHIP:1,CRUISER:.86,DESTROYER:.7,FRIGATE:.56,TRANSPORT:.8};
+const stateCol={ok:'#6fb98a',dmg:'#f0c04a',dead:'#d9533d'};
+function heatCol(v){ // hull section tint
+  if(v<.15)return '#4b535e'; if(v<.4)return '#6a5b49'; if(v<.7)return '#8c5a38'; return '#7a2e22';}
+function schematic(ship,svg,W=232,H=96){
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML='';
+  const s=SIZES[ship.cls];const hw=W*.8*s,x0=(W-hw)/2;
+  const g=el('g',{transform:`translate(${x0},0)`},svg);
+  // shield quadrants as arcs around hull
+  const cx=hw/2,cy=H/2,rx=hw/2+10,ry=26*s+8;
+  const q=[[ -30,30],[30,150],[150,210],[210,330]]; // F(right) S(bottom) A(left) P(top) in degrees
+  const names=['F','S','A','P'];
+  ship.shield.forEach((v,i)=>{
+    const [a0,a1]=q[i];
+    const pt=a=>[cx+Math.cos(a*Math.PI/180)*rx, cy+Math.sin(a*Math.PI/180)*ry];
+    const p0=pt(a0+4),p1=pt(a1-4);
+    const large=(a1-a0)>180?1:0;
+    el('path',{d:`M${p0} A${rx},${ry} 0 ${large} 1 ${p1}`,fill:'none',stroke:v>0.04?'#58a6ff':'#2a2f37','stroke-width':1+v*3,opacity:v>0.04?0.35+v*0.65:1,'stroke-dasharray':v>0.04?'0':'2 3'},g);
+  });
+  // hull sections (6 slices)
+  const parts=6;
+  for(let i=0;i<parts;i++){
+    const xa=i*100/parts,xb=(i+1)*100/parts;
+    const seg=HULL.filter(p=>p[0]>xa&&p[0]<xb);
+    const prof=x=>{for(let j=0;j<HULL.length-1;j++){const a=HULL[j],b=HULL[j+1];if(x>=a[0]&&x<=b[0])return a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0]);}return 0};
+    const pts=[[xa,prof(xa)],...seg,[xb,prof(xb)]];
+    const top=pts.map(([x,y])=>[x*hw/100,H/2-y*s*1.35]);
+    const bot=pts.slice().reverse().map(([x,y])=>[x*hw/100,H/2+y*s*1.35]);
+    const path='M'+top.concat(bot).map(p=>p.join(',')).join(' L')+' Z';
+    const v=ship.sect[i];
+    const p=el('path',{d:path,fill:heatCol(v),stroke:'#0b0d10','stroke-width':1.2},g);
+    if(ship.vent&&ship.vent.includes(i))p.setAttribute('class','venting');
+    if(v>.7){ // breach marks
+      const bx=(xa+xb)/2*hw/100;
+      el('path',{d:`M${bx-5},${cy-3} l4,5 l-3,4 l5,5 M${bx+4},${cy+4} l-3,-5 l4,-3`,stroke:'#05060a','stroke-width':1.6,fill:'none'},g);
+      el('circle',{cx:bx,cy:cy+1,r:3,fill:'#ff7a3a',opacity:.8,class:'blink'},g);
+    }
+  }
+  el('path',{d:hullPath(hw,H,s*1.35),fill:'none',stroke:'#aeb6c2','stroke-width':.8,opacity:.5},g);
+  el('line',{x1:0,y1:cy,x2:hw,y2:cy,stroke:'#0b0d10','stroke-width':.6,opacity:.6},g);
+  // engines
+  for(let i=0;i<ship.eng;i++){
+    const dy=(i-(ship.eng-1)/2)*7*s;const dead=ship.id==='LONG MEMORY'&&i===1;
+    el('rect',{x:-4,y:cy+dy-2.5,width:5,height:5,fill:dead?'#2a2f37':'#ff9a4a',opacity:dead?1:.85},g);
+  }
+  // turrets
+  ship.tur.forEach(([x,side,st])=>{
+    const tx=x*hw/100,ty=cy+side*8*s*1.2;
+    el('circle',{cx:tx,cy:ty,r:3.4*s+1,fill:'#0b0d10',stroke:stateCol[st],'stroke-width':1.6},g);
+    if(st==='dead')el('path',{d:`M${tx-2.5},${ty-2.5} l5,5 M${tx+2.5},${ty-2.5} l-5,5`,stroke:'#d9533d','stroke-width':1.3},g);
+    else el('line',{x1:tx,y1:ty,x2:tx+7*s+2,y2:ty,stroke:stateCol[st],'stroke-width':1.6},g);
+  });
+}
+const cardsEl=document.getElementById('cards');
+SHIPS.forEach((sh,i)=>{
+  const c=document.createElement('div');c.className='card'+(sh.sel?' sel':'');
+  const col=F[sh.f].c;
+  c.innerHTML=`<div class="hd"><span class="nm" style="color:${col}">${sh.id}</span><span style="color:var(--mute)">${sh.cls}</span></div><svg></svg>
+    <div class="ft"><b class="${sh.tag}">${sh.hp}</b><b>${sh.tur.filter(t=>t[2]==='ok').length}/${sh.tur.length} GUNS</b></div>`;
+  schematic(sh,c.querySelector('svg'));
+  c.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel')};
+  cardsEl.appendChild(c);
+});
+
+/* ---- world view: ships with converging gun arcs ---- */
+const W=document.getElementById('world');
+(function(){
+  const defs=el('defs',{},W);
+  const gr=el('linearGradient',{id:'cone',x1:0,x2:1},defs);
+  el('stop',{offset:0,'stop-color':'#e7aa45','stop-opacity':.38},gr);el('stop',{offset:1,'stop-color':'#e7aa45','stop-opacity':.02},gr);
+  const sh=el('radialGradient',{id:'shd'},defs);
+  el('stop',{offset:.7,'stop-color':'#58a6ff','stop-opacity':0},sh);el('stop',{offset:1,'stop-color':'#58a6ff','stop-opacity':.5},sh);
+  // stars
+  let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  for(let i=0;i<140;i++)el('circle',{cx:rnd()*1000,cy:rnd()*560,r:rnd()*1.2+.2,fill:'#fff',opacity:rnd()*.6+.1},W);
+  // planet
+  el('circle',{cx:860,cy:90,r:92,fill:'#1a2438'},W);el('circle',{cx:835,cy:70,r:92,fill:'#27395a',opacity:.6},W);
+
+  // helper: ship silhouette
+  function ship(x,y,ang,len,col,opts={}){
+    const g=el('g',{transform:`translate(${x},${y}) rotate(${ang})`},W);
+    const w=len,h=len*.22;
+    const p=HULL.map(([a,b])=>[a*w/100-w/2,-b*h/13]).concat(HULL.slice().reverse().map(([a,b])=>[a*w/100-w/2,b*h/13]));
+    if(opts.shield!==false)el('ellipse',{cx:0,cy:0,rx:w*.62,ry:h*1.5,fill:'url(#shd)',opacity:opts.shd||.7},g);
+    el('path',{d:'M'+p.join(' L')+' Z',fill:opts.dark?'#2b2623':'#2b3340',stroke:col,'stroke-width':1.4},g);
+    el('path',{d:`M${-w/2},0 L${w/2},0`,stroke:col,'stroke-width':.5,opacity:.5},g);
+    for(let i=0;i<(opts.eng||2);i++)el('circle',{cx:-w/2-2,cy:(i-(opts.eng||2)/2+.5)*h*.3,r:2.5,fill:'#ff9a4a'},g);
+    return g;
+  }
+  // our line (left), enemy (right)
+  const us=[{x:230,y:300,l:150,e:3,a:-6,id:'CONSTANT RESOLVE'},{x:180,y:210,l:110,e:2,a:-10,id:'ASHFALL'},{x:170,y:400,l:78,e:1,a:2,id:'LONG MEMORY'},{x:280,y:130,l:60,e:2,a:-14,id:'THRESHOLD'}];
+  const them={x:770,y:290,l:150};
+  // converging arcs (cones from each ship's gun to the target)
+  us.forEach((u,i)=>{
+    const ax=u.x+u.l*.2,ay=u.y,t={x:them.x-30,y:them.y};
+    const spread=i===0?.09:.12;
+    const dx=t.x-ax,dy=t.y-ay,dist=Math.hypot(dx,dy),ang=Math.atan2(dy,dx);
+    const l=ang+spread,r=ang-spread;
+    el('path',{d:`M${ax},${ay} L${ax+Math.cos(l)*dist*1.05},${ay+Math.sin(l)*dist*1.05} L${ax+Math.cos(r)*dist*1.05},${ay+Math.sin(r)*dist*1.05} Z`,fill:'url(#cone)',stroke:'#e7aa45','stroke-opacity':.25,'stroke-width':.8,'stroke-dasharray':'3 4'},W);
+  });
+  // traverse limits for starboard bank on ASHFALL (blocked)
+  const a=us[1];
+  el('path',{d:`M${a.x},${a.y+4} L${a.x+160},${a.y+82} A 160 160 0 0 1 ${a.x+110},${a.y+130} Z`,fill:'rgba(217,83,61,.12)',stroke:'#d9533d','stroke-opacity':.45,'stroke-dasharray':'2 4'},W);
+  const cl=el('text',{x:a.x+150,y:a.y+30,fill:'#d9533d','font-family':'Share Tech Mono','font-size':11,'letter-spacing':'1.5'},W);cl.textContent='BANK DESTROYED — NO FIRE';
+
+  us.forEach((u,i)=>{
+    ship(u.x,u.y,u.a,u.l,'#5aa3dc',{eng:u.e,shd:i===2?.2:.7});
+    const t=el('text',{x:u.x-u.l/2,y:u.y-u.l*.2-4,fill:i===0?'#e7aa45':'#7fb7e8','font-family':'Share Tech Mono','font-size':10,'letter-spacing':'1.5'},W);t.textContent=u.id;
+  });
+  if(true){ // selection bracket
+    const u=us[0];const bx=u.x-u.l*.6,by=u.y-26,bw=u.l*1.2,bh=52;
+    el('path',{d:`M${bx},${by+10} V${by} H${bx+10} M${bx+bw-10},${by} H${bx+bw} V${by+10} M${bx+bw},${by+bh-10} V${by+bh} H${bx+bw-10} M${bx+10},${by+bh} H${bx} V${by+bh-10}`,stroke:'#e7aa45',fill:'none','stroke-width':1.6},W);
+  }
+  // enemy cruiser, hit, tracers
+  ship(them.x,them.y,184,them.l,'#c9683d',{dark:true,eng:2,shd:.2});
+  const te=el('text',{x:them.x-50,y:them.y-48,fill:'#e08a5f','font-family':'Share Tech Mono','font-size':10,'letter-spacing':'1.5'},W);te.textContent='VESPERINE  ◂ TARGET';
+  el('circle',{cx:them.x-30,cy:them.y,r:34,fill:'none',stroke:'#58a6ff','stroke-width':2,opacity:.8},W);
+  el('circle',{cx:them.x-58,cy:them.y-6,r:12,fill:'#ffd28a',opacity:.8},W);el('circle',{cx:them.x-58,cy:them.y-6,r:5,fill:'#fff'},W);
+  // tracers
+  [[us[0],0],[us[0],8],[us[0],-8],[us[1],0],[us[3],0]].forEach(([u,o],i)=>{
+    const sx=u.x+u.l*.3,sy=u.y+o;
+    const ex=them.x-58+o*.2,ey=them.y-6+o*.1;
+    const f=.35+i*.1;const mx=sx+(ex-sx)*f,my=sy+(ey-sy)*f;
+    el('line',{x1:mx,y1:my,x2:mx+(ex-sx)*.1,y2:my+(ey-sy)*.1,stroke:'#ffd9a0','stroke-width':2,'stroke-linecap':'round'},W);
+  });
+  // fire/vent particles on ASHFALL
+  for(let i=0;i<10;i++)el('circle',{cx:a.x-20+i*3,cy:a.y+14+rnd()*8,r:rnd()*3+1,fill:i<4?'#ff7a3a':'#8d949e',opacity:.5-i*.03,class:'venting'},W);
+})();
+
+/* ---- plot (radar as plotting table) ---- */
+(function(){
+  const s=document.getElementById('plotsvg');
+  const c=130;
+  el('circle',{cx:c,cy:c,r:124,fill:'#0b0f0c',stroke:'#2b3a30'},s);
+  [40,80,120].forEach(r=>el('circle',{cx:c,cy:c,r,fill:'none',stroke:'#1e2c23'},s));
+  for(let a=0;a<360;a+=30){
+    const r=a*Math.PI/180;
+    el('line',{x1:c+Math.cos(r)*118,y1:c+Math.sin(r)*118,x2:c+Math.cos(r)*124,y2:c+Math.sin(r)*124,stroke:'#4a6b57'},s);
+    if(a%90===0)el('line',{x1:c,y1:c,x2:c+Math.cos(r)*118,y2:c+Math.sin(r)*118,stroke:'#1a261f'},s);
+    const t=el('text',{x:c+Math.cos(r)*106,y:c+Math.sin(r)*106+3,fill:'#4a6b57','font-family':'Share Tech Mono','font-size':8,'text-anchor':'middle'},s);
+    t.textContent=String(((a+90)%360)).padStart(3,'0');
+  }
+  const sw=el('g',{class:'sweep'},s);
+  el('path',{d:`M${c},${c} L${c+120},${c} A120,120 0 0 0 ${c+120*Math.cos(-.5)},${c+120*Math.sin(-.5)} Z`,fill:'rgba(143,211,168,.10)'},sw);
+  // asteroid cloud
+  for(let i=0;i<14;i++)el('circle',{cx:150+Math.cos(i*2.1)*18,cy:70+Math.sin(i*1.3)*12,r:2,fill:'#3d4a41'},s);
+  // contacts: ours
+  [[78,128],[62,100],[70,160],[54,128],[88,150]].forEach(([x,y],i)=>{
+    const sq=el('rect',{x:x-3,y:y-3,width:6,height:6,fill:i===0?'#e7aa45':'#5aa3dc'},s);
+  });
+  // theirs
+  [[196,128],[210,112]].forEach(([x,y])=>el('path',{d:`M${x},${y-4} L${x+4},${y+4} L${x-4},${y+4} Z`,fill:'none',stroke:'#c9683d','stroke-width':1.5},s));
+  // track lines
+  el('path',{d:'M 88 128 L 120 128 M 196 128 L 170 124',stroke:'#4a6b57','stroke-dasharray':'2 3',fill:'none'},s);
+})();
+</script>
+</body>
+</html>

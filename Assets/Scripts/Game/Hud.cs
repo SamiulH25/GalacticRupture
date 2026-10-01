@@ -34,13 +34,13 @@ namespace GalacticRupture.Game
         Texture2D _white, _disc, _ring, _tri;
         float _radarRange = 7000f;
 
-        static readonly Color Panel = new Color(0.02f, 0.035f, 0.06f, 0.82f);
-        static readonly Color Rule = new Color(0.45f, 0.62f, 0.8f, 0.22f);
-        static readonly Color Edge = new Color(0.45f, 0.85f, 1f, 0.55f);
-        static readonly Color Ink = new Color(0.86f, 0.91f, 0.97f);
-        static readonly Color Muted = new Color(0.56f, 0.64f, 0.74f);
+        static readonly Color Panel = UiKit.Panel;
+        static readonly Color Rule = UiKit.Line;
+        static readonly Color Edge = new Color(UiKit.Amber.r, UiKit.Amber.g, UiKit.Amber.b, 0.75f);
+        static readonly Color Ink = UiKit.Ink;
+        static readonly Color Muted = UiKit.Mute;
         static readonly Color HullColor = new Color(0.9f, 0.76f, 0.46f);
-        static readonly Color ShieldColor = new Color(0.4f, 0.8f, 1f);
+        static readonly Color ShieldColor = UiKit.Shield;
         static readonly Color Friend = new Color(0.4f, 0.78f, 1f);
         static readonly Color Foe = new Color(1f, 0.32f, 0.28f);
 
@@ -49,6 +49,7 @@ namespace GalacticRupture.Game
         void Styles()
         {
             if (_white != null) return;
+            UiKit.Init(Runner.Art);
             _white = Texture2D.whiteTexture;
             _disc = Disc(64, false);
             _ring = Disc(256, true);
@@ -57,10 +58,10 @@ namespace GalacticRupture.Game
             var font = art != null && art.UiFont != null ? art.UiFont : GUI.skin.font;
             var bold = art != null && art.UiFontBold != null ? art.UiFontBold : font;
             _text = new GUIStyle(GUI.skin.label) { font = bold, fontSize = 15, richText = true, normal = { textColor = Ink } };
-            _small = new GUIStyle(_text) { font = font, fontSize = 13, normal = { textColor = Muted } };
-            _tiny = new GUIStyle(_small) { fontSize = 11 };
-            _caps = new GUIStyle(_text) { fontSize = 13, normal = { textColor = new Color(0.62f, 0.74f, 0.88f) } };
-            _banner = new GUIStyle(_text) { fontSize = 52, alignment = TextAnchor.MiddleCenter };
+            _small = new GUIStyle(_text) { font = UiKit.Mono, fontSize = 12, normal = { textColor = Muted } };
+            _tiny = new GUIStyle(_small) { fontSize = 10 };
+            _caps = new GUIStyle(_text) { font = UiKit.Mono, fontSize = 12, normal = { textColor = UiKit.Amber } };
+            _banner = new GUIStyle(_text) { font = UiKit.Stencil, fontSize = 52, alignment = TextAnchor.MiddleCenter };
             _key = new GUIStyle(_text) { fontSize = 12, alignment = TextAnchor.MiddleCenter };
             _center = new GUIStyle(_text) { fontSize = 13, alignment = TextAnchor.MiddleCenter };
         }
@@ -77,13 +78,16 @@ namespace GalacticRupture.Game
                 if (!ring) a = Mathf.Clamp01((1f - d) * size * 0.25f);
                 else
                 {
-                    // The radar face: dark disc, range rings and a bright rim.
-                    a = d > 1f ? 0f : 0.55f;
+                    // The plotting board: dark green face, range rings, bearing ticks every ten degrees.
+                    a = d > 1f ? 0f : 0.82f;
                     float rim = Mathf.Abs(d - 0.985f) < 0.012f ? 1f : 0f;
-                    float rings = (Mathf.Abs(d - 0.33f) < 0.004f || Mathf.Abs(d - 0.66f) < 0.004f) ? 0.5f : 0f;
-                    float cross = (Mathf.Abs(x - c) < 0.6f || Mathf.Abs(y - c) < 0.6f) && d < 0.98f ? 0.25f : 0f;
-                    float line = Mathf.Max(rim, Mathf.Max(rings, cross));
-                    var col = Color.Lerp(new Color(0.02f, 0.05f, 0.09f), new Color(0.4f, 0.7f, 0.95f), line);
+                    float rings = (Mathf.Abs(d - 0.33f) < 0.004f || Mathf.Abs(d - 0.66f) < 0.004f) ? 0.45f : 0f;
+                    float cross = (Mathf.Abs(x - c) < 0.6f || Mathf.Abs(y - c) < 0.6f) && d < 0.98f ? 0.2f : 0f;
+                    float ang = Mathf.Atan2(y - c, x - c) * Mathf.Rad2Deg;
+                    float step = Mathf.Abs(Mathf.DeltaAngle(ang, Mathf.Round(ang / 10f) * 10f));
+                    float tick = d > 0.94f && d < 0.985f && step * d * 3.14159f / 180f * c < 0.9f ? 0.8f : 0f;
+                    float line = Mathf.Max(Mathf.Max(rim, tick), Mathf.Max(rings, cross));
+                    var col = Color.Lerp(new Color(0.035f, 0.055f, 0.045f), new Color(0.42f, 0.66f, 0.5f), line);
                     t.SetPixel(x, y, new Color(col.r, col.g, col.b, Mathf.Max(a, line * 0.9f)));
                     continue;
                 }
@@ -173,6 +177,7 @@ namespace GalacticRupture.Game
             Reserves();
             Cards();
             AbilityBar();
+            DirectiveSlip();
             Banner();
 
             if (repaint)
@@ -268,9 +273,16 @@ namespace GalacticRupture.Game
             foreach (var s in W.Ships)
                 if (s.Alive) { if (s.Side == Input.PlayerSide) own++; else enemy++; }
             var res = Runner.Reinforcements;
-            string cmd = res != null ? $"     COMMAND {res.Used(W, Input.PlayerSide)}/{res.Cap[Input.PlayerSide]}" : "";
             string time = $"×{Runner.TimeScale:0.##}";
-            GUI.Label(new Rect(20, 12, 700, 24), $"{time}     FLEET {own}     CONTACTS {enemy}{cmd}", _text);
+            GUI.Label(new Rect(20, 12, 700, 24), $"{time}     FLEET {own}     CONTACTS {enemy}", _caps);
+            if (res != null)
+            {
+                int cap = res.Cap[Input.PlayerSide], used = res.Used(W, Input.PlayerSide);
+                float px = 20f;
+                GUI.Label(new Rect(px, 34, 90, 16), "COMMAND", _tiny);
+                for (int i = 0; i < Mathf.Min(cap, 40); i++)
+                    UiKit.Fill(new Rect(px + 62 + i * 8, 36, 5, 11), i < used ? UiKit.Amber : new Color(0.17f, 0.15f, 0.1f));
+            }
             string terrain = Runner.Terrain.Describe();
             GUI.Label(new Rect(Screen.width * 0.5f - 200, 12, 400, 24), terrain.ToUpperInvariant(), new GUIStyle(_caps) { alignment = TextAnchor.MiddleCenter });
 
@@ -427,7 +439,7 @@ namespace GalacticRupture.Game
             int used = res.Used(W, side);
             int picked = 0;
             foreach (var p in Input.Placing) picked += Reinforcements.Points(p.Def.Class);
-            GUI.Label(new Rect(r.x + 42, r.y + 8, w - 50, 22), $"REINFORCEMENTS  <color=#8aa0b8><size=12>{pool.Count} waiting · command {used}/{res.Cap[side]}</size></color>", _text);
+            GUI.Label(new Rect(r.x + 42, r.y + 8, w - 50, 22), $"REINFORCEMENTS  <color=#b99a55><size=12>{pool.Count} waiting · command {used}/{res.Cap[side]}</size></color>", _text);
             if (!ShowReserves) return;
             if (pool.Count == 0)
             {
@@ -512,6 +524,9 @@ namespace GalacticRupture.Game
 
         readonly List<(HullDef Def, List<Ship> Ships)> _groups = new List<(HullDef, List<Ship>)>();
 
+        readonly HullSchematic _schematic = new HullSchematic();
+        readonly HashSet<int> _liveIds = new HashSet<int>();
+
         void Cards()
         {
             if (Input.Selected.Count == 0) return;
@@ -533,36 +548,51 @@ namespace GalacticRupture.Game
                 }
                 _groups[g].Ships.Add(s);
             }
-            const float cw = 150f, ch = 72f, gap = 6f;
-            int n = Mathf.Min(_groups.Count, 9);
+            const float cw = 224f, ch = 146f, gap = 6f;
+            int fit = Mathf.Max(1, Mathf.FloorToInt((Screen.width - 540f) / (cw + gap)));
+            int n = Mathf.Min(_groups.Count, Mathf.Min(fit, 9));
             float total = n * cw + (n - 1) * gap;
             float x0 = Screen.width * 0.5f - total * 0.5f, y = Screen.height - ch - 30f;
+            _liveIds.Clear();
+            foreach (var s in W.Ships) if (s.Alive) _liveIds.Add(s.Id);
+            _schematic.Forget(_liveIds);
             for (int k = 0; k < n; k++)
             {
                 var (def, ships) = _groups[k];
-                var r = PanelBox(new Rect(x0 + k * (cw + gap), y, cw, ch), Edge);
-                float hull = 0f, shield = 0f;
+                var lead = ships[0];
+                var r = new Rect(x0 + k * (cw + gap), y, cw, ch);
+                UiKit.Fill(r, UiKit.Panel);
+                UiKit.Outline(r, UiKit.Line);
+                _building.Add(r);
                 int guns = 0, mounts = 0;
                 foreach (var s in ships)
-                {
-                    hull += s.Hull / s.Def.HullHp;
-                    shield += s.Def.ShieldHp > 0f ? s.Shield / s.Def.ShieldHp : 0f;
                     foreach (var m in s.Mounts) { mounts++; if (m.Alive) guns++; }
-                }
+
+                // Head: key, class, count.
+                var keyR = new Rect(r.x + 6, r.y + 5, 16, 16);
+                UiKit.Fill(keyR, new Color(1f, 1f, 1f, 0.07f));
+                UiKit.Text(keyR, (k + 1).ToString(), UiKit.Face.Mono, 11, UiKit.Amber, TextAnchor.MiddleCenter);
+                string title = ClassName(def).Split('·')[0].Trim();
+                if (ships.Count > 1) title += $" ×{ships.Count}";
+                UiKit.Text(new Rect(r.x + 28, r.y + 3, cw - 130, 20), title.ToUpperInvariant(), UiKit.Face.Bold, 14, UiKit.Ink, TextAnchor.MiddleLeft);
+                UiKit.Fill(new Rect(r.x, r.y + 25, cw, 1), UiKit.Line);
+
+                // The hull.
+                var pic = new Rect(r.x + 2, r.y + 26, cw - 4, (cw - 4) * HullSchematic.H / HullSchematic.W);
+                UiKit.Tex(pic, _schematic.Get(lead), Color.white);
+
+                // Foot: what it is doing, and what it has left.
+                float hull = 0f;
+                foreach (var s in ships) hull += s.Hull / s.Def.HullHp;
                 hull /= ships.Count;
-                shield /= ships.Count;
-                var keyR = new Rect(r.x + 6, r.y + 6, 18, 18);
-                Fill(keyR, new Color(1f, 1f, 1f, 0.08f));
-                GUI.Label(keyR, (k + 1).ToString(), _key);
-                string title = ships.Count > 1 ? $"{ClassName(def).Split('·')[0].Trim()} ×{ships.Count}" : ClassName(def).Split('·')[0].Trim();
-                GUI.Label(new Rect(r.x + 30, r.y + 4, cw - 34, 20), title, _text);
-                var lead = ships[0];
-                string status = ships.Count > 1 ? $"{guns}/{mounts} guns" : $"{OrderText(lead)} · {guns}/{mounts} guns";
-                if (lead.ActiveAbility >= 0 && ships.Count == 1) status = AbilityShort((Ability)lead.ActiveAbility) + " · " + status;
-                if (lead.InNebula) status += " · <color=#c49aff>nebula</color>";
-                GUI.Label(new Rect(r.x + 8, r.y + 26, cw - 12, 18), status, _tiny);
-                Bar(new Rect(r.x + 8, r.y + 50, cw - 16, 4), shield, ShieldColor);
-                Bar(new Rect(r.x + 8, r.y + 58, cw - 16, 4), hull, HullColor);
+                var (state, tone) = Condition(lead, ships.Count, hull);
+                string order = ships.Count > 1 ? "" : OrderText(lead);
+                if (lead.ActiveAbility >= 0 && ships.Count == 1) order = AbilityShort((Ability)lead.ActiveAbility);
+                UiKit.Text(new Rect(r.xMax - 100, r.y + 4, 92, 18), order.ToUpperInvariant(), UiKit.Face.Mono, 9, UiKit.Mute, TextAnchor.MiddleRight);
+                UiKit.Text(new Rect(r.x + 8, r.yMax - 19, cw - 84, 16), state, UiKit.Face.Mono, 10, tone, TextAnchor.MiddleLeft);
+                UiKit.Text(new Rect(r.xMax - 76, r.yMax - 19, 68, 16), $"{guns}/{mounts} GUNS", UiKit.Face.Mono, 10, guns < mounts ? UiKit.Warn : UiKit.Mute, TextAnchor.MiddleRight);
+                if (lead.InNebula) UiKit.Text(new Rect(r.x + 8, r.y + 28, 90, 14), "IN NEBULA", UiKit.Face.Mono, 9, new Color(0.77f, 0.6f, 1f));
+
                 if (Clicked(r))
                 {
                     Input.Selected.Clear();
@@ -571,6 +601,46 @@ namespace GalacticRupture.Game
             }
             if (_groups.Count > n)
                 GUI.Label(new Rect(x0 + total + 8, y + ch - 20, 80, 18), $"+{_groups.Count - n}", _small);
+        }
+
+        // The words under the hull picture: the damage said plainly, worst first.
+        static (string, Color) Condition(Ship s, int count, float hull)
+        {
+            if (count > 1) return hull > 0.9f ? ("SOUND", UiKit.Ok) : hull > 0.5f ? ("DAMAGED", UiKit.Warn) : ("MAULED", UiKit.Red);
+            int dead = 0, total = 0, deadSide = 0;
+            foreach (var m in s.Mounts)
+            {
+                total++;
+                if (m.Alive) continue;
+                dead++;
+                deadSide += m.Hardpoint.LocalPosition.X >= 0f ? 1 : -1;
+            }
+            if (hull < 0.25f) return ("CRITICAL", UiKit.Red);
+            if (s.Shield <= 0f && s.Def.ShieldHp > 0f && hull < 0.6f) return ("HULL OPEN", UiKit.Red);
+            if (dead * 2 >= total && total > 0) return ("BATTERIES LOST", UiKit.Red);
+            if (dead > 0) return (deadSide > 0 ? "STARBOARD BANK LOST" : deadSide < 0 ? "PORT BANK LOST" : "GUNS LOST", UiKit.Warn);
+            if (s.Def.ShieldHp > 0f && s.Shield <= 0f) return ("SHIELDS DOWN", UiKit.Warn);
+            return hull > 0.9f ? ("SOUND", UiKit.Ok) : ("DAMAGED", UiKit.Warn);
+        }
+
+        // The last order as a slip of paper, with what the ships said back.
+        void DirectiveSlip()
+        {
+            float age = Time.unscaledTime - Input.DirectiveTime;
+            if (age > 14f || Input.DirectiveNumber == 0) return;
+            float a = Mathf.Clamp01((14f - age) / 2f);
+            var r = new Rect(16, Screen.height - 220 - 34 - 128, 330, 118);
+            if (Event.current.type != EventType.Repaint) return;
+            var old = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, a);
+            UiKit.Paper(r, -0.8f);
+            var m = GUI.matrix;
+            GUIUtility.RotateAroundPivot(-0.8f, r.center);
+            UiKit.Text(new Rect(r.x + 12, r.y + 7, r.width - 24, 20), $"DIRECTIVE {Input.DirectiveNumber} — {Input.DirectiveTitle}", UiKit.Face.Stencil, 15, UiKit.PaperInk);
+            UiKit.Text(new Rect(r.x + 12, r.y + 29, r.width - 24, 34), Input.DirectiveBody, UiKit.Face.Mono, 12, UiKit.PaperInk, TextAnchor.UpperLeft, true);
+            UiKit.Text(new Rect(r.x + 12, r.y + 72, r.width - 24, 40), "readback: " + Input.DirectiveReadback, UiKit.Face.Mono, 11, new Color(0.23f, 0.2f, 0.15f), TextAnchor.UpperLeft, true);
+            GUI.matrix = m;
+            GUI.color = old;
         }
 
         static string OrderText(Ship s) => s.Order.Kind switch

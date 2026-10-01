@@ -17,6 +17,10 @@ namespace GalacticRupture.Game
         static readonly Color Move = new Color(0.35f, 0.9f, 0.55f, 0.35f);
         static readonly Color Attack = new Color(1f, 0.35f, 0.3f, 0.9f);
         static readonly Color Hover = new Color(1f, 1f, 1f, 0.5f);
+        static readonly Color GunBig = new Color(0.91f, 0.67f, 0.27f, 0.3f);
+        static readonly Color GunSmall = new Color(0.91f, 0.67f, 0.27f, 0.12f);
+        static readonly Color GunLaid = new Color(1f, 0.82f, 0.45f, 0.5f);
+        static readonly Color GunDead = new Color(0.85f, 0.33f, 0.24f, 0.9f);
 
         readonly List<LineRenderer> _pool = new List<LineRenderer>();
         int _used;
@@ -64,6 +68,48 @@ namespace GalacticRupture.Game
             lr.SetPosition(1, b);
         }
 
+        // The batteries as geometry (IDEAS.md §2.1): each live gun's firing arc as a thin fan, a red
+        // mark where one has been shot away, and a line to the target for each gun that is laid on.
+        void GunArcs(Ship ship, Vector3 shipPos, bool fans)
+        {
+            var world = Runner.World;
+            float w = Mathf.Max(0.5f, Vector3.Distance(Input.Rig.Camera.transform.position, shipPos) * 0.0009f);
+            foreach (var m in ship.Mounts)
+            {
+                Vector3 pivot = world.MountPivot(ship, m).ToUnity();
+                var hp = m.Hardpoint;
+                if (!m.Alive)
+                {
+                    Ring(pivot, ship.Def.Radius * 0.25f + 3f, w * 1.6f, GunDead);
+                    continue;
+                }
+                bool big = m.Def.Class == MountClass.Line;
+                var col = big ? GunBig : GunSmall;
+                if (fans && m.Def.Class != MountClass.PointDefence && hp.YawHalfArcDeg < 178f)
+                {
+                    float range = m.Def.Range;
+                    float centre = ship.Yaw + hp.BaseYawDeg * Mathf.Deg2Rad;
+                    float half = hp.YawHalfArcDeg * Mathf.Deg2Rad;
+                    bool all = half >= Mathf.PI * 0.98f;
+                    const int n = 14;
+                    var lr = Next(all ? n * 2 : n + 1, w, col, all);
+                    for (int i = 0; i < lr.positionCount; i++)
+                    {
+                        float a = all ? i * Mathf.PI * 2f / lr.positionCount : centre - half + i * 2f * half / n;
+                        lr.SetPosition(i, pivot + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * range);
+                    }
+                    if (!all)
+                    {
+                        var edge = new Color(col.r, col.g, col.b, col.a * 0.7f);
+                        Line(pivot, pivot + new Vector3(Mathf.Sin(centre - half), 0f, Mathf.Cos(centre - half)) * range, w * 0.7f, edge);
+                        Line(pivot, pivot + new Vector3(Mathf.Sin(centre + half), 0f, Mathf.Cos(centre + half)) * range, w * 0.7f, edge);
+                    }
+                }
+                if (m.Target >= 0 && m.OnTarget && world.ShipById(m.Target) is Ship t && t.Alive)
+                    Line(pivot, t.Position.ToUnity(), w * 1.1f, GunLaid);
+            }
+        }
+
         void LateUpdate()
         {
             _used = 0;
@@ -89,6 +135,8 @@ namespace GalacticRupture.Game
                 // Drop line to the order plane, so height reads in 3D.
                 if (Mathf.Abs(p.y - planeY) > 5f)
                     Line(p, new Vector3(p.x, planeY, p.z), Mathf.Max(0.3f, scale * 0.5f), new Color(Own.r, Own.g, Own.b, 0.35f));
+
+                if (ship.Mounts.Count > 0 && ship.Side == Input.PlayerSide) GunArcs(ship, p, Input.Selected.Count <= 3 || id == Input.Selected[0]);
 
                 var o = ship.Order;
                 if (o.Kind == OrderKind.MoveTo)

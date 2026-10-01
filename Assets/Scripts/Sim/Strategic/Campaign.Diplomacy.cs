@@ -342,6 +342,9 @@ namespace GalacticRupture.Sim.Strategic
             return true;
         }
 
+        // Seats the council out of turn (the capture harness and tests).
+        public void OpenCouncilNow() => OpenCouncil();
+
         void OpenCouncil()
         {
             var session = new CouncilSession();

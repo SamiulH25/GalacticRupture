@@ -27,10 +27,10 @@ namespace GalacticRupture.Game
         GUIStyle _text, _small, _title, _caps, _button, _buttonHot, _banner, _label, _tiny;
         Texture2D _white;
 
-        static readonly Color Panel = new Color(0.018f, 0.03f, 0.05f, 0.88f);
-        static readonly Color Rule = new Color(0.5f, 0.7f, 0.95f, 0.18f);
-        static readonly Color Ink = new Color(0.86f, 0.9f, 0.96f);
-        static readonly Color Muted = new Color(0.55f, 0.62f, 0.72f);
+        static readonly Color Panel = new Color(UiKit.Panel.r, UiKit.Panel.g, UiKit.Panel.b, 0.9f);
+        static readonly Color Rule = UiKit.Line;
+        static readonly Color Ink = UiKit.Ink;
+        static readonly Color Muted = UiKit.Mute;
         static readonly Color HullBar = new Color(0.9f, 0.74f, 0.44f);
         static readonly Color ArmyBar = new Color(0.7f, 0.85f, 0.55f);
 
@@ -123,6 +123,7 @@ namespace GalacticRupture.Game
         void Styles()
         {
             if (_white != null) return;
+            UiKit.Init(Art);
             _white = Texture2D.whiteTexture;
             var font = Art != null && Art.UiFont != null ? Art.UiFont : GUI.skin.font;
             var bold = Art != null && Art.UiFontBold != null ? Art.UiFontBold : font;
@@ -131,19 +132,19 @@ namespace GalacticRupture.Game
             _small = new GUIStyle(_text) { fontSize = 14, normal = { textColor = Muted } };
             _tiny = new GUIStyle(_text) { fontSize = 12, normal = { textColor = Muted } };
             _title = new GUIStyle(_text) { font = bold, fontSize = 24 };
-            _caps = new GUIStyle(_text) { font = bold, fontSize = 13, normal = { textColor = new Color(0.62f, 0.72f, 0.86f) } };
-            _banner = new GUIStyle(_text) { font = bold, fontSize = 52, alignment = TextAnchor.MiddleCenter };
+            _caps = new GUIStyle(_text) { font = UiKit.Mono, fontSize = 12, normal = { textColor = UiKit.Amber } };
+            _banner = new GUIStyle(_text) { font = UiKit.Stencil, fontSize = 52, alignment = TextAnchor.MiddleCenter };
             _button = new GUIStyle(GUI.skin.button)
             {
                 font = bold, fontSize = 14, alignment = TextAnchor.MiddleLeft, richText = true,
                 padding = new RectOffset(12, 10, 4, 4),
-                normal = { background = Tex(new Color(0.08f, 0.12f, 0.18f, 0.95f)), textColor = Ink },
-                hover = { background = Tex(new Color(0.13f, 0.2f, 0.3f, 0.98f)), textColor = Color.white },
-                active = { background = Tex(new Color(0.2f, 0.32f, 0.46f, 1f)), textColor = Color.white },
+                normal = { background = Tex(new Color(0.075f, 0.082f, 0.098f, 0.97f)), textColor = Ink },
+                hover = { background = Tex(new Color(0.16f, 0.14f, 0.09f, 0.98f)), textColor = UiKit.Amber },
+                active = { background = Tex(new Color(0.3f, 0.23f, 0.1f, 1f)), textColor = Color.white },
             };
             _buttonHot = new GUIStyle(_button)
             {
-                normal = { background = Tex(new Color(0.16f, 0.28f, 0.42f, 0.98f)), textColor = Color.white },
+                normal = { background = Tex(new Color(0.2f, 0.16f, 0.08f, 0.98f)), textColor = UiKit.Amber },
             };
         }
 
@@ -284,7 +285,7 @@ namespace GalacticRupture.Game
             Fill(new Rect(18, 16, 20, 20), FactionStyle.Of(Campaign.PlayerFaction));
             Fill(new Rect(22, 20, 12, 12), FactionStyle.Accent[0]);
             bool wide = Screen.width >= 1500;
-            GUI.Label(new Rect(48, 13, 200, 28), wide ? Caps(fac.Name) : fac.Name.ToUpperInvariant(), new GUIStyle(_caps) { fontSize = 16, normal = { textColor = Ink } });
+            GUI.Label(new Rect(48, 13, 200, 28), fac.Name.ToUpperInvariant(), new GUIStyle(_caps) { fontSize = 16, normal = { textColor = Ink } });
             string time = Director.Waiting ? "HELD" : Director.Paused ? "PAUSED" : $"×{Director.Speed:0.#}";
             float next = Campaign.CouncilIntervalDays * 24f - (float)(C.Hours % (Campaign.CouncilIntervalDays * 24f));
             string act = C.Act switch { 1 => "act I", 2 => "act II", _ => "act III" };
@@ -614,30 +615,6 @@ namespace GalacticRupture.Game
             }
             var parts = counts.Select(kv => $"{kv.Value} {kv.Key}{(kv.Value > 1 ? "s" : "")}");
             return $"{string.Join(" and ", factions)}: {string.Join(", ", parts)}";
-        }
-
-        void CouncilWindow()
-        {
-            var s = C.Council;
-            int voters = s.Votes.Count;
-            var r = Modal(820, 200 + (voters + 1) / 2 * 24 + 40, new Color(0.85f, 0.75f, 0.5f));
-            float y = r.y + 18;
-            GUI.Label(new Rect(r.x, y, r.width, 22), Caps("The council sits"), new GUIStyle(_caps) { alignment = TextAnchor.MiddleCenter });
-            GUI.Label(new Rect(r.x + 30, y + 26, r.width - 60, 60), C.Describe(s), new GUIStyle(_title) { fontSize = 22, wordWrap = true, alignment = TextAnchor.UpperCenter });
-            y += 98;
-            int k = 0;
-            foreach (var kv in s.Votes)
-            {
-                string v = kv.Value switch { Vote.Yes => "<color=#9fe39a>for</color>", Vote.No => "<color=#ff8a70>against</color>", _ => "abstains" };
-                GUI.Label(new Rect(r.x + 40 + (k % 2) * 380, y + (k / 2) * 24, 370, 22), $"{Director.Tag(kv.Key)} · {C.Seats(kv.Key)} seats · {v}", _label);
-                k++;
-            }
-            y += (k + 1) / 2 * 24;
-            GUI.Label(new Rect(r.x + 40, y + 4, 540, 22), $"our seats: {C.Seats(Campaign.PlayerFaction)}", _small);
-            float bw = 176;
-            if (Button(new Rect(r.x + 30, r.yMax - 50, bw, 34), "VOTE FOR", true, true)) { C.CastPlayerVote(Vote.Yes); Director.Flush(); }
-            if (Button(new Rect(r.x + 30 + bw + 12, r.yMax - 50, bw, 34), "VOTE AGAINST")) { C.CastPlayerVote(Vote.No); Director.Flush(); }
-            if (Button(new Rect(r.x + 30 + (bw + 12) * 2, r.yMax - 50, bw, 34), "ABSTAIN")) { C.CastPlayerVote(Vote.Abstain); Director.Flush(); }
         }
 
         void EndBanner()
