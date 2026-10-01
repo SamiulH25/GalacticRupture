@@ -18,8 +18,8 @@ namespace GalacticRupture.Sim
 
         public static readonly MountDef Secondary = new MountDef
         {
-            Id = "secondary", Name = "Turbolaser", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
-            Size = MountSize.Medium, Cost = 30, Family = WeaponFamily.Turbolaser,
+            Id = "secondary", Name = "Plasma cannon", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
+            Size = MountSize.Medium, Cost = 30, Family = WeaponFamily.Plasma,
             YawRateDeg = 34f, PitchRateDeg = 28f, PitchMinDeg = -6f, PitchMaxDeg = 70f,
             Range = 3000f, Reload = 1.8f, Barrels = 2, BarrelStagger = 0.1f,
             ProjectileSpeed = 1700f, Damage = 38f, SpreadDeg = 0.35f, AimToleranceDeg = 2f,
@@ -38,8 +38,8 @@ namespace GalacticRupture.Sim
 
         public static readonly MountDef CorvetteGun = new MountDef
         {
-            Id = "corvette_gun", Name = "Light turbolaser", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
-            Size = MountSize.Small, Cost = 12, Family = WeaponFamily.Turbolaser,
+            Id = "corvette_gun", Name = "Light plasma cannon", Class = MountClass.Secondary, Channel = DamageChannel.Energy,
+            Size = MountSize.Small, Cost = 12, Family = WeaponFamily.Plasma,
             YawRateDeg = 60f, PitchRateDeg = 50f, PitchMinDeg = -10f, PitchMaxDeg = 60f,
             Range = 1800f, Reload = 1.4f, Barrels = 2, BarrelStagger = 0.08f,
             ProjectileSpeed = 1600f, Damage = 16f, SpreadDeg = 0.6f, AimToleranceDeg = 3f,
@@ -125,11 +125,11 @@ namespace GalacticRupture.Sim
             MuzzleLength = 26f, PivotHeight = 3.8f, Hp = 700f,
         };
 
-        // Energy, tier 1: the capital's turbolaser.
-        public static readonly MountDef HeavyTurbolaser = new MountDef
+        // Energy, tier 1: the capital's plasma cannon.
+        public static readonly MountDef HeavyPlasma = new MountDef
         {
-            Id = "heavy_turbolaser", Name = "Heavy turbolaser", Class = MountClass.Line, Channel = DamageChannel.Energy,
-            Size = MountSize.Large, Cost = 100, Family = WeaponFamily.Turbolaser, Tech = "heavy_turbolasers",
+            Id = "heavy_plasma_cannon", Name = "Heavy plasma cannon", Class = MountClass.Line, Channel = DamageChannel.Energy,
+            Size = MountSize.Large, Cost = 100, Family = WeaponFamily.Plasma, Tech = "heavy_plasma",
             YawRateDeg = 16f, PitchRateDeg = 12f, PitchMinDeg = -4f, PitchMaxDeg = 45f,
             Range = 4000f, Reload = 4f, Barrels = 2, BarrelStagger = 0.2f,
             ProjectileSpeed = 1900f, Damage = 120f, SpreadDeg = 0.2f, AimToleranceDeg = 1.3f,
@@ -170,30 +170,30 @@ namespace GalacticRupture.Sim
         };
 
         // Disruptive: no hull damage to speak of, but it kills guns (IDEAS.md §5.1).
-        public static readonly MountDef IonBattery = new MountDef
+        public static readonly MountDef ArcBattery = new MountDef
         {
-            Id = "ion_battery", Name = "Ion cannon", Class = MountClass.Secondary, Channel = DamageChannel.Disruptive,
-            Size = MountSize.Medium, Cost = 36, Family = WeaponFamily.Ion, Tech = "ion",
+            Id = "arc_battery", Name = "Arc cannon", Class = MountClass.Secondary, Channel = DamageChannel.Disruptive,
+            Size = MountSize.Medium, Cost = 36, Family = WeaponFamily.Arc, Tech = "arc",
             YawRateDeg = 30f, PitchRateDeg = 24f, PitchMinDeg = -6f, PitchMaxDeg = 70f,
             Range = 2600f, Reload = 2.4f, Barrels = 2, BarrelStagger = 0.1f,
             ProjectileSpeed = 1500f, Damage = 45f, SpreadDeg = 0.35f, AimToleranceDeg = 2f,
             MuzzleLength = 9f, PivotHeight = 2.2f, Hp = 220f,
         };
 
-        public static readonly MountDef LightIon = new MountDef
+        public static readonly MountDef LightArc = new MountDef
         {
-            Id = "light_ion", Name = "Light ion cannon", Class = MountClass.Secondary, Channel = DamageChannel.Disruptive,
-            Size = MountSize.Small, Cost = 16, Family = WeaponFamily.Ion, Tech = "compact_ion",
+            Id = "light_arc", Name = "Light arc cannon", Class = MountClass.Secondary, Channel = DamageChannel.Disruptive,
+            Size = MountSize.Small, Cost = 16, Family = WeaponFamily.Arc, Tech = "compact_arc",
             YawRateDeg = 55f, PitchRateDeg = 45f, PitchMinDeg = -10f, PitchMaxDeg = 60f,
             Range = 1800f, Reload = 1.6f, Barrels = 1, BarrelStagger = 0.1f,
             ProjectileSpeed = 1500f, Damage = 36f, SpreadDeg = 0.5f, AimToleranceDeg = 3f,
             MuzzleLength = 5f, PivotHeight = 1.5f, Hp = 60f,
         };
 
-        public static readonly MountDef HeavyIon = new MountDef
+        public static readonly MountDef HeavyArc = new MountDef
         {
-            Id = "heavy_ion", Name = "Heavy ion cannon", Class = MountClass.Line, Channel = DamageChannel.Disruptive,
-            Size = MountSize.Large, Cost = 95, Family = WeaponFamily.Ion, Tech = "heavy_ion",
+            Id = "heavy_arc", Name = "Heavy arc cannon", Class = MountClass.Line, Channel = DamageChannel.Disruptive,
+            Size = MountSize.Large, Cost = 95, Family = WeaponFamily.Arc, Tech = "heavy_arc",
             YawRateDeg = 14f, PitchRateDeg = 11f, PitchMinDeg = -4f, PitchMaxDeg = 40f,
             Range = 3600f, Reload = 4f, Barrels = 2, BarrelStagger = 0.2f,
             ProjectileSpeed = 1500f, Damage = 110f, SpreadDeg = 0.2f, AimToleranceDeg = 1.3f,
@@ -223,9 +223,9 @@ namespace GalacticRupture.Sim
 
         public static readonly MountDef[] Mounts =
         {
-            MainBattery, HeavyTurbolaser, HeavyRailgun, MassAccelerator, LanceBattery, HeavyIon, HeavyFlak,
-            MassDriver, Secondary, RotaryDriver, Railgun, ShieldBurner, IonBattery, FlakBattery,
-            AutoCannon, CorvetteGun, RotaryCannon, PulseLaser, LightIon, PointDefence,
+            MainBattery, HeavyPlasma, HeavyRailgun, MassAccelerator, LanceBattery, HeavyArc, HeavyFlak,
+            MassDriver, Secondary, RotaryDriver, Railgun, ShieldBurner, ArcBattery, FlakBattery,
+            AutoCannon, CorvetteGun, RotaryCannon, PulseLaser, LightArc, PointDefence,
         };
 
         public static MountDef MountById(string id)

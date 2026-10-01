@@ -39,7 +39,7 @@ namespace GalacticRupture.Game
             Color c = wl.SideColoured ? (player ? WeaponLook.PlayerBolt : WeaponLook.EnemyBolt) : wl.Color;
             m.SetColor("_Color", c);
             m.SetFloat("_Intensity", wl.Intensity);
-            if (p.Family == WeaponFamily.Ion) m.SetFloat("_Softness", 4f);
+            if (p.Family == WeaponFamily.Arc) m.SetFloat("_Softness", 4f);
             i = _looks.Count;
             _looks.Add(new Look { Material = m, Length = wl.Length, Width = wl.Width });
             _buckets.Add(new List<Matrix4x4>(1024));

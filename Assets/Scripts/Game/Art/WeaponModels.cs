@@ -5,7 +5,7 @@ using UnityEngine;
 namespace GalacticRupture.Game
 {
     // One silhouette per weapon family (IDEAS.md §2.1: the guns are the signature image), so a
-    // flak mount, a line battery and an ion cannon read apart at a glance and a heavy turbolaser
+    // flak mount, a line battery and an arc cannon read apart at a glance and a heavy plasma cannon
     // reads as the big brother of a light one. Built from code until Blender models replace them;
     // a model named for the mount id (GameArt.TurretModels) always wins.
     //
@@ -96,7 +96,7 @@ namespace GalacticRupture.Game
                     recoil = 2f * k;
                     break;
                 }
-                case WeaponFamily.Turbolaser:
+                case WeaponFamily.Plasma:
                 {
                     // A rounded dome; short thick emitters with cooling fins and hot tips.
                     Dome(house, (def.Size == MountSize.Small ? 2.8f : 3.6f) * k, p * 1.75f, Slot.Paint);
@@ -161,7 +161,7 @@ namespace GalacticRupture.Game
                     recoil = 0.2f * k;
                     break;
                 }
-                case WeaponFamily.Ion:
+                case WeaponFamily.Arc:
                 {
                     // A drum housing and a pronged fork with a glowing coil between the prongs.
                     house.Cylinder(new Vector3(0f, 0f, 0f), new Vector3(0f, p * 1.6f, 0f), 3.2f * k, 2.8f * k, 20, Slot.Paint);
@@ -279,11 +279,11 @@ namespace GalacticRupture.Game
                 case WeaponFamily.Rotary: return new WeaponLook { Length = 16f, Width = 0.55f * (0.6f + k * 0.4f), Color = new Color(1f, 0.8f, 0.42f), Intensity = 11f, Muzzle = 0.5f * k };
                 case WeaponFamily.Railgun: return new WeaponLook { Length = 150f * Mathf.Sqrt(k), Width = 0.8f * Mathf.Sqrt(k), Color = new Color(0.78f, 0.9f, 1f), Intensity = 20f, Muzzle = 1.2f * k };
                 case WeaponFamily.Accelerator: return new WeaponLook { Length = 320f, Width = 4f, Color = new Color(0.85f, 0.72f, 1f), Intensity = 26f, Muzzle = 6f };
-                case WeaponFamily.Turbolaser: return new WeaponLook { Length = 20f + 26f * k, Width = 0.9f + 1f * k, Intensity = 14f, SideColoured = true, Muzzle = 1.1f * k };
+                case WeaponFamily.Plasma: return new WeaponLook { Length = 20f + 26f * k, Width = 0.9f + 1f * k, Intensity = 14f, SideColoured = true, Muzzle = 1.1f * k };
                 case WeaponFamily.Pulse: return new WeaponLook { Length = 11f, Width = 0.9f, Intensity = 13f, SideColoured = true, Muzzle = 0.5f };
                 case WeaponFamily.Lance: return new WeaponLook { Length = 150f, Width = 3.6f, Intensity = 22f, SideColoured = true, Muzzle = 5f };
                 case WeaponFamily.ShieldBurner: return new WeaponLook { Length = 48f, Width = 2.2f, Color = new Color(1f, 0.38f, 0.95f), Intensity = 16f, Muzzle = 1.6f };
-                case WeaponFamily.Ion: return new WeaponLook { Length = 30f + 12f * k, Width = 2f + 1f * k, Color = new Color(0.45f, 0.62f, 1f), Intensity = 16f, Muzzle = 1.4f * k };
+                case WeaponFamily.Arc: return new WeaponLook { Length = 30f + 12f * k, Width = 2f + 1f * k, Color = new Color(0.45f, 0.62f, 1f), Intensity = 16f, Muzzle = 1.4f * k };
                 case WeaponFamily.Flak: return new WeaponLook { Length = 8f + 3f * k, Width = 0.8f + 0.3f * k, Color = new Color(1f, 0.86f, 0.4f), Intensity = 12f, Muzzle = 0.7f * k };
                 default: return new WeaponLook { Length = 16f, Width = 0.5f, Color = new Color(1f, 0.88f, 0.6f), Intensity = 9f, Muzzle = 0.6f };
             }

@@ -132,14 +132,14 @@ namespace GalacticRupture.Tests
         [Test]
         public void DesignsChangeGunsCostAndBuildTime()
         {
-            var d = new ShipDesign("Ion Destroyer", Hulls.Destroyer);
+            var d = new ShipDesign("Arc Destroyer", Hulls.Destroyer);
             Assert.IsFalse(d.Set(0, Hulls.MainBattery), "a large gun does not fit a medium hardpoint");
-            Assert.IsTrue(d.Set(0, Hulls.IonBattery));
+            Assert.IsTrue(d.Set(0, Hulls.ArcBattery));
             Assert.IsTrue(d.Set(2, Hulls.AutoCannon));
             var built = d.Built;
             Assert.AreEqual("destroyer", built.Id, "same hull, same model");
-            Assert.AreEqual(Hulls.IonBattery, built.Hardpoints[0].Mount);
-            Assert.AreEqual(Hulls.Destroyer.Cost + Hulls.IonBattery.Cost - Hulls.Secondary.Cost + Hulls.AutoCannon.Cost - Hulls.PointDefence.Cost, built.Cost);
+            Assert.AreEqual(Hulls.ArcBattery, built.Hardpoints[0].Mount);
+            Assert.AreEqual(Hulls.Destroyer.Cost + Hulls.ArcBattery.Cost - Hulls.Secondary.Cost + Hulls.AutoCannon.Cost - Hulls.PointDefence.Cost, built.Cost);
             Assert.AreEqual(Hulls.Secondary, Hulls.Destroyer.Hardpoints[0].Mount, "the stock hull is untouched");
 
             var world = new World(1);
@@ -211,7 +211,7 @@ namespace GalacticRupture.Tests
         public void ResearchUnlocksGunsAndImprovesHulls()
         {
             var c = Line();
-            Assert.IsFalse(c.CanUse(0, Hulls.HeavyTurbolaser), "not known at the start");
+            Assert.IsFalse(c.CanUse(0, Hulls.HeavyPlasma), "not known at the start");
             Assert.IsTrue(c.CanUse(0, Hulls.MainBattery));
             c.Enqueue(0, "rails");
             Assert.AreEqual("rotary", c.Current(0).Id, "prerequisites are queued first");
@@ -223,7 +223,7 @@ namespace GalacticRupture.Tests
 
             var design = c.DesignFor(0, HullClass.Destroyer);
             float before = c.Buildable(0, design).ShieldHp;
-            c.Learn(0, Techs.ById("deflectors"));
+            c.Learn(0, Techs.ById("shield_lattice"));
             Assert.Greater(c.Buildable(0, design).ShieldHp, before, "new hulls get the better shields");
         }
 

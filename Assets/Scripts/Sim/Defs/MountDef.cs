@@ -23,11 +23,11 @@ namespace GalacticRupture.Sim
         Rotary,         // many spinning barrels, a hail of small rounds
         Railgun,        // long thin rails, very fast slugs, long reach
         Accelerator,    // one huge coil gun; the round goes through ships
-        Turbolaser,     // energy bolts from short, hot emitters
+        Plasma,     // magnetically confined plasma bolts from short, hot emitters
         Pulse,          // clustered quad emitters, rapid short bolts
         Lance,          // one long emitter, a slow heavy bolt
         ShieldBurner,   // energy tuned to tear shields down
-        Ion,            // disruptive: kills guns, not hulls
+        Arc,            // electric arc discharge: burns out guns, not hulls
         Flak,           // bursts to screen small craft
         PointDefence,   // tiny rapid guns
     }

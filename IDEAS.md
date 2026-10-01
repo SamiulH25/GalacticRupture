@@ -371,9 +371,9 @@ tuning from headless runs of the AI playing itself, not from play.
   what is not spent is banked. Research improves hulls **as they are built** (shields, armour,
   speed); guns are fitted in the designer. 29 technologies in six branches:
   - *Ballistic:* rotary cannon → rotary driver / railgun → heavy railgun → mass accelerator.
-  - *Energy:* heavy turbolaser → pulse laser → beam lance → shield burner.
-  - *Disruptive:* ion cannon → light ion cannon → heavy ion cannon → ion doctrine (reload −10%).
-  - *Defence:* flak → heavy flak; deflector lattice (shields +20%), layered armour (hull +15%) →
+  - *Energy:* heavy plasma cannon → pulse laser → beam lance → shield burner.
+  - *Disruptive:* arc cannon → light arc cannon → heavy arc cannon → arc doctrine (reload −10%).
+  - *Defence:* flak → heavy flak; shield lattice (shields +20%), layered armour (hull +15%) →
     reactive shields, fortress worlds.
   - *Industry:* automated fabs, orbital refining, research institutes → arcologies, slipway automation.
   - *Logistics & command:* salvage doctrine, forward depots → lane drives, civic administration,
@@ -395,11 +395,11 @@ and flash, and comes in sizes (light / standard / heavy):
 | Rotary | rotary cannon, rotary driver | round drum, ring of barrels; a hail of tiny tracers |
 | Railgun | railgun, heavy railgun | low wedge, flat twin rails with a glowing gap; long white streaks |
 | Accelerator | mass accelerator | one huge coil-wound barrel; a violet-white bar that passes through ships |
-| Turbolaser | light turbolaser, turbolaser, heavy turbolaser | dome with finned emitters and hot tips; bolts in the side's colour |
+| Plasma | light plasma cannon, plasma cannon, heavy plasma cannon | dome with finned emitters and hot tips; bolts in the side's colour |
 | Pulse | pulse laser | small dome, 2×2 emitters; short rapid bolts |
 | Lance | beam lance | long house, one square emitter with a glowing slit; a long heavy bolt |
 | Shield burner | shield burner | dome, emitters ringed with glowing coils; magenta bolts |
-| Ion | light ion, ion cannon, heavy ion | drum house, pronged fork with a coil; fat soft blue bolts |
+| Arc | light arc, arc cannon, heavy arc | drum house, pronged fork with a coil; fat soft blue bolts |
 | Flak | flak battery, heavy flak | box behind a shield plate, four stubby barrels; short yellow dashes |
 | Point defence | point defence | ball mount, twin needles; tiny white tracers |
 
@@ -432,7 +432,7 @@ one, because it opens an arc that never closes.
   penetration**. Grinds hull. The answer when shields are holding.
 - **Energy** — beams, plasma, shield-burners. High alpha, high efficiency. Loses to
   shields that regen faster than you burn.
-- **Disruptive** — EMP, ion, neural. **No hull damage.** Kills subsystems. The only
+- **Disruptive** — EMP, arc, neural. **No hull damage.** Kills subsystems. The only
   reliable answer to a capital's turrets.
 
 `PROPOSED` — Disruption and persistent damage are the same system aimed at different

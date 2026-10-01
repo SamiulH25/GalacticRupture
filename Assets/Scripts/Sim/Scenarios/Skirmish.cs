@@ -81,15 +81,15 @@ namespace GalacticRupture.Sim
         }
 
         static readonly ShipDesign ArsenalBattleship = Loadout("Arsenal", Hulls.Battleship,
-            Hulls.HeavyTurbolaser, Hulls.HeavyRailgun, Hulls.LanceBattery, Hulls.MassAccelerator,
-            Hulls.Railgun, Hulls.Railgun, Hulls.IonBattery, Hulls.IonBattery, Hulls.FlakBattery, Hulls.FlakBattery,
-            Hulls.PulseLaser, Hulls.PulseLaser, Hulls.RotaryCannon, Hulls.RotaryCannon, Hulls.LightIon, Hulls.LightIon);
+            Hulls.HeavyPlasma, Hulls.HeavyRailgun, Hulls.LanceBattery, Hulls.MassAccelerator,
+            Hulls.Railgun, Hulls.Railgun, Hulls.ArcBattery, Hulls.ArcBattery, Hulls.FlakBattery, Hulls.FlakBattery,
+            Hulls.PulseLaser, Hulls.PulseLaser, Hulls.RotaryCannon, Hulls.RotaryCannon, Hulls.LightArc, Hulls.LightArc);
 
         static readonly ShipDesign[] ArsenalDestroyers =
         {
             Loadout("Rotary", Hulls.Destroyer, Hulls.RotaryDriver, Hulls.RotaryDriver, Hulls.AutoCannon, Hulls.AutoCannon),
             Loadout("Burner", Hulls.Destroyer, Hulls.ShieldBurner, Hulls.ShieldBurner, Hulls.PulseLaser, Hulls.PulseLaser),
-            Loadout("Driver", Hulls.Destroyer, Hulls.MassDriver, Hulls.FlakBattery, Hulls.RotaryCannon, Hulls.LightIon),
+            Loadout("Driver", Hulls.Destroyer, Hulls.MassDriver, Hulls.FlakBattery, Hulls.RotaryCannon, Hulls.LightArc),
         };
 
         public void Tick(World world)
