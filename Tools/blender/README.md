@@ -3,6 +3,13 @@
 Every ship mesh in the game is generated here and exported to `Assets/Art/Models/*.fbx`.
 Nothing is hand-modelled in the Unity project.
 
+> **Superseded design (2026-11-04).** The models and the shared contract described below
+> were rejected. `IDEAS.md` §7.4 now requires **per-faction hardpoint layouts**: `HullDef`
+> gains a faction dimension, and the contract check runs per faction. New hulls follow the
+> wartime ship design doctrine and the shared anatomy in §7.4, and each faction's real-world
+> precedent in §7.2. The text below describes the current code until that rework lands. Keep
+> the safety checks (C#↔model mirror, no floating turrets). Drop the "never move a gun" rule.
+
 ## The contract
 
 `Assets/Scripts/Sim/Scenarios/Hulls.cs` defines one `HullDef` per class and **no faction

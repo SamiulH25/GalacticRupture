@@ -113,3 +113,7 @@ InitTestScene*.unity*
 .idea/
 .vs/
 __pycache__/
+
+# Local tool output and agent config
+/output/
+.codex/
